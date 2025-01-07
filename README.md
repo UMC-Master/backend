@@ -22,13 +22,13 @@
 ### ✅ Allowed <type> Values
 |Type|설명|
 |:---|:---|
-|feat| ✨ 새로운 기능 추가|
-|fix| 🐛 버그 수정|
-|docs| 📚 문서 업데이트|
-|style|	🎨 코드 스타일 변경 (포맷팅 등)|
-|refactor|	🔧 기능 변화 없는 코드 리팩토링|
-|test|	🧪 테스트 추가 또는 업데이트|
-|chore|	🔨 빌드, 도구 설정 등 유지보수 작업|
+|✨feat|  새로운 기능 추가|
+|🐛fix|  버그 수정|
+|📚docs|  문서 업데이트|
+|🎨style|	 코드 스타일 변경 (포맷팅 등)|
+|🔧refactor|	 기능 변화 없는 코드 리팩토링|
+|🧪test|	 테스트 추가 또는 업데이트|
+|🔨chore|	 빌드, 도구 설정 등 유지보수 작업|
 
 * * *
 
@@ -227,13 +227,3 @@ The removed `inject` wasn't generaly useful for directives so there should be no
 |develop|	개발 진행|	기능 개발
 |feature|	새 기능 개발|	기능 추가/수정
 |hotfix|	긴급 수정|긴급 버그 수정
-
-
-
-
-
-
-
-
-
-
