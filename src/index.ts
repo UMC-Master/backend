@@ -1,7 +1,8 @@
 // index.js
-import express, { Request, Response, Express, NextFunction } from "express";
-import dotenv from "dotenv";
-import cors from "cors";
+import express, { Request, Response, NextFunction } from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import { CommomError } from './errors.js';
 
 dotenv.config();
 
@@ -13,12 +14,12 @@ const port = process.env.PORT;
  */
 app.use((req, res, next) => {
   res.success = (success) => {
-    return res.json({ resultType: "SUCCESS", error: null, success });
+    return res.json({ resultType: 'SUCCESS', error: null, success });
   };
 
-  res.error = ({ errorCode = "unknown", reason = null, data = null }) => {
+  res.error = ({ errorCode = 'unknown', reason = null, data = null }) => {
     return res.json({
-      resultType: "FAIL",
+      resultType: 'FAIL',
       error: { errorCode, reason, data },
       success: null,
     });
@@ -27,9 +28,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cors());                            // cors 방식 허용
-app.use(express.static('public'));          // 정적 파일 접근
-app.use(express.json());                    // request의 본문을 json으로 해석할 수 있도록 함 (JSON 형태의 요청 body를 파싱하기 위함)
+app.use(cors()); // cors 방식 허용
+app.use(express.static('public')); // 정적 파일 접근
+app.use(express.json()); // request의 본문을 json으로 해석할 수 있도록 함 (JSON 형태의 요청 body를 파싱하기 위함)
 app.use(express.urlencoded({ extended: false })); // 단순 객체 문자열 형태로 본문 데이터 해석
 
 app.get('/', (req, res) => {
@@ -39,13 +40,13 @@ app.get('/', (req, res) => {
 /**
  * 전역 오류를 처리하기 위한 미들웨어
  */
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: CommomError, req: Request, res: Response, next: NextFunction) => {
   if (res.headersSent) {
     return next(err);
   }
 
-  res.status(err.statusCode || 500).error({
-    errorCode: err.errorCode || "unknown",
+  res.status(500).error({
+    errorCode: err.errorCode || 'unknown',
     reason: err.reason || err.message || null,
     data: err.data || null,
   });
