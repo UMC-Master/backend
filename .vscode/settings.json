@@ -1,3 +1,5 @@
 {
-    "javascript.preferences.importModuleSpecifierEnding": "js"
-  }
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "typescript.preferences.importModuleSpecifierEnding": "js"
+}
