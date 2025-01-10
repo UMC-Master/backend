@@ -1,4 +1,4 @@
-export class CommomError extends Error {
+export class CommonError extends Error {
   errorCode: string;
   reason: string;
   data: unknown;
@@ -11,7 +11,7 @@ export class CommomError extends Error {
   }
 }
 
-export class DuplicateUserEmailError extends CommomError {
+export class DuplicateUserEmailError extends CommonError {
   constructor(reason: string, data: unknown) {
     super('U001', reason, data);
   }
