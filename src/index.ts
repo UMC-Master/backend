@@ -17,7 +17,11 @@ const port = process.env.PORT || 3000;
  */
 app.use((req, res, next) => {
   // 성공 응답
-  res.success = (response: any, message: string = '성공입니다.', code: string = 'COMMON200') => {
+  res.success = (
+    response: unknown,
+    message: string = '성공입니다.',
+    code: string = 'COMMON200'
+  ) => {
     return res.json({
       isSuccess: true,
       code,
@@ -34,7 +38,7 @@ app.use((req, res, next) => {
   }: {
     errorCode?: string;
     reason?: string;
-    data?: any;
+    data?: unknown;
   }) => {
     return res.json({
       isSuccess: false,
