@@ -1,3 +1,13 @@
 {
-    "extends": "@tsconfig/node20/tsconfig.json"
-}
+    "compilerOptions": {
+      "typeRoots": ["./types", "./node_modules/@types"], // 커스텀 타입 정의 경로 추가
+      "outDir": "dist",                                 // 컴파일 출력 폴더
+      "rootDir": "src",                                 // 소스 파일 폴더
+      "module": "ESNext",                               // 모듈 형식
+      "target": "ESNext",                               // 컴파일 타겟
+      "esModuleInterop": true,                          // ES 모듈 호환성
+      "moduleResolution": "node"                        // Node.js 모듈 방식
+    },
+    "include": ["src/**/*"],                            // 소스 파일 포함
+    "exclude": ["node_modules"]                         // 제외 폴더
+  }  

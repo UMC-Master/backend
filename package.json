@@ -14,7 +14,8 @@
   "license": "ISC",
   "description": "UMC 7기 H_MASTER 프로젝트",
   "dependencies": {
-    "@prisma/client": "^6.1.0",
+    "bcrypt": "^5.1.1",
+    "@prisma/client": "^6.2.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -38,7 +39,7 @@
     "globals": "^15.14.0",
     "nodemon": "^3.1.9",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
+    "typescript": "^5.7.3",
     "typescript-eslint": "^8.19.1"
   }
 }
