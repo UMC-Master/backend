@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { swaggerUi, specs } from './swagger';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { CommonError } from './errors.js';
@@ -49,6 +50,9 @@ app.use(express.static('public')); // 정적 파일 제공
 app.use(express.json()); // JSON 요청 바디 파싱
 app.use(express.urlencoded({ extended: false })); // URL-encoded 요청 바디 파싱
 
+// Swagger UI 연결
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
 // 기본 라우트
 app.get('/', (req, res) => {
   res.send('Hello World!');
@@ -75,4 +79,5 @@ app.use((err: CommonError, req: Request, res: Response, next: NextFunction) => {
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Swagger docs available at http://localhost:${port}/api-docs`);
 });
