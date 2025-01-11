@@ -457,7 +457,7 @@ export class UserController {
       const userData = req.body;
       const user = await this.userService.emailSignup(userData);
       return res.success(user, '회원가입이 완료되었습니다.');
-    } catch (error: any) {
+    } catch (error) {
       return res.error({
         errorCode: 'COMMON500',
         reason: '회원가입에 실패했습니다.',
