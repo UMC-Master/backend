@@ -11,10 +11,9 @@ export class TipController {
     this.searchTips();
   }
 
-  
+
   private getTipsBySeason() {
-    
-    /**
+      /**
    * @swagger
    * /api/v1/tips:
    *   get:
@@ -25,7 +24,7 @@ export class TipController {
    *     parameters:
    *       - name: season
    *         in: query
-   *         description: 필터링할 계절 (예: 여름, 겨울)
+   *         description: 필터링할 계절 
    *         required: true
    *         schema:
    *           type: string
@@ -40,10 +39,6 @@ export class TipController {
    *                 resultType:
    *                   type: string
    *                   example: "SUCCESS"
-   *                 error:
-   *                   type: object
-   *                   nullable: true
-   *                   example: null
    *                 success:
    *                   type: object
    *                   properties:
@@ -62,7 +57,7 @@ export class TipController {
    *                             type: string
    *                             example: "Stay hydrated and wear sunscreen."
    *       400:
-   *         description: 잘못된 요청 (예: 필수 파라미터 누락)
+   *         description: 잘못된 요청
    *         content:
    *           application/json:
    *             schema:
@@ -74,31 +69,18 @@ export class TipController {
    *                 error:
    *                   type: object
    *                   properties:
-   *                     errorCode:
-   *                       type: string
-   *                       example: "A100"
    *                     reason:
    *                       type: string
    *                       example: "Missing 'season' query parameter"
-   *                     data:
-   *                       type: object
-   *                       nullable: true
-   *                       example: null
-   *                 success:
-   *                   type: object
-   *                   nullable: true
-   *                   example: null
    */
-    
+
     this.router.get('/api/v1/tips', (req: Request, res: Response) => {
       res.status(200).send(); // 빈 응답
     });
   }
 
   private browseTipsByCategory() {
-    this.router.get('/api/v1/tips/category', (req: Request, res: Response) => {
-      
-  /**
+       /**
    * @swagger
    * /api/v1/tips/category:
    *   get:
@@ -109,7 +91,7 @@ export class TipController {
    *     parameters:
    *       - name: category
    *         in: query
-   *         description: 필터링할 카테고리 (예: 음식, 여행)
+   *         description: 필터링할 카테고리 
    *         required: true
    *         schema:
    *           type: string
@@ -124,10 +106,6 @@ export class TipController {
    *                 resultType:
    *                   type: string
    *                   example: "SUCCESS"
-   *                 error:
-   *                   type: object
-   *                   nullable: true
-   *                   example: null
    *                 success:
    *                   type: object
    *                   properties:
@@ -146,7 +124,7 @@ export class TipController {
    *                             type: string
    *                             example: "Try local cuisine when traveling."
    *       400:
-   *         description: 잘못된 요청 (예: 필수 파라미터 누락)
+   *         description: 잘못된 요청
    *         content:
    *           application/json:
    *             schema:
@@ -158,30 +136,19 @@ export class TipController {
    *                 error:
    *                   type: object
    *                   properties:
-   *                     errorCode:
-   *                       type: string
-   *                       example: "A100"
    *                     reason:
    *                       type: string
    *                       example: "Missing 'category' query parameter"
-   *                     data:
-   *                       type: object
-   *                       nullable: true
-   *                       example: null
-   *                 success:
-   *                   type: object
-   *                   nullable: true
-   *                   example: null
    */
-      
+    this.router.get('/api/v1/tips/category', (req: Request, res: Response) => {
       res.status(200).send(); // 빈 응답
     });
   }
 
+ 
 
   private searchTips() {
-    this.router.get('/api/v1/tips/search', (req: Request, res: Response) => {
-      /**
+  /**
    * @swagger
    * /api/v1/tips/search:
    *   get:
@@ -207,10 +174,6 @@ export class TipController {
    *                 resultType:
    *                   type: string
    *                   example: "SUCCESS"
-   *                 error:
-   *                   type: object
-   *                   nullable: true
-   *                   example: null
    *                 success:
    *                   type: object
    *                   properties:
@@ -229,7 +192,7 @@ export class TipController {
    *                             type: string
    *                             example: "Pack light for shorter trips."
    *       400:
-   *         description: 잘못된 요청 (예: 필수 파라미터 누락)
+   *         description: 잘못된 요청
    *         content:
    *           application/json:
    *             schema:
@@ -241,22 +204,12 @@ export class TipController {
    *                 error:
    *                   type: object
    *                   properties:
-   *                     errorCode:
-   *                       type: string
-   *                       example: "A100"
    *                     reason:
    *                       type: string
    *                       example: "Missing 'keyword' query parameter"
-   *                     data:
-   *                       type: object
-   *                       nullable: true
-   *                       example: null
-   *                 success:
-   *                   type: object
-   *                   nullable: true
-   *                   example: null
    */
-      
+    
+    this.router.get('/api/v1/tips/search', (req: Request, res: Response) => {
       res.status(200).send(); // 빈 응답
     });
   }

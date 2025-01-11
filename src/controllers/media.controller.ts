@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 
 // media.controller.ts
-// MediaController: Handles multimedia functionality (e.g., playback of various media types)
+// MediaController: 멀티미디어 기능을 처리하는 컨트롤러 (예: 다양한 미디어 타입의 재생)
 export class MediaController {
   public router: Router;
 
@@ -11,18 +11,20 @@ export class MediaController {
     this.uploadMedia();
   }
 
-  // 멀티 미디어 재생 (GET /api/v1/tips/{tipId}/media/play)
+  // 멀티미디어 재생 (GET /api/v1/tips/{tipId}/media/play)
   private playMedia() {
     this.router.get('/api/v1/tips/:tipId/media/play', (req: Request, res: Response) => {
       const { tipId } = req.params;
-      
+
       // Swagger 문서화
       /**
        * @swagger
        * /api/v1/tips/{tipId}/media/play:
        *   get:
-       *     summary: "Play multimedia content"
-       *     description: "Retrieves the multimedia content for the given tip ID and plays it."
+       *     summary: "멀티미디어 콘텐츠 재생"
+       *     description: "주어진 tip ID에 대한 멀티미디어 콘텐츠를 조회하여 재생합니다."
+       *     tags:
+       *       - Medias
        *     operationId: playMedia
        *     parameters:
        *       - in: path
@@ -30,10 +32,10 @@ export class MediaController {
        *         required: true
        *         schema:
        *           type: integer
-       *         description: "The ID of the tip whose media needs to be played."
+       *         description: "재생할 미디어가 포함된 꿀팁의 ID."
        *     responses:
        *       '200':
-       *         description: "Successfully retrieved the media content"
+       *         description: "미디어 콘텐츠를 성공적으로 조회"
        *         content:
        *           application/json:
        *             schema:
@@ -41,14 +43,14 @@ export class MediaController {
        *               properties:
        *                 media_url:
        *                   type: string
-       *                   description: "The URL of the media content."
+       *                   description: "미디어 콘텐츠의 URL."
        *                 media_type:
        *                   type: string
-       *                   description: "The type of media (e.g., image, video)."
+       *                   description: "미디어 타입 (예: 이미지, 비디오)."
        *       '404':
-       *         description: "Tip not found"
+       *         description: "해당 꿀팁을 찾을 수 없음"
        *       '500':
-       *         description: "Internal server error"
+       *         description: "서버 내부 오류"
        */
       
       res.status(200).json({
@@ -58,7 +60,7 @@ export class MediaController {
     });
   }
 
-  // 멀티 미디어 업로드 (POST /api/v1/tips/{tipId}/media/upload)
+  // 멀티미디어 업로드 (POST /api/v1/tips/{tipId}/media/upload)
   private uploadMedia() {
     this.router.post('/api/v1/tips/:tipId/media/upload', (req: Request, res: Response) => {
       const { tipId } = req.params;
@@ -68,8 +70,10 @@ export class MediaController {
        * @swagger
        * /api/v1/tips/{tipId}/media/upload:
        *   post:
-       *     summary: "Upload multimedia content"
-       *     description: "Uploads multimedia content for the given tip ID."
+       *     summary: "멀티미디어 콘텐츠 업로드"
+       *     description: "주어진 tip ID에 대한 멀티미디어 콘텐츠를 업로드합니다."
+       *     tags:
+       *       - Medias     
        *     operationId: uploadMedia
        *     parameters:
        *       - in: path
@@ -77,7 +81,7 @@ export class MediaController {
        *         required: true
        *         schema:
        *           type: integer
-       *         description: "The ID of the tip to which the media will be uploaded."
+       *         description: "미디어를 업로드할 꿀팁의 ID."
        *     requestBody:
        *       required: true
        *       content:
@@ -88,10 +92,10 @@ export class MediaController {
        *               media:
        *                 type: string
        *                 format: binary
-       *                 description: "The media file to upload."
+       *                 description: "업로드할 미디어 파일."
        *     responses:
        *       '201':
-       *         description: "Successfully uploaded the media content"
+       *         description: "미디어 콘텐츠 업로드 성공"
        *         content:
        *           application/json:
        *             schema:
@@ -99,16 +103,16 @@ export class MediaController {
        *               properties:
        *                 media_url:
        *                   type: string
-       *                   description: "The URL of the uploaded media."
+       *                   description: "업로드된 미디어의 URL."
        *                 media_type:
        *                   type: string
-       *                   description: "The type of the uploaded media (e.g., image, video)."
+       *                   description: "업로드된 미디어의 타입 (예: 이미지, 비디오)."
        *       '400':
-       *         description: "Invalid media file format"
+       *         description: "잘못된 미디어 파일 형식"
        *       '404':
-       *         description: "Tip not found"
+       *         description: "해당 꿀팁을 찾을 수 없음"
        *       '500':
-       *         description: "Internal server error"
+       *         description: "서버 내부 오류"
        */
       
       res.status(201).json({
