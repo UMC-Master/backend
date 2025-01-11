@@ -1,46 +1,67 @@
-// index.js
 import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { CommomError } from './errors.js';
+import { CommonError } from './errors.js';
+import { UserController } from './controllers/user.controller.js';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 
 /**
  * 공통 응답을 사용할 수 있는 헬퍼 함수 등록
  */
 app.use((req, res, next) => {
-  res.success = (success) => {
-    return res.json({ resultType: 'SUCCESS', error: null, success });
+  // 성공 응답
+  res.success = (response: any, message: string = '성공입니다.', code: string = 'COMMON200') => {
+    return res.json({
+      isSuccess: true,
+      code,
+      message,
+      result: response,
+    });
   };
 
-  res.error = ({ errorCode = 'unknown', reason = null, data = null }) => {
+  // 실패 응답
+  res.error = ({
+    errorCode = 'COMMON400',
+    reason = '요청 처리 중 오류가 발생했습니다.',
+    data = null,
+  }: {
+    errorCode?: string;
+    reason?: string;
+    data?: any;
+  }) => {
     return res.json({
-      resultType: 'FAIL',
-      error: { errorCode, reason, data },
-      success: null,
+      isSuccess: false,
+      code: errorCode,
+      message: reason,
+      result: data,
     });
   };
 
   next();
 });
 
-app.use(cors()); // cors 방식 허용
-app.use(express.static('public')); // 정적 파일 접근
-app.use(express.json()); // request의 본문을 json으로 해석할 수 있도록 함 (JSON 형태의 요청 body를 파싱하기 위함)
-app.use(express.urlencoded({ extended: false })); // 단순 객체 문자열 형태로 본문 데이터 해석
+app.use(cors()); // CORS 설정
+app.use(express.static('public')); // 정적 파일 제공
+app.use(express.json()); // JSON 요청 바디 파싱
+app.use(express.urlencoded({ extended: false })); // URL-encoded 요청 바디 파싱
 
+// 기본 라우트
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+// UserController 통합
+const userController = new UserController();
+app.use(userController.router);
+
 /**
- * 전역 오류를 처리하기 위한 미들웨어
+ * 전역 오류 처리 미들웨어
  */
-app.use((err: CommomError, req: Request, res: Response, next: NextFunction) => {
+app.use((err: CommonError, req: Request, res: Response, next: NextFunction) => {
   if (res.headersSent) {
     return next(err);
   }
