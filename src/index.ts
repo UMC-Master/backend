@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { CommonError } from './errors.js';
 import { UserController } from './controllers/user.controller.js';
+import { TipController } from './controllers/tip.controller.js';
+import { CommunityController } from './controllers/community.controller.js';
 
 dotenv.config();
 
@@ -61,6 +63,15 @@ app.get('/', (req, res) => {
 // UserController 통합
 const userController = new UserController();
 app.use(userController.router);
+
+const tipController = new TipController();
+app.use(tipController.router); 
+
+const communityController = new CommunityController();
+app.use(communityController.router);
+
+
+
 
 /**
  * 전역 오류 처리 미들웨어
