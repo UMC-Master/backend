@@ -1,0 +1,67 @@
+name: deploy-develop  
+
+on:
+  push:
+    branches:
+      - develop  
+  workflow_dispatch:  # 필요한 경우 수동으로 실행할 수도 있도록 합니다
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # CI/CD 파이프라인이 실행될 운영체제 환경을 지정합니다
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          cat >>~/.ssh/config <<END
+          Host umc_home_master
+            HostName $EC2_HOST
+            User $EC2_USER
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+          END
+        env:
+          EC2_USER: ubuntu
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Copy Workspace
+        run: |
+          ssh umc_home_master 'sudo mkdir -p /opt/app'
+          ssh umc_home_master 'sudo chown ubuntu:ubuntu /opt/app'
+          scp -r ./[!.]* umc_home_master:/opt/app
+
+      - name: Install dependencies
+        run: |
+          ssh umc_home_master 'npm install --prefix /opt/app/'
+
+      - name: Copy systemd service file
+        run: |
+          ssh umc_home_master '
+            echo "[Unit]
+            Description=umc_home_master
+            After=network.target
+
+            [Service]
+            User=${USER}
+            ExecStart=/usr/bin/npm run dev --prefix /opt/app/
+            Restart=always
+
+            [Install]
+            WantedBy=multi-user.target" | sudo tee /etc/systemd/system/app.service
+          '
+
+      - name: Enable systemd service
+        run: |
+          ssh umc_home_master 'sudo systemctl daemon-reload'
+          ssh umc_home_master 'sudo systemctl enable app'
+
+      - name: Restart systemd service
+        run: |
+          ssh umc_home_master 'sudo systemctl restart app'
