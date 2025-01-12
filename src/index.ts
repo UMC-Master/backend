@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { CommonError } from './errors.js';
 import { UserController } from './controllers/user.controller.js';
+import { NotificationController } from './controllers/notification.controller.js';
 import { TipController } from './controllers/tip.controller.js';
 import { CommunityController } from './controllers/community.controller.js';
 
@@ -73,6 +74,9 @@ app.use(tipController.router);
 
 const communityController = new CommunityController();
 app.use(communityController.router);
+
+const notificationController = new NotificationController();
+app.use(notificationController.router);
 
 
 
