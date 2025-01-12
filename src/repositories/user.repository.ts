@@ -18,4 +18,17 @@ export class UserRepository {
       throw error;
     }
   }
+
+  async findUserByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+    });
+  }
+
+  async updateLastLogin(userId: number, lastLogin: Date) {
+    return this.prisma.user.update({
+      where: { user_id: userId },
+      data: { last_login: lastLogin },
+    });
+  }
 }

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { UserService } from '../services/user.service';
 import { KakaoSignupDto } from '../dtos/user.dto';
+import { EmailLoginDto } from '../dtos/user.dto';
 
 export class UserController {
   private userService: UserService;
@@ -225,9 +226,7 @@ export class UserController {
  *             schema:
  *               type: object
  */
-    this.router.post('/api/v1/users/login', (req: Request, res: Response) => {
-      res.json({});
-    });
+    this.router.post('/api/v1/users/login', this.emailLogin.bind(this));
 
     /**
 * @swagger
@@ -474,6 +473,29 @@ export class UserController {
       res.status(201).json(user);
     } catch (error) {
       res.status(400).json({ message: error.message });
+    }
+  }
+
+  private async emailLogin(req: Request, res: Response) {
+    console.log('Request received:', req.body);
+    try {
+      const { email, password }: EmailLoginDto = req.body;
+
+      // 로그인 처리
+      const tokens = await this.userService.loginUser(email, password);
+
+      // 응답
+      return res.status(200).json({
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      });
+    } catch (error: any) {
+      return res.status(401).json({
+        isSuccess: false,
+        code: 'AUTH401',
+        message: '로그인에 실패했습니다.',
+        result: error.message,
+      });
     }
   }
 }
