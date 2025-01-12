@@ -53,11 +53,7 @@ export class QuizController {
   }
 
   private async getQuizzes(req: Request, res: Response) {
-    try {
-      const data: QuizListDto = null;
-      res.status(StatusCodes.OK).json(data);
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
+    const data: QuizListDto = null;
+    res.status(StatusCodes.OK).json(data);
   }
 }

@@ -20,6 +20,7 @@ model User {
   updated_at       DateTime          @updatedAt
   location         Location?         @relation(fields: [location_id], references: [location_id])
   location_id      BigInt?
+  status           String
   tips             Tip[]
   tip_saves        TipSave[]
   tipLikes TipLike[]

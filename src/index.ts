@@ -69,13 +69,10 @@ const userController = new UserController();
 app.use(userController.router);
 
 const tipController = new TipController();
-app.use(tipController.router); 
+app.use(tipController.router);
 
 const communityController = new CommunityController();
 app.use(communityController.router);
-
-
-
 
 /**
  * 전역 오류 처리 미들웨어

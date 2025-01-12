@@ -1,6 +1,6 @@
 export interface QuizListDto {
   numberOfQuiz: number;
-  QuizList: [
+  quizList: [
     {
       description: string;
       answer: boolean;
