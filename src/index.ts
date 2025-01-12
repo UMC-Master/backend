@@ -62,7 +62,12 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // 기본 라우트
 app.get('/', (req, res) => {
-  res.send('Hello World!');
+  res.json({
+    message: 'Welcome to the API!',
+    routes: {
+      users: '/api/v1/users',
+    },
+  });
 });
 
 // UserController 통합
