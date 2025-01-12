@@ -16,6 +16,7 @@ model User {
   district         String?
   profile_image_url String?
   login_type       LoginType
+  last_login       DateTime?
   created_at       DateTime          @default(now())
   updated_at       DateTime          @updatedAt
   location         Location?         @relation(fields: [location_id], references: [location_id])

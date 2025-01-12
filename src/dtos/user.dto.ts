@@ -12,4 +12,9 @@ export interface KakaoSignupDto {
   nickname?: string;
   city?: string;
   district?: string;
-}  
+}
+
+export interface EmailLoginDto {
+  email: string;
+  password: string;
+}

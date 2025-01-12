@@ -4,8 +4,13 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { CommonError } from './errors.js';
 import { UserController } from './controllers/user.controller.js';
+import { NotificationController } from './controllers/notification.controller.js';
 import { TipController } from './controllers/tip.controller.js';
 import { CommunityController } from './controllers/community.controller.js';
+import { AnalyzeController } from './controllers/analyze.controller.js';
+import { PolicyController } from './controllers/policy.controller.js';
+import { UserManageController } from './controllers/user.manage.controller.js';
+import { QuizController } from './controllers/quiz.controller.js';
 
 dotenv.config();
 
@@ -73,6 +78,21 @@ app.use(tipController.router);
 
 const communityController = new CommunityController();
 app.use(communityController.router);
+
+const notificationController = new NotificationController();
+app.use(notificationController.router);
+
+const analyzeController = new AnalyzeController();
+app.use(analyzeController.router);
+
+const policyController = new PolicyController();
+app.use(policyController.router);
+
+const userManageController = new UserManageController();
+app.use(userManageController.router);
+
+const quizController = new QuizController();
+app.use(quizController.router);
 
 /**
  * 전역 오류 처리 미들웨어
