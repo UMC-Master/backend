@@ -3,9 +3,15 @@ import { Router ,Request, Response } from 'express';
 export class BookmarkController {
     public router: Router;
 
+    constructor() {
+      this.router = Router();
+      this.initializeRoutes();
+    }
+
 // 북마크된 꿀팁 목록을 조회하는 GET 요청 처리 (빈 응답)
-private getBookmarks() {
-    /**
+
+private initializeRoutes() {
+ /**
      * @swagger
      * /api/v1/users/bookmarks:
      *   get:
@@ -69,12 +75,12 @@ private getBookmarks() {
      *                   nullable: true
      *                   example: null
      */
-    
-    this.router.get('/api/v1/users/bookmarks', (req: Request, res: Response) => {
-      // 빈 응답 (실제 데이터가 없는 경우)
-      res.status(200).send();
-    });
-  }
+    this.router.get('/api/v1/users/bookmarks', this.getBookmarks);
+}
+
+private getBookmarks(req: Request, res: Response) {
+  res.status(200).send(); // 빈 응답 (현재 데이터 없음)
+}
 
 }
 
