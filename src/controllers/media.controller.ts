@@ -1,22 +1,16 @@
+// media.controller.ts
 import { Router, Request, Response } from 'express';
 
-// media.controller.ts
-// MediaController: 멀티미디어 기능을 처리하는 컨트롤러 (예: 다양한 미디어 타입의 재생)
 export class MediaController {
   public router: Router;
 
   constructor() {
     this.router = Router();
-    this.playMedia();
-    this.uploadMedia();
+    this.initializeRoutes();
   }
 
-  // 멀티미디어 재생 (GET /api/v1/tips/{tipId}/media/play)
-  private playMedia() {
-    this.router.get('/api/v1/tips/:tipId/media/play', (req: Request, res: Response) => {
-      const { tipId } = req.params;
-
-      // Swagger 문서화
+  private initializeRoutes(){
+// Swagger 문서화
       /**
        * @swagger
        * /api/v1/tips/{tipId}/media/play:
@@ -52,20 +46,8 @@ export class MediaController {
        *       '500':
        *         description: "서버 내부 오류"
        */
-      
-      res.status(200).json({
-        media_url: `https://example.com/media/${tipId}`,
-        media_type: 'video', // media_type을 영상이나 이미지로 지정할 수 있음
-      });
-    });
-  }
-
-  // 멀티미디어 업로드 (POST /api/v1/tips/{tipId}/media/upload)
-  private uploadMedia() {
-    this.router.post('/api/v1/tips/:tipId/media/upload', (req: Request, res: Response) => {
-      const { tipId } = req.params;
-
-      // Swagger 문서화
+      this.router.get('/api/v1/tips/:tipId/media/play', this.playMedia);
+ // Swagger 문서화
       /**
        * @swagger
        * /api/v1/tips/{tipId}/media/upload:
@@ -114,11 +96,27 @@ export class MediaController {
        *       '500':
        *         description: "서버 내부 오류"
        */
-      
-      res.status(201).json({
-        media_url: `https://example.com/media/${tipId}/uploaded-media`,
-        media_type: 'image', // media_type을 이미지나 영상으로 지정할 수 있음
-      });
+      this.router.post('/api/v1/tips/:tipId/media/upload', this.uploadMedia);
+
+  }
+
+  // 멀티미디어 재생 
+  private playMedia(req: Request, res: Response) {
+    const { tipId } = req.params;
+    res.status(200).json({
+      media_url: `https://example.com/media/${tipId}`,
+      media_type: 'video',
     });
   }
+
+  // 멀티미디어 업로드 
+  private uploadMedia(req: Request, res: Response) {
+    const { tipId } = req.params;
+    res.status(201).json({
+      media_url: `https://example.com/media/${tipId}/uploaded-media`,
+      media_type: 'image',
+    });
+  
+  } 
+
 }

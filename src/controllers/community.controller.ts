@@ -1,20 +1,16 @@
 // community.controller.ts
-// CommunityController: 커뮤니티 상호작용 처리 (예: 꿀팁 공유, 댓글 달기, 꿀팁 추천 및 저장)
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 
 export class CommunityController {
   public router: Router;
 
   constructor() {
     this.router = Router();
-    this.shareTip();
-    this.commentOnTip();
-    this.recommendTip();
-    this.saveTip();
+    this.initializeRoutes();
   }
 
-  private shareTip() {
-    /**
+  private initializeRoutes(){
+  /**
      * @swagger
      * /api/v1/tips/share:
      *   post:
@@ -86,10 +82,8 @@ export class CommunityController {
      *                       example: "서버 내부 오류"
      */
     // 사용자 간 꿀팁 공유 (POST /api/v1/tips/share 공유할 꿀팁 정보 전송)
-  }
-
-  private commentOnTip() {
-    /**
+    this.router.post('/api/v1/tips/share', this.shareTip);
+  /**
      * @swagger
      * /api/v1/tips/{tipId}/comments:
      *   post:
@@ -149,10 +143,9 @@ export class CommunityController {
      *                       example: "댓글 내용이 비어있습니다."
      */
     // 꿀팁에 대한 댓글 (POST /api/v1/tips/{tipId}/comments 댓글 내용 전송)
-  }
+    this.router.post('/api/v1/tips/:tipId/comments', this.commentOnTip);
 
-  private recommendTip() {
-    /**
+      /**
      * @swagger
      * /api/v1/tips/{tipId}/like:
      *   post:
@@ -202,9 +195,8 @@ export class CommunityController {
      *                       example: "잘못된 꿀팁 ID"
      */
     // 좋아요 시스템 꿀팁 추천 (POST /api/v1/tips/{tipId}/like 좋아요 토글 기능)
-  }
+    this.router.post('/api/v1/tips/:tipId/like', this.recommendTip);
 
-  private saveTip() {
     /**
      * @swagger
      * /api/v1/tips/{tipId}/save:
@@ -255,5 +247,25 @@ export class CommunityController {
      *                       example: "잘못된 꿀팁 ID"
      */
     // 꿀팁 저장 (POST /api/v1/tips/{tipId}/save 저장 토글 기능)
+    this.router.post('/api/v1/tips/:tipId/save', this.saveTip);
   }
+
+
+  private shareTip(req: Request, res: Response) {
+    res.status(200).json({ message: '꿀팁이 성공적으로 공유되었습니다.' });
+  }
+
+  private commentOnTip(req: Request, res: Response) {
+    res.status(200).json({ message: '댓글이 성공적으로 추가되었습니다.' });
+  }
+
+  private recommendTip(req: Request, res: Response) {
+    res.status(200).json({ message: '좋아요가 성공적으로 토글되었습니다.' });
+  }
+
+  private saveTip(req: Request, res: Response) {
+    res.status(200).json({ message: '꿀팁이 성공적으로 저장되었습니다.' });
+  }
+
+
 }
