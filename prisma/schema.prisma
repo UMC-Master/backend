@@ -34,6 +34,8 @@ model User {
   magazine_likes   MagazineLike[]
   magazine_bookmarks MagazineBookmark[]
   logs             Log[]
+  
+  @@map("user")
 }
 
 model Location {
@@ -47,6 +49,8 @@ model Location {
   organizations   Organization[]
   magazines       Magazine[]
   users           User[]
+  
+  @@map("location")
 }
 
 model Tip {
@@ -65,6 +69,8 @@ model Tip {
   comments        Comment[]
   likes           TipLike[]
   hashtags        TipHashtag[]
+  
+  @@map("tip")
 }
 
 model TipMedia {
@@ -74,6 +80,8 @@ model TipMedia {
   media_type      MediaType
   uploaded_at     DateTime
   tips            Tip               @relation(fields: [tips_id], references: [tips_id])
+  
+  @@map("tip_media")
 }
 
 model TipSave {
@@ -83,6 +91,8 @@ model TipSave {
   scraped_at      DateTime          @default(now())
   user            User              @relation(fields: [user_id], references: [user_id])
   tips            Tip               @relation(fields: [tips_id], references: [tips_id])
+  
+  @@map("tip_save")
 }
 
 model SocialAccount {
@@ -91,6 +101,8 @@ model SocialAccount {
   provider        SocialProvider
   created_at      DateTime          @default(now())
   user            User              @relation(fields: [user_id], references: [user_id])
+  
+  @@map("social_account")
 }
 
 model Comment {
@@ -102,7 +114,8 @@ model Comment {
   user            User              @relation(fields: [user_id], references: [user_id])
   tips            Tip               @relation(fields: [tips_id], references: [tips_id])
   notifications Notification[] @relation("CommentNotifications", map: "Comment_Notification_fkey")
-
+  
+  @@map("comment")
 }
 
 model Notification {
@@ -120,6 +133,8 @@ model Notification {
   trigger_user    User              @relation("TriggerUserNotifications", fields: [trigger_user_id], references: [user_id])
   tips            Tip?              @relation("TipNotifications", fields: [tips_id], references: [tips_id], map: "Notification_Tip_fkey")
   comment         Comment?          @relation("CommentNotifications", fields: [comment_id], references: [comment_id], map: "Notification_Comment_fkey")
+  
+  @@map("notification")
 }
 
 model TipLike {
@@ -129,6 +144,8 @@ model TipLike {
   liked_at        DateTime          @default(now())
   user            User              @relation(fields: [user_id], references: [user_id])
   tips            Tip               @relation(fields: [tips_id], references: [tips_id])
+  
+  @@map("tip_like")
 }
 
 model UserStatistic {
@@ -139,6 +156,8 @@ model UserStatistic {
   likes_received  Int               @default(0)
   created_at      DateTime          @default(now())
   user            User              @relation(fields: [user_id], references: [user_id])
+  
+  @@map("user_statistic")
 }
 
 model Quiz {
@@ -147,6 +166,8 @@ model Quiz {
   correct_answer  String
   quiz_at         DateTime          @default(now())
   quiz_answers    QuizAnswer[]
+  
+  @@map("quiz")
 }
 
 model QuizAnswer {
@@ -157,13 +178,27 @@ model QuizAnswer {
   submitted_at    DateTime          @default(now())
   user            User              @relation(fields: [user_id], references: [user_id])
   quiz            Quiz              @relation(fields: [quiz_id], references: [quiz_id])
+  
+  @@map("quiz_answer")
 }
 
 model Hashtag {
   hashtag_id      Int               @id @default(autoincrement())
   name            String
+  hashtag_type_id Int        
+  hashtag_type    HashtagType       @relation(fields: [hashtag_type_id], references: [hashtag_type_id])
   tips            TipHashtag[]
   magazines       MagazineHashtag[]
+  
+  @@map("hashtag")
+}
+
+model HashtagType {
+  hashtag_type_id Int               @id @default(autoincrement())
+  name            String            
+  hashtags        Hashtag[]
+
+  @@map("hashtag_type")
 }
 
 model TipHashtag {
@@ -172,6 +207,8 @@ model TipHashtag {
   hashtag_id      Int
   tips            Tip               @relation(fields: [tips_id], references: [tips_id])
   hashtag         Hashtag           @relation(fields: [hashtag_id], references: [hashtag_id])
+  
+  @@map("tip_hashtag")
 }
 
 model Magazine {
@@ -189,6 +226,8 @@ model Magazine {
   magazine_hashtags MagazineHashtag[]
   organization    Organization?      @relation(fields: [organization_id], references: [organization_id])
   location        Location?          @relation(fields: [location_id], references: [location_id])
+  
+  @@map("magazine")
 }
 
 model MagazineHashtag {
@@ -198,6 +237,8 @@ model MagazineHashtag {
 
   magazine Magazine? @relation(fields: [magazine_id], references: [magazine_id])
   hashtag Hashtag? @relation(fields: [hashtag_id], references: [hashtag_id])
+  
+  @@map("magazine_hashtag")
 }
 
 model MagazineImage {
@@ -205,6 +246,8 @@ model MagazineImage {
   image_url         String
   magazine_id       Int
   magazine          Magazine           @relation(fields: [magazine_id], references: [magazine_id])
+  
+  @@map("magazine_image")
 }
 
 model MagazineLike {
@@ -213,6 +256,8 @@ model MagazineLike {
   magazine_id      Int
   user             User               @relation(fields: [user_id], references: [user_id])
   magazine         Magazine           @relation(fields: [magazine_id], references: [magazine_id])
+  
+  @@map("magazine_like")
 }
 
 model MagazineBookmark {
@@ -221,6 +266,8 @@ model MagazineBookmark {
   user_id            Int
   magazine           Magazine           @relation(fields: [magazine_id], references: [magazine_id])
   user               User               @relation(fields: [user_id], references: [user_id])
+  
+  @@map("magazine_bookmark")
 }
 
 model Organization {
@@ -233,6 +280,8 @@ model Organization {
   location_id       BigInt?
   location          Location?         @relation(fields: [location_id], references: [location_id])
   magazines         Magazine[]
+  
+  @@map("organization")
 }
 
 model Log {
@@ -243,12 +292,16 @@ model Log {
   user_id          Int
   user_activity_type UserActivityType? @relation(fields: [user_activity_type_id], references: [user_activity_type_id])
   user             User              @relation(fields: [user_id], references: [user_id])
+  
+  @@map("log")
 }
 
 model UserActivityType {
   user_activity_type_id Int               @id @default(autoincrement())
   name                  String
   logs                  Log[]
+  
+  @@map("user_activity_type")
 }
 
 enum LoginType {
