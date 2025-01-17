@@ -10,9 +10,6 @@ export class TipController {
   constructor() {
     this.tipService = null; // new TipService();
     this.router = Router();
-    this.getTipsBySeason();
-    this.browseTipsByCategory();
-    this.searchTips();
     this.initializeRoutes();
   }
 
@@ -203,77 +200,8 @@ export class TipController {
       '/api/v1/tips/:tipId/disable',
       this.filteringTip.bind(this)
     );
-  }
 
-  private getTipsBySeason() {
-    /**
-     * @swagger
-     * /api/v1/tips:
-     *   get:
-     *     summary: 계절별 꿀팁 가져오기
-     *     description: 특정 계절에 해당하는 꿀팁을 조회합니다.
-     *     tags:
-     *       - Tips
-     *     parameters:
-     *       - name: season
-     *         in: query
-     *         description: 필터링할 계절
-     *         required: true
-     *         schema:
-     *           type: string
-     *     responses:
-     *       200:
-     *         description: 꿀팁 목록 조회 성공
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 resultType:
-     *                   type: string
-     *                   example: "SUCCESS"
-     *                 success:
-     *                   type: object
-     *                   properties:
-     *                     tips:
-     *                       type: array
-     *                       items:
-     *                         type: object
-     *                         properties:
-     *                           id:
-     *                             type: integer
-     *                             example: 1
-     *                           title:
-     *                             type: string
-     *                             example: "5 Summer Tips"
-     *                           content:
-     *                             type: string
-     *                             example: "Stay hydrated and wear sunscreen."
-     *       400:
-     *         description: 잘못된 요청
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 resultType:
-     *                   type: string
-     *                   example: "FAIL"
-     *                 error:
-     *                   type: object
-     *                   properties:
-     *                     reason:
-     *                       type: string
-     *                       example: "Missing 'season' query parameter"
-     */
-
-    this.router.get('/api/v1/tips', (req: Request, res: Response) => {
-      res.status(200).send(); // 빈 응답
-    });
-  }
-
-  private browseTipsByCategory() {
-    /**
+   /**
      * @swagger
      * /api/v1/tips/category:
      *   get:
@@ -333,13 +261,8 @@ export class TipController {
      *                       type: string
      *                       example: "Missing 'category' query parameter"
      */
-    this.router.get('/api/v1/tips/category', (req: Request, res: Response) => {
-      res.status(200).send(); // 빈 응답
-    });
-  }
-
-  private searchTips() {
-    /**
+   this.router.get('/api/v1/tips/category', this.browseTipsByCategory.bind(this))
+ /**
      * @swagger
      * /api/v1/tips/search:
      *   get:
@@ -400,9 +323,19 @@ export class TipController {
      *                       example: "Missing 'keyword' query parameter"
      */
 
-    this.router.get('/api/v1/tips/search', (req: Request, res: Response) => {
-      res.status(200).send(); // 빈 응답
-    });
+
+this.router.get('/api/v1/tips/search', this.searchTips.bind(this));
+}
+
+  private browseTipsByCategory(req: Request, res: Response) {
+    const data: TipDto = req.body;
+    res.status(StatusCodes.OK).json(data);
+  }
+
+  private searchTips(req: Request, res: Response) {
+
+    const data: TipDto = req.body;
+    res.status(StatusCodes.OK).json(data);
   }
 
   private async createTip(req: Request, res: Response) {
