@@ -1,13 +1,17 @@
 // community.controller.ts
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import { CommunityService } from '../services/community.service.js';
 
 export class CommunityController {
   public router: Router;
+  private communityService: CommunityService;
 
   constructor() {
     this.router = Router();
+    this.communityService = new CommunityService();
     this.initializeRoutes();
   }
+
 
   private initializeRoutes(){
   /**
@@ -195,7 +199,7 @@ export class CommunityController {
      *                       example: "잘못된 꿀팁 ID"
      */
     // 좋아요 시스템 꿀팁 추천 (POST /api/v1/tips/{tipId}/like 좋아요 토글 기능)
-    this.router.post('/api/v1/tips/:tipId/like', this.recommendTip);
+    this.router.post('/api/v1/tips/:tipId/like', this.likeTip);
 
     /**
      * @swagger
@@ -251,21 +255,59 @@ export class CommunityController {
   }
 
 
-  private shareTip(req: Request, res: Response) {
-    res.status(200).json({ message: '꿀팁이 성공적으로 공유되었습니다.' });
-  }
+  // 팁 공유
+  private shareTip = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { title, content, category } = req.body;
+      const userId = req.user.user_id; // 인증된 사용자 정보
+      const newTip = await this.communityService.createTip({ userId, title, content, category });
+      res.status(200).json({ resultType: 'SUCCESS', success: { message: '팁이 성공적으로 공유되었습니다.', data: newTip } });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-  private commentOnTip(req: Request, res: Response) {
-    res.status(200).json({ message: '댓글이 성공적으로 추가되었습니다.' });
-  }
+  // 팁 저장
+  private saveTip = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user.user_id;
+      const tipId = parseInt(req.params.tipId, 10);
+      const updatedTip = await this.communityService.saveTip(userId, tipId);
+      res.status(200).json({ resultType: 'SUCCESS', success: { message: '팁이 성공적으로 저장되었습니다.', data: updatedTip } });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-  private recommendTip(req: Request, res: Response) {
-    res.status(200).json({ message: '좋아요가 성공적으로 토글되었습니다.' });
-  }
+  // 팁 좋아요
+  private likeTip = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user.user_id;
+      const tipId = parseInt(req.params.tipId, 10);
+      const updatedTip = await this.communityService.likeTip(userId, tipId);
+      res.status(200).json({ resultType: 'SUCCESS', success: { message: '좋아요가 성공적으로 처리되었습니다.', data: updatedTip } });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-  private saveTip(req: Request, res: Response) {
-    res.status(200).json({ message: '꿀팁이 성공적으로 저장되었습니다.' });
-  }
-
-
+  // 팁 댓글 작성
+  private commentOnTip = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user.user_id;
+      const tipId = parseInt(req.params.tipId, 10);
+      const { comment } = req.body;
+      const newComment = await this.communityService.commentOnTip(userId, tipId, comment);
+      res.status(200).json({ resultType: 'SUCCESS', success: { message: '댓글이 성공적으로 추가되었습니다.', data: newComment } });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
+
+
+
+
+
+
+
