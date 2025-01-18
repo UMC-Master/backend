@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { UserService } from '../services/user.service';
 import { authenticateJWT } from '../middlewares/authenticateJWT';
-import { KakaoSignupDto, EmailSignupDto, EmailLoginDto } from '../dtos/user.dto';
+import { KakaoSignupDto, EmailSignupDto, EmailLoginDto, ProfileUpdateDto } from '../dtos/user.dto';
 
 export class UserController {
   private userService: UserService;
@@ -23,6 +23,26 @@ export class UserController {
     this.router.get('/api/v1/users/statistics', authenticateJWT, this.getStatistics.bind(this));
   }
 
+  /**
+   * @swagger
+   * /api/v1/users/signup:
+   *   post:
+   *     summary: 이메일 회원가입
+   *     description: 이메일, 비밀번호, 닉네임, 주소 정보를 입력해 회원가입을 수행합니다.
+   *     tags:
+   *       - Users
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/EmailSignupDto'
+   *     responses:
+   *       201:
+   *         description: 회원가입 성공
+   *       500:
+   *         description: 회원가입 실패
+   */
   private async emailSignup(req: Request, res: Response): Promise<void> {
     try {
       const data: EmailSignupDto = req.body;
@@ -43,6 +63,26 @@ export class UserController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/v1/users/signup/kakao:
+   *   post:
+   *     summary: 카카오 회원가입
+   *     description: 카카오 OAuth 인증 후 추가 정보를 입력하여 회원가입을 수행합니다.
+   *     tags:
+   *       - Users
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/KakaoSignupDto'
+   *     responses:
+   *       201:
+   *         description: 회원가입 성공
+   *       500:
+   *         description: 회원가입 실패
+   */
   private async kakaoSignup(req: Request, res: Response): Promise<void> {
     try {
       const data: KakaoSignupDto = req.body;
@@ -63,6 +103,26 @@ export class UserController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/v1/users/login:
+   *   post:
+   *     summary: 이메일 로그인
+   *     description: 이메일과 비밀번호를 통해 사용자가 로그인합니다.
+   *     tags:
+   *       - Users
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/EmailLoginDto'
+   *     responses:
+   *       200:
+   *         description: 로그인 성공
+   *       401:
+   *         description: 로그인 실패
+   */
   private async emailLogin(req: Request, res: Response): Promise<void> {
     try {
       const { email, password }: EmailLoginDto = req.body;
@@ -97,6 +157,22 @@ export class UserController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/v1/users/profile:
+   *   get:
+   *     summary: 사용자 프로필 조회
+   *     description: 인증된 사용자의 프로필 정보를 반환합니다.
+   *     tags:
+   *       - Users
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: 프로필 조회 성공
+   *       401:
+   *         description: 인증 실패
+   */
   private async getProfile(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId;
@@ -114,7 +190,7 @@ export class UserController {
   private async updateProfile(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId;
-      const data: Partial<EmailSignupDto> = req.body;
+      const data: ProfileUpdateDto = req.body; // ProfileUpdateDto 사용
       const updatedProfile = await this.userService.updateProfile(userId, data);
       res.status(200).json({
         isSuccess: true,
@@ -126,6 +202,22 @@ export class UserController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/v1/users/statistics:
+   *   get:
+   *     summary: 사용자 통계 조회
+   *     description: 사용자의 활동 통계(퀴즈 점수, 좋아요 수 등)를 반환합니다.
+   *     tags:
+   *       - Users
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: 통계 조회 성공
+   *       401:
+   *         description: 인증 실패
+   */
   private async getStatistics(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId;
