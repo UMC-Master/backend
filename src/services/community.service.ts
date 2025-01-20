@@ -1,12 +1,11 @@
 import { CommunityRepository } from '../repositories/community.repository.js';
 import { toCommunityDto } from '../dtos/community.dto.js';
-import { Tip } from '../dtos/community.dto.js'; // Tip 타입 import
+import { Tip } from '../dtos/community.dto.js';
 import { 
-  TipNotFoundError, 
-  DuplicateTipError, 
-  CommentNotFoundError, 
-  LikeAlreadyExistError, 
-} from '../errors'; // 에러 클래스 import
+  ResourceNotFoundError,
+  ValidationError,
+  DatabaseError
+} from '../errors';  // 에러 클래스 import
 
 export class CommunityService {
   private communityRepository: CommunityRepository;
@@ -17,74 +16,114 @@ export class CommunityService {
 
   // 팁 생성
   public async createTip(data: { userId: number; title: string; content: string; category: string }) {
-    // Validation: 중복된 팁을 생성하려 할 때 발생하는 에러 처리
-    const existingTip = await this.communityRepository.getTipByTitle(data.title);
-    if (existingTip) {
-      throw new DuplicateTipError(data.title);
+    try {
+      // Validation: 중복된 팁을 생성하려 할 때 발생하는 에러 처리
+      const existingTip = await this.communityRepository.getTipByTitle(data.title);
+      if (existingTip) {
+        throw new ValidationError('Duplicate tip title', { title: data.title });
+      }
+
+      const newTip: Tip = await this.communityRepository.createTip(data);
+
+      // Validation: 생성된 팁이 필요한 필드를 포함하도록 처리
+      newTip.user = { userId: data.userId, nickname: "Unknown", profile_image_url: "" }; // 예시: 기본값 처리
+      newTip.likes = newTip.likes || [];
+      newTip.comments = newTip.comments || [];
+      newTip.media = newTip.media || [];
+
+      return toCommunityDto(newTip);  // 팁 DTO 반환
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error; // 중복 팁 오류는 그대로 던짐
+      }
+      throw new DatabaseError('An error occurred while creating the tip.', error);
     }
-
-    const newTip: Tip = await this.communityRepository.createTip(data);
-
-    // Validation: 생성된 팁이 필요한 필드를 포함하도록 처리
-    newTip.user = { user_id: data.userId, nickname: "Unknown", profile_image_url: "" }; // 예시: 기본값 처리
-    newTip.likes = newTip.likes || [];
-    newTip.comments = newTip.comments || [];
-    newTip.media = newTip.media || [];
-
-    return toCommunityDto(newTip);  // toCommunityDto 사용
   }
 
   // 팁 조회
   public async getTipById(tipId: number) {
-    const tip: Tip | null = await this.communityRepository.getTipById(tipId);
-    if (!tip) {
-      throw new TipNotFoundError(tipId);  // 팁을 찾을 수 없을 때 발생하는 에러 처리
-    }
+    try {
+      const tip: Tip | null = await this.communityRepository.getTipById(tipId);
+      if (!tip) {
+        throw new ResourceNotFoundError('Tip not found', { tipId });
+      }
 
-    return toCommunityDto(tip);  // toCommunityDto 사용
+      return toCommunityDto(tip);  // 팁 DTO 반환
+    } catch (error) {
+      if (error instanceof ResourceNotFoundError) {
+        throw error;  // 팁을 찾을 수 없을 때 발생하는 에러
+      }
+      throw new DatabaseError('An error occurred while retrieving the tip.', error);
+    }
   }
 
   // 팁 저장 (토글)
   public async saveTip(userId: number, tipId: number) {
-    const tip = await this.communityRepository.getTipById(tipId);
-    if (!tip) {
-      throw new TipNotFoundError(tipId);  // 팁을 찾을 수 없을 때 발생하는 에러 처리
-    }
+    try {
+      const tip = await this.communityRepository.getTipById(tipId);
 
-    await this.communityRepository.saveTip(userId, tipId);
-    return toCommunityDto(tip);  // toCommunityDto 사용
+      if (!tip) {
+        throw new ResourceNotFoundError('Tip not found', { tipId });
+      }
+      
+      await this.communityRepository.saveTip(userId, tipId);  // 팁 저장
+      return toCommunityDto(tip);  // 팁 DTO 반환
+    } catch (error) {
+      if (error instanceof ResourceNotFoundError) {
+        throw error;  // 팁을 찾을 수 없을 때 발생하는 에러
+      }
+      throw new DatabaseError('An error occurred while saving the tip.', error);
+    }
   }
 
   // 팁 좋아요 (토글)
   public async likeTip(userId: number, tipId: number) {
-    // Validation: 이미 좋아요를 눌렀을 때 발생하는 에러 처리
-    const existingLike = await this.communityRepository.getTipLike(userId, tipId);
-    if (existingLike) {
-      throw new LikeAlreadyExistError(tipId, userId);  // 이미 좋아요를 눌렀을 때 발생하는 에러
-    }
+    try {
+      // Validation: 이미 좋아요를 눌렀을 때 발생하는 에러 처리
+      const existingLike = await this.communityRepository.getTipLike(userId, tipId);
+      if (existingLike) {
+        throw new ValidationError('Like already exists', { tipId, userId });
+      }
 
-    const tip = await this.communityRepository.getTipById(tipId);
-    if (!tip) {
-      throw new TipNotFoundError(tipId);  // 팁을 찾을 수 없을 때 발생하는 에러 처리
-    }
+      const tip = await this.communityRepository.getTipById(tipId);
+      if (!tip) {
+        throw new ResourceNotFoundError('Tip not found', { tipId });
+      }
 
-    await this.communityRepository.likeTip(userId, tipId);
-    return toCommunityDto(tip);  // toCommunityDto 사용
+      await this.communityRepository.likeTip(userId, tipId);  // 좋아요 처리
+      return toCommunityDto(tip);  // 팁 DTO 반환
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;  // 이미 좋아요가 존재하는 경우의 에러
+      } else if (error instanceof ResourceNotFoundError) {
+        throw error;  // 팁을 찾을 수 없을 때 발생하는 에러
+      }
+      throw new DatabaseError('An error occurred while liking the tip.', error);
+    }
   }
 
   // 팁에 댓글 작성
   public async commentOnTip(userId: number, tipId: number, comment: string) {
-    const tip = await this.communityRepository.getTipById(tipId);
-    if (!tip) {
-      throw new TipNotFoundError(tipId);  // 팁을 찾을 수 없을 때 발생하는 에러 처리
-    }
+    try {
+      const tip = await this.communityRepository.getTipById(tipId);
+      if (!tip) {
+        throw new ResourceNotFoundError('Tip not found', { tipId });
+      }
 
-    // 댓글을 찾을 수 없을 때 발생하는 에러 처리
-    const newComment = await this.communityRepository.commentOnTip(userId, tipId, comment);
-    if (!newComment) {
-      throw new CommentNotFoundError(tipId);  // 댓글이 존재하지 않을 경우
-    }
+      // 댓글을 작성할 수 없을 때 발생하는 에러 처리
+      const newComment = await this.communityRepository.commentOnTip(userId, tipId, comment);
+      if (!newComment) {
+        throw new ValidationError('Comment creation failed', { tipId, comment });
+      }
 
-    return newComment;  // 댓글은 CommunityDto 형식으로 변환할 필요가 없음
+      return newComment;  // 댓글 정보 반환
+    } catch (error) {
+      if (error instanceof ResourceNotFoundError) {
+        throw error;  // 팁을 찾을 수 없을 때 발생하는 에러
+      } else if (error instanceof ValidationError) {
+        throw error;  // 댓글 작성 실패 에러
+      }
+      throw new DatabaseError('An error occurred while commenting on the tip.', error);
+    }
   }
 }
