@@ -6,17 +6,20 @@ export interface EmailSignupDto {
   district?: string;
 }
 
-export interface KakaoSignupDto {
-  kakaoToken: string;
-  email?: string;
-  nickname?: string;
-  city?: string;
-  district?: string;
-}
-
 export interface EmailLoginDto {
   email: string;
   password: string;
+}
+
+export class KakaoLoginDto {
+  kakaoAccessToken: string;
+
+  constructor(data: { kakaoAccessToken: string }) {
+    if (!data.kakaoAccessToken) {
+      throw new Error('Kakao Access Token is required');
+    }
+    this.kakaoAccessToken = data.kakaoAccessToken;
+  }
 }
 
 export interface ProfileUpdateDto {

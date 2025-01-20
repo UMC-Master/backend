@@ -1,7 +1,9 @@
+import axios from 'axios';
 import { Router, Request, Response } from 'express';
 import { UserService } from '../services/user.service';
 import { authenticateJWT } from '../middlewares/authenticateJWT';
-import { KakaoSignupDto, EmailSignupDto, EmailLoginDto, ProfileUpdateDto } from '../dtos/user.dto';
+import { EmailSignupDto, EmailLoginDto, KakaoLoginDto, ProfileUpdateDto } from '../dtos/user.dto';
+import { ValidationError, UnauthorizedError, ResourceNotFoundError } from '../errors';
 
 export class UserController {
   private userService: UserService;
@@ -14,217 +16,118 @@ export class UserController {
   }
 
   private initializeRoutes() {
-    this.router.post('/api/v1/users/signup', this.emailSignup.bind(this));
-    this.router.post('/api/v1/users/signup/kakao', this.kakaoSignup.bind(this));
-    this.router.post('/api/v1/users/login', this.emailLogin.bind(this));
-    this.router.post('/api/v1/users/login/kakao', this.kakaoLogin.bind(this));
-    this.router.get('/api/v1/users/profile', authenticateJWT, this.getProfile.bind(this));
-    this.router.put('/api/v1/users/profile', authenticateJWT, this.updateProfile.bind(this));
-    this.router.get('/api/v1/users/statistics', authenticateJWT, this.getStatistics.bind(this));
+    this.router.post('/signup', this.emailSignup.bind(this));
+    this.router.post('/login', this.emailLogin.bind(this));
+    this.router.post('/login/kakao', this.kakaoLogin.bind(this));
+    this.router.get('/profile', authenticateJWT, this.getProfile.bind(this));
+    this.router.put('/profile', authenticateJWT, this.updateProfile.bind(this));
+    this.router.post('/password/reset', this.requestPasswordReset.bind(this));
+    this.router.post('/password/reset/confirm', this.resetPassword.bind(this));
+    this.router.delete('/deactivate', authenticateJWT, this.deactivateAccount.bind(this));
+    this.router.post('/reactivate', authenticateJWT, this.reactivateAccount.bind(this));
+    this.router.get('/statistics', authenticateJWT, this.getStatistics.bind(this));
+    this.router.post('/token/refresh', this.refreshAccessToken.bind(this));
   }
 
-  /**
-   * @swagger
-   * /api/v1/users/signup:
-   *   post:
-   *     summary: 이메일 회원가입
-   *     description: 이메일, 비밀번호, 닉네임, 주소 정보를 입력해 회원가입을 수행합니다.
-   *     tags:
-   *       - Users
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/EmailSignupDto'
-   *     responses:
-   *       201:
-   *         description: 회원가입 성공
-   *       500:
-   *         description: 회원가입 실패
-   */
+  // 공통 검증 유틸리티
+  private validateFields(fields: Record<string, any>, message: string) {
+    const missingFields = Object.entries(fields).filter(([, value]) => !value);
+    if (missingFields.length > 0) {
+      throw new ValidationError(message, fields);
+    }
+  }
+
   private async emailSignup(req: Request, res: Response): Promise<void> {
-    try {
-      const data: EmailSignupDto = req.body;
-      const user = await this.userService.emailSignup(data);
-      res.status(201).json({
-        isSuccess: true,
-        code: 'COMMON201',
-        message: '회원가입이 완료되었습니다.',
-        result: user,
-      });
-    } catch (error: unknown) {
-      res.status(500).json({
-        isSuccess: false,
-        code: 'COMMON500',
-        message: '회원가입에 실패했습니다.',
-        result: (error as Error).message,
-      });
-    }
+    const data: EmailSignupDto = req.body;
+    this.validateFields(data, '이메일, 비밀번호, 닉네임은 필수 입력 항목입니다.');
+    const user = await this.userService.emailSignup(data);
+    res.status(201).json({ isSuccess: true, message: '회원가입 성공', result: user });
   }
 
-  /**
-   * @swagger
-   * /api/v1/users/signup/kakao:
-   *   post:
-   *     summary: 카카오 회원가입
-   *     description: 카카오 OAuth 인증 후 추가 정보를 입력하여 회원가입을 수행합니다.
-   *     tags:
-   *       - Users
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/KakaoSignupDto'
-   *     responses:
-   *       201:
-   *         description: 회원가입 성공
-   *       500:
-   *         description: 회원가입 실패
-   */
-  private async kakaoSignup(req: Request, res: Response): Promise<void> {
-    try {
-      const data: KakaoSignupDto = req.body;
-      const user = await this.userService.kakaoSignup(data);
-      res.status(201).json({
-        isSuccess: true,
-        code: 'COMMON201',
-        message: '카카오 회원가입이 완료되었습니다.',
-        result: user,
-      });
-    } catch (error: unknown) {
-      res.status(500).json({
-        isSuccess: false,
-        code: 'COMMON500',
-        message: '카카오 회원가입에 실패했습니다.',
-        result: (error as Error).message,
-      });
-    }
-  }
-
-  /**
-   * @swagger
-   * /api/v1/users/login:
-   *   post:
-   *     summary: 이메일 로그인
-   *     description: 이메일과 비밀번호를 통해 사용자가 로그인합니다.
-   *     tags:
-   *       - Users
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/EmailLoginDto'
-   *     responses:
-   *       200:
-   *         description: 로그인 성공
-   *       401:
-   *         description: 로그인 실패
-   */
   private async emailLogin(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, password }: EmailLoginDto = req.body;
-      const tokens = await this.userService.loginUser(email, password);
-      res.status(200).json({
-        isSuccess: true,
-        code: 'AUTH200',
-        message: '로그인에 성공했습니다.',
-        result: tokens,
-      });
-    } catch (error: unknown) {
-      res.status(401).json({
-        isSuccess: false,
-        code: 'AUTH401',
-        message: '로그인에 실패했습니다.',
-        result: (error as Error).message,
-      });
-    }
+    const { email, password }: EmailLoginDto = req.body;
+    this.validateFields({ email, password }, '이메일과 비밀번호는 필수 입력 항목입니다.');
+    const tokens = await this.userService.loginUser(email, password);
+    res.status(200).json({ isSuccess: true, message: '로그인 성공', result: tokens });
   }
 
   private async kakaoLogin(req: Request, res: Response): Promise<void> {
+    const { kakaoAccessToken }: KakaoLoginDto = req.body;
+
+
+    if (!kakaoAccessToken) {
+      res.status(400).json({ isSuccess: false, message: '카카오 Access Token이 필요합니다.' });
+      return;
+    }
+
     try {
-      // TODO: 카카오 인증 로직 추가
-      res.status(200).json({ message: '카카오 로그인 성공 (로직 추가 필요)' });
-    } catch (error: unknown) {
-      res.status(401).json({
-        isSuccess: false,
-        code: 'AUTH401',
-        message: '카카오 로그인에 실패했습니다.',
-        result: (error as Error).message,
-      });
+      const tokens = await this.userService.kakaoLogin(kakaoAccessToken);
+      res.status(200).json({ isSuccess: true, message: '카카오 로그인 성공', result: tokens });
+    } catch (error) {
+      res.status(500).json({ isSuccess: false, message: '카카오 로그인 실패', error: error.message });
     }
   }
 
-  /**
-   * @swagger
-   * /api/v1/users/profile:
-   *   get:
-   *     summary: 사용자 프로필 조회
-   *     description: 인증된 사용자의 프로필 정보를 반환합니다.
-   *     tags:
-   *       - Users
-   *     security:
-   *       - bearerAuth: []
-   *     responses:
-   *       200:
-   *         description: 프로필 조회 성공
-   *       401:
-   *         description: 인증 실패
-   */
   private async getProfile(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId;
-      if (!userId) {
-        res.status(401).json({ message: 'Unauthorized' });
-        return;
-      }
-      const profile = await this.userService.getProfile(userId);
-      res.status(200).json(profile);
-    } catch (error: unknown) {
-      res.status(500).json({ message: '프로필 조회 실패', error: (error as Error).message });
-    }
+    const userId = req.user?.userId;
+    if (!userId) throw new UnauthorizedError('로그인이 필요합니다.', null);
+    const profile = await this.userService.getProfile(userId);
+    if (!profile) throw new ResourceNotFoundError('사용자 프로필을 찾을 수 없습니다.', { userId });
+    res.status(200).json({ isSuccess: true, message: '프로필 조회 성공', result: profile });
   }
 
   private async updateProfile(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId;
-      const data: ProfileUpdateDto = req.body; // ProfileUpdateDto 사용
-      const updatedProfile = await this.userService.updateProfile(userId, data);
-      res.status(200).json({
-        isSuccess: true,
-        message: '사용자 정보가 성공적으로 수정되었습니다.',
-        result: updatedProfile,
-      });
-    } catch (error: unknown) {
-      res.status(400).json({ message: '프로필 수정 실패', error: (error as Error).message });
-    }
+    const userId = req.user?.userId;
+    if (!userId) throw new UnauthorizedError('로그인이 필요합니다.', null);
+    const data: ProfileUpdateDto = req.body;
+    this.validateFields(data, '업데이트할 데이터가 필요합니다.');
+    const updatedProfile = await this.userService.updateProfile(userId, data);
+    res.status(200).json({ isSuccess: true, message: '프로필 수정 성공', result: updatedProfile });
   }
 
-  /**
-   * @swagger
-   * /api/v1/users/statistics:
-   *   get:
-   *     summary: 사용자 통계 조회
-   *     description: 사용자의 활동 통계(퀴즈 점수, 좋아요 수 등)를 반환합니다.
-   *     tags:
-   *       - Users
-   *     security:
-   *       - bearerAuth: []
-   *     responses:
-   *       200:
-   *         description: 통계 조회 성공
-   *       401:
-   *         description: 인증 실패
-   */
-  private async getStatistics(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId;
-      const statistics = await this.userService.getStatistics(userId);
-      res.status(200).json(statistics);
-    } catch (error: unknown) {
-      res.status(500).json({ message: '통계 조회 실패', error: (error as Error).message });
+  private async requestPasswordReset(req: Request, res: Response): Promise<void> {
+    const { email } = req.body;
+    this.validateFields({ email }, '이메일은 필수 입력 항목입니다.');
+    const result = await this.userService.requestPasswordReset(email);
+    res.status(200).json({ isSuccess: true, message: result.message });
+  }
+
+  private async resetPassword(req: Request, res: Response): Promise<void> {
+    const { resetToken, newPassword } = req.body;
+    this.validateFields({ resetToken, newPassword }, '토큰과 새 비밀번호는 필수 입력 항목입니다.');
+    const result = await this.userService.resetPassword(resetToken, newPassword);
+    res.status(200).json({ isSuccess: true, message: result.message });
+  }
+
+  private async deactivateAccount(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.userId;
+    if (!userId) throw new UnauthorizedError('로그인이 필요합니다.', null);
+    const result = await this.userService.deactivateAccount(userId);
+    res.status(200).json({ isSuccess: true, message: result.message });
+  }
+
+  private async reactivateAccount(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.userId; // JWT로 인증된 사용자 ID
+    if (!userId) {
+      throw new UnauthorizedError('로그인이 필요합니다.', null);
     }
+  
+    const result = await this.userService.reactivateAccount(userId);
+    res.status(200).json({ isSuccess: true, message: result.message });
+  }
+  
+
+  private async getStatistics(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.userId;
+    if (!userId) throw new UnauthorizedError('로그인이 필요합니다.', null);
+    const statistics = await this.userService.getStatistics(userId);
+    res.status(200).json({ isSuccess: true, message: '통계 조회 성공', result: statistics });
+  }
+
+  private async refreshAccessToken(req: Request, res: Response): Promise<void> {
+    const { refreshToken } = req.body;
+    this.validateFields({ refreshToken }, 'Refresh Token이 필요합니다.');
+    const result = await this.userService.refreshAccessToken(refreshToken);
+    res.status(200).json({ isSuccess: true, message: 'Access Token 갱신 성공', result });
   }
 }

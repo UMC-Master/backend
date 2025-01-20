@@ -8,305 +8,332 @@ datasource db {
 }
 
 model User {
-  user_id          Int               @id @default(autoincrement())
-  email            String?            @unique
-  password         String
-  nickname         String?            @unique
-  city             String?
-  district         String?
-  profile_image_url String?
-  login_type       LoginType
-  last_login       DateTime?
-  created_at       DateTime          @default(now())
-  updated_at       DateTime          @updatedAt
-  location         Location?         @relation(fields: [location_id], references: [location_id])
-  location_id      BigInt?
-  status           String
-  tips             Tip[]
-  tip_saves        TipSave[]
-  tipLikes TipLike[]
-  comments         Comment[]
-  notifications    Notification[] @relation("UserNotifications")
-  trigger_notifications Notification[] @relation("TriggerUserNotifications")
-  social_accounts  SocialAccount[]
-  quiz_answers     QuizAnswer[]
-  user_statistics  UserStatistic?
-  magazine_likes   MagazineLike[]
-  magazine_bookmarks MagazineBookmark[]
-  logs             Log[]
-  
+  user_id               Int                @id @default(autoincrement())
+  email                 String?            @unique
+  password              String?
+  nickname              String?            @unique
+  city                  String?
+  district              String?
+  profile_image_url     String?
+  provider              String    @default("local")
+  providerId            String?   @unique // 소셜 로그인 사용자 ID
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @updatedAt
+  location_id           BigInt?
+  last_login            DateTime?
+  status                String
+  comments              Comment[]
+  logs                  Log[]
+  magazine_bookmarks    MagazineBookmark[]
+  magazine_likes        MagazineLike[]
+  trigger_notifications Notification[]     @relation("TriggerUserNotifications")
+  notifications         Notification[]     @relation("UserNotifications")
+  quiz_answers          QuizAnswer[]
+  social_accounts       SocialAccount[]
+  tips                  Tip[]
+  tipLikes              TipLike[]
+  tip_saves             TipSave[]
+  location              Location?          @relation(fields: [location_id], references: [location_id])
+  user_statistics       UserStatistic?
+
+  @@index([location_id], map: "user_location_id_fkey")
   @@map("user")
 }
 
 model Location {
-  location_id     BigInt            @id @default(autoincrement())
-  name            String?
-  parent_id       BigInt?
-  created_at      DateTime?
-  updated_at      DateTime?
-  parent          Location?         @relation("LocationParent", fields: [parent_id], references: [location_id])
-  children        Location[]        @relation("LocationParent")
-  organizations   Organization[]
-  magazines       Magazine[]
-  users           User[]
-  
+  location_id   BigInt         @id @default(autoincrement())
+  name          String?
+  parent_id     BigInt?
+  created_at    DateTime?
+  updated_at    DateTime?
+  parent        Location?      @relation("LocationParent", fields: [parent_id], references: [location_id])
+  children      Location[]     @relation("LocationParent")
+  magazines     Magazine[]
+  organizations Organization[]
+  users         User[]
+
+  @@index([parent_id], map: "location_parent_id_fkey")
   @@map("location")
 }
 
 model Tip {
-  tips_id         Int               @id @default(autoincrement())
-  user_id         Int
-  title           String
-  content         String
-  category        String
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @updatedAt
-  seasons         Season?
-  notifications Notification[] @relation("TipNotifications", map: "Tip_Notification_fkey")
-  user            User              @relation(fields: [user_id], references: [user_id])
-  media           TipMedia[]
-  saves           TipSave[]
-  comments        Comment[]
-  likes           TipLike[]
-  hashtags        TipHashtag[]
-  
+  tips_id       Int            @id @default(autoincrement())
+  user_id       Int
+  title         String
+  content       String
+  category      String
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  seasons       Season?
+  comments      Comment[]
+  notifications Notification[] @relation("TipNotifications")
+  user          User           @relation(fields: [user_id], references: [user_id])
+  hashtags      TipHashtag[]
+  likes         TipLike[]
+  media         TipMedia[]
+  saves         TipSave[]
+
+  @@index([user_id], map: "tip_user_id_fkey")
   @@map("tip")
 }
 
 model TipMedia {
-  media_id        Int               @id @default(autoincrement())
-  tips_id         Int
-  media_url       String
-  media_type      MediaType
-  uploaded_at     DateTime
-  tips            Tip               @relation(fields: [tips_id], references: [tips_id])
-  
+  media_id    Int       @id @default(autoincrement())
+  tips_id     Int
+  media_url   String
+  media_type  MediaType
+  uploaded_at DateTime
+  tips        Tip       @relation(fields: [tips_id], references: [tips_id])
+
+  @@index([tips_id], map: "tip_media_tips_id_fkey")
   @@map("tip_media")
 }
 
 model TipSave {
-  save_id         Int               @id @default(autoincrement())
-  user_id         Int
-  tips_id         Int
-  scraped_at      DateTime          @default(now())
-  user            User              @relation(fields: [user_id], references: [user_id])
-  tips            Tip               @relation(fields: [tips_id], references: [tips_id])
-  
+  save_id    Int      @id @default(autoincrement())
+  user_id    Int
+  tips_id    Int
+  scraped_at DateTime @default(now())
+  tips       Tip      @relation(fields: [tips_id], references: [tips_id])
+  user       User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([tips_id], map: "tip_save_tips_id_fkey")
+  @@index([user_id], map: "tip_save_user_id_fkey")
   @@map("tip_save")
 }
 
 model SocialAccount {
-  social_id       String            @id
-  user_id         Int
-  provider        SocialProvider
-  created_at      DateTime          @default(now())
-  user            User              @relation(fields: [user_id], references: [user_id])
-  
+  social_id  String         @id
+  user_id    Int
+  provider   SocialProvider
+  created_at DateTime       @default(now())
+  user       User           @relation(fields: [user_id], references: [user_id])
+
+  @@index([user_id], map: "social_account_user_id_fkey")
   @@map("social_account")
 }
 
 model Comment {
-  comment_id      Int               @id @default(autoincrement())
-  user_id         Int
-  tips_id         Int
-  comment         String
-  created_at      DateTime          @default(now())
-  user            User              @relation(fields: [user_id], references: [user_id])
-  tips            Tip               @relation(fields: [tips_id], references: [tips_id])
-  notifications Notification[] @relation("CommentNotifications", map: "Comment_Notification_fkey")
-  
+  comment_id    Int            @id @default(autoincrement())
+  user_id       Int
+  tips_id       Int
+  comment       String
+  created_at    DateTime       @default(now())
+  tips          Tip            @relation(fields: [tips_id], references: [tips_id])
+  user          User           @relation(fields: [user_id], references: [user_id])
+  notifications Notification[] @relation("CommentNotifications")
+
+  @@index([tips_id], map: "comment_tips_id_fkey")
+  @@index([user_id], map: "comment_user_id_fkey")
   @@map("comment")
 }
 
 model Notification {
-  id              Int               @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   title           String
   message         String
-  is_read         Boolean           @default(false)
-  created_at      DateTime          @default(now())
+  is_read         Boolean          @default(false)
+  created_at      DateTime         @default(now())
   type            NotificationType
   user_id         Int
   trigger_user_id Int
   tips_id         Int?
   comment_id      Int?
-  user            User              @relation("UserNotifications", fields: [user_id], references: [user_id])
-  trigger_user    User              @relation("TriggerUserNotifications", fields: [trigger_user_id], references: [user_id])
-  tips            Tip?              @relation("TipNotifications", fields: [tips_id], references: [tips_id], map: "Notification_Tip_fkey")
-  comment         Comment?          @relation("CommentNotifications", fields: [comment_id], references: [comment_id], map: "Notification_Comment_fkey")
-  
+  comment         Comment?         @relation("CommentNotifications", fields: [comment_id], references: [comment_id], map: "Notification_Comment_fkey")
+  tips            Tip?             @relation("TipNotifications", fields: [tips_id], references: [tips_id], map: "Notification_Tip_fkey")
+  trigger_user    User             @relation("TriggerUserNotifications", fields: [trigger_user_id], references: [user_id])
+  user            User             @relation("UserNotifications", fields: [user_id], references: [user_id])
+
+  @@index([comment_id], map: "Notification_Comment_fkey")
+  @@index([tips_id], map: "Notification_Tip_fkey")
+  @@index([trigger_user_id], map: "notification_trigger_user_id_fkey")
+  @@index([user_id], map: "notification_user_id_fkey")
   @@map("notification")
 }
 
 model TipLike {
-  like_id         Int               @id @default(autoincrement())
-  user_id         Int
-  tips_id         Int
-  liked_at        DateTime          @default(now())
-  user            User              @relation(fields: [user_id], references: [user_id])
-  tips            Tip               @relation(fields: [tips_id], references: [tips_id])
-  
+  like_id  Int      @id @default(autoincrement())
+  user_id  Int
+  tips_id  Int
+  liked_at DateTime @default(now())
+  tips     Tip      @relation(fields: [tips_id], references: [tips_id])
+  user     User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([tips_id], map: "tip_like_tips_id_fkey")
+  @@index([user_id], map: "tip_like_user_id_fkey")
   @@map("tip_like")
 }
 
 model UserStatistic {
-  id              Int               @id @default(autoincrement())
-  user_id         Int               @unique
-  quiz_score      Int               @default(0)
-  tips_shared_count Int             @default(0)
-  likes_received  Int               @default(0)
-  created_at      DateTime          @default(now())
-  user            User              @relation(fields: [user_id], references: [user_id])
-  
+  id                Int      @id @default(autoincrement())
+  user_id           Int      @unique
+  quiz_score        Int      @default(0)
+  tips_shared_count Int      @default(0)
+  likes_received    Int      @default(0)
+  created_at        DateTime @default(now())
+  user              User     @relation(fields: [user_id], references: [user_id])
+
   @@map("user_statistic")
 }
 
 model Quiz {
-  quiz_id         Int               @id @default(autoincrement())
-  question        String
-  correct_answer  String
-  quiz_at         DateTime          @default(now())
-  quiz_answers    QuizAnswer[]
-  
+  quiz_id        Int          @id @default(autoincrement())
+  question       String
+  correct_answer String
+  quiz_at        DateTime     @default(now())
+  quiz_answers   QuizAnswer[]
+
   @@map("quiz")
 }
 
 model QuizAnswer {
-  answer_id       Int               @id @default(autoincrement())
-  user_id         Int
-  quiz_id         Int
+  answer_id        Int      @id @default(autoincrement())
+  user_id          Int
+  quiz_id          Int
   submitted_answer Answer
-  submitted_at    DateTime          @default(now())
-  user            User              @relation(fields: [user_id], references: [user_id])
-  quiz            Quiz              @relation(fields: [quiz_id], references: [quiz_id])
-  
+  submitted_at     DateTime @default(now())
+  quiz             Quiz     @relation(fields: [quiz_id], references: [quiz_id])
+  user             User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([quiz_id], map: "quiz_answer_quiz_id_fkey")
+  @@index([user_id], map: "quiz_answer_user_id_fkey")
   @@map("quiz_answer")
 }
 
 model Hashtag {
   hashtag_id      Int               @id @default(autoincrement())
   name            String
-  hashtag_type_id Int        
+  hashtag_type_id Int
   hashtag_type    HashtagType       @relation(fields: [hashtag_type_id], references: [hashtag_type_id])
-  tips            TipHashtag[]
   magazines       MagazineHashtag[]
-  
+  tips            TipHashtag[]
+
+  @@index([hashtag_type_id], map: "hashtag_hashtag_type_id_fkey")
   @@map("hashtag")
 }
 
 model HashtagType {
-  hashtag_type_id Int               @id @default(autoincrement())
-  name            String            
+  hashtag_type_id Int       @id @default(autoincrement())
+  name            String
   hashtags        Hashtag[]
 
   @@map("hashtag_type")
 }
 
 model TipHashtag {
-  tips_hashtag_id Int               @id @default(autoincrement())
+  tips_hashtag_id Int     @id @default(autoincrement())
   tips_id         Int
   hashtag_id      Int
-  tips            Tip               @relation(fields: [tips_id], references: [tips_id])
-  hashtag         Hashtag           @relation(fields: [hashtag_id], references: [hashtag_id])
-  
+  hashtag         Hashtag @relation(fields: [hashtag_id], references: [hashtag_id])
+  tips            Tip     @relation(fields: [tips_id], references: [tips_id])
+
+  @@index([hashtag_id], map: "tip_hashtag_hashtag_id_fkey")
+  @@index([tips_id], map: "tip_hashtag_tips_id_fkey")
   @@map("tip_hashtag")
 }
 
 model Magazine {
-  magazine_id     Int               @id @default(autoincrement())
-  organization_id Int?
-  title           String
-  description     String
-  created_at      DateTime?
-  updated_at      DateTime?
-  policy_url      String?
-  location_id     BigInt?
-  magazine_images MagazineImage[]
-  magazine_likes  MagazineLike[]
+  magazine_id        Int                @id @default(autoincrement())
+  organization_id    Int?
+  title              String
+  description        String
+  created_at         DateTime?
+  updated_at         DateTime?
+  policy_url         String?
+  location_id        BigInt?
+  location           Location?          @relation(fields: [location_id], references: [location_id])
+  organization       Organization?      @relation(fields: [organization_id], references: [organization_id])
   magazine_bookmarks MagazineBookmark[]
-  magazine_hashtags MagazineHashtag[]
-  organization    Organization?      @relation(fields: [organization_id], references: [organization_id])
-  location        Location?          @relation(fields: [location_id], references: [location_id])
-  
+  magazine_hashtags  MagazineHashtag[]
+  magazine_images    MagazineImage[]
+  magazine_likes     MagazineLike[]
+
+  @@index([location_id], map: "magazine_location_id_fkey")
+  @@index([organization_id], map: "magazine_organization_id_fkey")
   @@map("magazine")
 }
 
 model MagazineHashtag {
-  magazine_hashtag_id BigInt   @id @default(autoincrement())
+  magazine_hashtag_id BigInt    @id @default(autoincrement())
   hashtag_id          Int?
   magazine_id         Int?
+  hashtag             Hashtag?  @relation(fields: [hashtag_id], references: [hashtag_id])
+  magazine            Magazine? @relation(fields: [magazine_id], references: [magazine_id])
 
-  magazine Magazine? @relation(fields: [magazine_id], references: [magazine_id])
-  hashtag Hashtag? @relation(fields: [hashtag_id], references: [hashtag_id])
-  
+  @@index([hashtag_id], map: "magazine_hashtag_hashtag_id_fkey")
+  @@index([magazine_id], map: "magazine_hashtag_magazine_id_fkey")
   @@map("magazine_hashtag")
 }
 
 model MagazineImage {
-  magazine_photo_id Int               @id @default(autoincrement())
+  magazine_photo_id Int      @id @default(autoincrement())
   image_url         String
   magazine_id       Int
-  magazine          Magazine           @relation(fields: [magazine_id], references: [magazine_id])
-  
+  magazine          Magazine @relation(fields: [magazine_id], references: [magazine_id])
+
+  @@index([magazine_id], map: "magazine_image_magazine_id_fkey")
   @@map("magazine_image")
 }
 
 model MagazineLike {
-  magazine_like_id Int               @id @default(autoincrement())
+  magazine_like_id Int      @id @default(autoincrement())
   user_id          Int
   magazine_id      Int
-  user             User               @relation(fields: [user_id], references: [user_id])
-  magazine         Magazine           @relation(fields: [magazine_id], references: [magazine_id])
-  
+  magazine         Magazine @relation(fields: [magazine_id], references: [magazine_id])
+  user             User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([magazine_id], map: "magazine_like_magazine_id_fkey")
+  @@index([user_id], map: "magazine_like_user_id_fkey")
   @@map("magazine_like")
 }
 
 model MagazineBookmark {
-  magazine_bookmark_id Int               @id @default(autoincrement())
-  magazine_id         Int
-  user_id            Int
-  magazine           Magazine           @relation(fields: [magazine_id], references: [magazine_id])
-  user               User               @relation(fields: [user_id], references: [user_id])
-  
+  magazine_bookmark_id Int      @id @default(autoincrement())
+  magazine_id          Int
+  user_id              Int
+  magazine             Magazine @relation(fields: [magazine_id], references: [magazine_id])
+  user                 User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([magazine_id], map: "magazine_bookmark_magazine_id_fkey")
+  @@index([user_id], map: "magazine_bookmark_user_id_fkey")
   @@map("magazine_bookmark")
 }
 
 model Organization {
-  organization_id   Int               @id @default(autoincrement())
-  name              String
-  photo_url         String?
-  homepage_url      String?
-  created_at        DateTime?
-  updated_at        DateTime?
-  location_id       BigInt?
-  location          Location?         @relation(fields: [location_id], references: [location_id])
-  magazines         Magazine[]
-  
+  organization_id Int        @id @default(autoincrement())
+  name            String
+  photo_url       String?
+  homepage_url    String?
+  created_at      DateTime?
+  updated_at      DateTime?
+  location_id     BigInt?
+  magazines       Magazine[]
+  location        Location?  @relation(fields: [location_id], references: [location_id])
+
+  @@index([location_id], map: "organization_location_id_fkey")
   @@map("organization")
 }
 
 model Log {
-  log_id           Int               @id @default(autoincrement())
-  activity_details Json?
-  created_at       DateTime?
+  log_id                Int               @id @default(autoincrement())
+  activity_details      Json?
+  created_at            DateTime?
   user_activity_type_id Int?
-  user_id          Int
-  user_activity_type UserActivityType? @relation(fields: [user_activity_type_id], references: [user_activity_type_id])
-  user             User              @relation(fields: [user_id], references: [user_id])
-  
+  user_id               Int
+  user_activity_type    UserActivityType? @relation(fields: [user_activity_type_id], references: [user_activity_type_id])
+  user                  User              @relation(fields: [user_id], references: [user_id])
+
+  @@index([user_activity_type_id], map: "log_user_activity_type_id_fkey")
+  @@index([user_id], map: "log_user_id_fkey")
   @@map("log")
 }
 
 model UserActivityType {
-  user_activity_type_id Int               @id @default(autoincrement())
+  user_activity_type_id Int    @id @default(autoincrement())
   name                  String
   logs                  Log[]
-  
-  @@map("user_activity_type")
-}
 
-enum LoginType {
-  EMAIL
-  KAKAO
+  @@map("user_activity_type")
 }
 
 enum MediaType {
@@ -334,5 +361,10 @@ enum Answer {
 }
 
 enum SocialProvider {
+  KAKAO
+}
+
+enum user_login_type {
+  EMAIL
   KAKAO
 }
