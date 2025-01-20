@@ -33,7 +33,7 @@ export interface Tip {
   content: string;
   category: string;
   user: {
-    user_id: number; // Update to user_id instead of userId
+    userId: number; // Update to user_id instead of userId
     nickname: string;
     profile_image_url: string;
   };
@@ -52,7 +52,7 @@ export function toCommunityDto(tip: Tip): CommunityDto {
     content: tip.content,
     category: tip.category,
     author: {
-      userId: tip.user.user_id, // Change to user_id
+      userId: tip.user.userId, 
       nickname: tip.user.nickname,
       profileImageUrl: tip.user.profile_image_url,
     },
@@ -60,7 +60,7 @@ export function toCommunityDto(tip: Tip): CommunityDto {
     updatedAt: tip.updated_at,
     likesCount: tip.likes.length,
     commentsCount: tip.comments.length,
-    isLiked: tip.likes.some((like) => like.user_id === tip.user.user_id), // Update to user_id
+    isLiked: tip.likes.some((like) => like.user_id === tip.user.userId), // Update to user_id
     mediaList: toMediaDtoList(tip.media),
   };
 }

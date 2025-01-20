@@ -1,6 +1,8 @@
 // community.controller.ts
 import { Router, Request, Response, NextFunction } from 'express';
 import { CommunityService } from '../services/community.service.js';
+import { StatusCodes } from 'http-status-codes'; // StatusCodes를 임포트
+import { authenticateJWT } from '../middlewares/authenticateJWT'; // 인증 미들웨어 import
 
 export class CommunityController {
   public router: Router;
@@ -11,6 +13,7 @@ export class CommunityController {
     this.communityService = new CommunityService();
     this.initializeRoutes();
   }
+
 
 
   private initializeRoutes(){
@@ -86,7 +89,7 @@ export class CommunityController {
      *                       example: "서버 내부 오류"
      */
     // 사용자 간 꿀팁 공유 (POST /api/v1/tips/share 공유할 꿀팁 정보 전송)
-    this.router.post('/api/v1/tips/share', this.shareTip);
+    this.router.post('/api/v1/tips/share', authenticateJWT,  this.shareTip);
   /**
      * @swagger
      * /api/v1/tips/{tipId}/comments:
@@ -147,7 +150,7 @@ export class CommunityController {
      *                       example: "댓글 내용이 비어있습니다."
      */
     // 꿀팁에 대한 댓글 (POST /api/v1/tips/{tipId}/comments 댓글 내용 전송)
-    this.router.post('/api/v1/tips/:tipId/comments', this.commentOnTip);
+    this.router.post('/api/v1/tips/:tipId/comments', authenticateJWT, this.commentOnTip);
 
       /**
      * @swagger
@@ -199,7 +202,7 @@ export class CommunityController {
      *                       example: "잘못된 꿀팁 ID"
      */
     // 좋아요 시스템 꿀팁 추천 (POST /api/v1/tips/{tipId}/like 좋아요 토글 기능)
-    this.router.post('/api/v1/tips/:tipId/like', this.likeTip);
+    this.router.post('/api/v1/tips/:tipId/like',  authenticateJWT, this.likeTip);
 
     /**
      * @swagger
@@ -251,7 +254,7 @@ export class CommunityController {
      *                       example: "잘못된 꿀팁 ID"
      */
     // 꿀팁 저장 (POST /api/v1/tips/{tipId}/save 저장 토글 기능)
-    this.router.post('/api/v1/tips/:tipId/save', this.saveTip);
+    this.router.post('/api/v1/tips/:tipId/save',  authenticateJWT,this.saveTip);
   }
 
 
@@ -259,50 +262,112 @@ export class CommunityController {
   private shareTip = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { title, content, category } = req.body;
-      const userId = req.user.user_id; // 인증된 사용자 정보
+      const userId = req.user?.userId;  // 인증된 사용자 정보
+  
+
+      // Validation
+      if (!title || !content) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          isSuccess: false,
+          code: 'COMMON400',
+          message: '꿀팁 내용이 없습니다.',
+          result: null,
+        });
+      }
+
       const newTip = await this.communityService.createTip({ userId, title, content, category });
-      res.status(200).json({ resultType: 'SUCCESS', success: { message: '팁이 성공적으로 공유되었습니다.', data: newTip } });
+      return res.status(StatusCodes.OK).json({
+        isSuccess: true,
+        code: 'COMMON200',
+        message: '꿀팁을 성공적으로 공유했습니다.',
+        result: { data: newTip },
+      });
     } catch (error) {
       next(error);
     }
-  };
+  };//확인 완료 
 
-  // 팁 저장
-  private saveTip = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user.user_id;
-      const tipId = parseInt(req.params.tipId, 10);
-      const updatedTip = await this.communityService.saveTip(userId, tipId);
-      res.status(200).json({ resultType: 'SUCCESS', success: { message: '팁이 성공적으로 저장되었습니다.', data: updatedTip } });
-    } catch (error) {
-      next(error);
-    }
-  };
 
-  // 팁 좋아요
-  private likeTip = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user.user_id;
-      const tipId = parseInt(req.params.tipId, 10);
-      const updatedTip = await this.communityService.likeTip(userId, tipId);
-      res.status(200).json({ resultType: 'SUCCESS', success: { message: '좋아요가 성공적으로 처리되었습니다.', data: updatedTip } });
-    } catch (error) {
-      next(error);
-    }
-  };
+    // 팁 저장
+    private saveTip = async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        // req.user에서 userId를 가져옴
+        const userId = req.user?.userId;  // 인증된 사용자 정보에서 userId를 가져옵니다.
+        const tipId = parseInt(req.params.tipId, 10);  // URL 파라미터에서 tipId를 가져옵니다.
+  
+        if (!userId) {
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            isSuccess: false,
+            message: 'User ID is missing',
+          });
+        }
+  
+        const updatedTip = await this.communityService.saveTip(userId, tipId);
+        return res.status(StatusCodes.OK).json({
+          isSuccess: true,
+          code: 'COMMON200',
+          message: '꿀팁이 성공적으로 저장되었습니다.',
+          result: { data: updatedTip },
+        });
+      } catch (error) {
+        next(error);
+      }
+    };
+  
+    // 팁 좋아요
+    private likeTip = async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = req.user?.userId;  // 인증된 사용자 정보에서 userId를 가져옵니다.
+        const tipId = parseInt(req.params.tipId, 10);  // URL 파라미터에서 tipId를 가져옵니다.
+  
+        if (!userId) {
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            isSuccess: false,
+            message: 'User ID is missing',
+          });
+        }
+  
+        const updatedTip = await this.communityService.likeTip(userId, tipId);
+        return res.status(StatusCodes.OK).json({
+          isSuccess: true,
+          code: 'COMMON200',
+          message: '좋아요가 성공적으로 처리되었습니다.',
+          result: { data: updatedTip },
+        });
+      } catch (error) {
+        next(error);
+      }
+    };//확인 완료 
 
   // 팁 댓글 작성
   private commentOnTip = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user.user_id;
+      const userId = req.user?.userId;
       const tipId = parseInt(req.params.tipId, 10);
       const { comment } = req.body;
+
+      // Validation
+      if (!comment) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          isSuccess: false,
+          code: 'COMMON400',
+          message: '댓글 내용이 비어있습니다.',
+          result: null,
+        });
+      }
+
       const newComment = await this.communityService.commentOnTip(userId, tipId, comment);
-      res.status(200).json({ resultType: 'SUCCESS', success: { message: '댓글이 성공적으로 추가되었습니다.', data: newComment } });
+      return res.status(StatusCodes.OK).json({
+        isSuccess: true,
+        code: 'COMMON200',
+        message: '댓글이 성공적으로 추가되었습니다.',
+        result: { data: newComment },
+      });
     } catch (error) {
       next(error);
     }
-  };
+  };//확인완료 
+
 }
 
 

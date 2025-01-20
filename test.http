@@ -1,0 +1,47 @@
+### 꿀팁 공유 요청
+POST http://localhost:3000/api/v1/tips/share
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {your_jwt_token}
+
+{
+  "title": "집중력 향상 방법",
+  "content": "포모도로 기법을 사용해 생산성을 높여보세요.",
+  "category": "productivity"
+}
+
+### 팁 저장 요청
+POST http://localhost:3000/api/v1/tips/1/save
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {your_jwt_token}
+
+{}
+
+### 팁 좋아요 요청
+POST http://localhost:3000/api/v1/tips/1/like
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {your_jwt_token}
+
+{}
+
+### 팁 댓글 작성 요청
+POST http://localhost:3000/api/v1/tips/1/comments
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {your_jwt_token}
+
+{
+  "comment": "좋은 꿀팁입니다! 바로 시도해보겠습니다."
+}
+
+
+###
+POST http://localhost:3000/api/v1/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
