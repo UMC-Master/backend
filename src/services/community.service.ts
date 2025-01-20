@@ -72,11 +72,11 @@ export class CommunityService {
     return toCommunityDto(tip);  // toCommunityDto 사용
   }
 
-  // 팁에 댓글 작성
+  // 팁에 댓글 작성 
   public async commentOnTip(userId: number, tipId: number, comment: string) {
     const tip = await this.communityRepository.getTipById(tipId);
     if (!tip) {
-      throw new TipNotFoundError(tipId);  // 팁을 찾을 수 없을 때 발생하는 에러 처리
+      throw new TipNotFoundError(tipId);  // 팁을 찾을 수 없을 때 발생하는 에러 처리 추가 
     }
 
     // 댓글을 찾을 수 없을 때 발생하는 에러 처리
