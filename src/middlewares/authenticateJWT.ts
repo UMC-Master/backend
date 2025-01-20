@@ -36,6 +36,7 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
       email: decoded.email,
     };
 
+
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
