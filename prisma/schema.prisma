@@ -61,10 +61,8 @@ model Tip {
   user_id       Int
   title         String
   content       String
-  category      String
   created_at    DateTime       @default(now())
   updated_at    DateTime       @updatedAt
-  seasons       Season?
   comments      Comment[]
   notifications Notification[] @relation("TipNotifications")
   user          User           @relation(fields: [user_id], references: [user_id])
@@ -346,13 +344,6 @@ enum NotificationType {
   SCRAP
   COMMENT
   REPLY
-}
-
-enum Season {
-  SPRING
-  SUMMER
-  FALL
-  WINTER
 }
 
 enum Answer {
