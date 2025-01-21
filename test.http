@@ -16,7 +16,7 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {your_jwt_token}
 
-{}
+
 
 ### 팁 좋아요 요청
 POST http://localhost:3000/api/v1/tips/1/like
@@ -24,7 +24,6 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {your_jwt_token}
 
-{}
 
 ### 팁 댓글 작성 요청
 POST http://localhost:3000/api/v1/tips/1/comments
@@ -36,12 +35,24 @@ Authorization: Bearer {your_jwt_token}
   "comment": "좋은 꿀팁입니다! 바로 시도해보겠습니다."
 }
 
+### 회원가입
+POST http://localhost:3000/api/v1/users/signup 
+Accept: application/json
+Content-Type: application/json
+
+
+{
+  "email": "codnjs@example.com",
+  "password": "Password",
+  "nickname": "won",
+}
+
 
 ###
 POST http://localhost:3000/api/v1/login
 Content-Type: application/json
 
 {
-  "email": "user@example.com",
-  "password": "password123"
+  "email": "codnjs@example.com",
+  "password": "Password"
 }
