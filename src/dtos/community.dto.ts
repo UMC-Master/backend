@@ -1,13 +1,14 @@
 // community.dto.ts
 import { MediaDto } from './media.dto';
 
+// CommunityDto 인터페이스 정의
 export interface CommunityDto {
   tipId: number; // 팁 ID
   title: string; // 팁 제목
   content: string; // 팁 내용
   category: string; // 카테고리
   author: {
-    userId: number; // 작성자 ID (use user_id)
+    userId: number; // 작성자 ID
     nickname: string; // 작성자 닉네임
     profileImageUrl?: string; // 작성자 프로필 이미지
   };
@@ -33,7 +34,7 @@ export interface Tip {
   content: string;
   category: string;
   user: {
-    userId: number; // Update to user_id instead of userId
+    user_id: number; // 데이터베이스에서 제공되는 user_id
     nickname: string;
     profile_image_url: string;
   };
@@ -45,22 +46,22 @@ export interface Tip {
 }
 
 // CommunityDto 형식으로 변환하는 함수
-export function toCommunityDto(tip: Tip): CommunityDto {
+export function toCommunityDto(tip: Tip, currentUserId: number): CommunityDto {
   return {
     tipId: tip.tips_id,
     title: tip.title,
     content: tip.content,
     category: tip.category,
     author: {
-      userId: tip.user.userId, 
-      nickname: tip.user.nickname,
-      profileImageUrl: tip.user.profile_image_url,
+      userId: tip.user?.user_id,
+      nickname: tip.user.nickname || "Unknown",
+      profileImageUrl: tip.user.profile_image_url || "",
     },
     createdAt: tip.created_at,
     updatedAt: tip.updated_at,
     likesCount: tip.likes.length,
     commentsCount: tip.comments.length,
-    isLiked: tip.likes.some((like) => like.user_id === tip.user.userId), // Update to user_id
+    isLiked: tip.likes.some((like) => like.user_id === currentUserId), // 수정: currentUserId와 비교
     mediaList: toMediaDtoList(tip.media),
   };
 }
