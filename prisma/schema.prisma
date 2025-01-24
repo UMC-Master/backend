@@ -19,7 +19,7 @@ model User {
   providerId            String?   @unique // 소셜 로그인 사용자 ID
   created_at            DateTime           @default(now())
   updated_at            DateTime           @updatedAt
-  location_id           BigInt?
+  location_id           Int?
   last_login            DateTime?
   status                String
   comments              Comment[]
@@ -41,9 +41,9 @@ model User {
 }
 
 model Location {
-  location_id   BigInt         @id @default(autoincrement())
+  location_id   Int         @id @default(autoincrement())
   name          String?
-  parent_id     BigInt?
+  parent_id     Int?
   created_at    DateTime?
   updated_at    DateTime?
   parent        Location?      @relation("LocationParent", fields: [parent_id], references: [location_id])
@@ -238,7 +238,7 @@ model Magazine {
   created_at         DateTime?
   updated_at         DateTime?
   policy_url         String?
-  location_id        BigInt?
+  location_id        Int?
   location           Location?          @relation(fields: [location_id], references: [location_id])
   organization       Organization?      @relation(fields: [organization_id], references: [organization_id])
   magazine_bookmarks MagazineBookmark[]
@@ -252,7 +252,7 @@ model Magazine {
 }
 
 model MagazineHashtag {
-  magazine_hashtag_id BigInt    @id @default(autoincrement())
+  magazine_hashtag_id Int    @id @default(autoincrement())
   hashtag_id          Int?
   magazine_id         Int?
   hashtag             Hashtag?  @relation(fields: [hashtag_id], references: [hashtag_id])
@@ -304,7 +304,7 @@ model Organization {
   homepage_url    String?
   created_at      DateTime?
   updated_at      DateTime?
-  location_id     BigInt?
+  location_id     Int?
   magazines       Magazine[]
   location        Location?  @relation(fields: [location_id], references: [location_id])
 
