@@ -22,6 +22,7 @@ model User {
   location_id           BigInt?
   last_login            DateTime?
   status                String
+  role                  UserRole           @default(USER) // 추가된 필드
   comments              Comment[]
   logs                  Log[]
   magazine_bookmarks    MagazineBookmark[]
@@ -358,4 +359,9 @@ enum SocialProvider {
 enum user_login_type {
   EMAIL
   KAKAO
+}
+
+enum UserRole {
+  ADMIN
+  USER
 }
