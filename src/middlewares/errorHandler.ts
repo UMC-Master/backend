@@ -1,7 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { CommonError, isCommonError } from '../errors';
+import { CommonError, isCommonError } from '../errors/errors';
 
-export const errorHandler = (error: unknown, req: Request, res: Response, next: NextFunction) => {
+export const errorHandler = (
+  error: unknown,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   if (isCommonError(error)) {
     res.status(getHttpStatusCode(error.errorCode)).json({
       isSuccess: false,
