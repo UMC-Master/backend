@@ -1,6 +1,5 @@
 import { CommunityRepository } from '../repositories/community.repository.js';
 import { toCommunityDto } from '../dtos/community.dto.js';
-import { Tip } from '../dtos/community.dto.js';
 import { 
   ResourceNotFoundError,
   ValidationError,
@@ -14,48 +13,6 @@ export class CommunityService {
     this.communityRepository = new CommunityRepository();
   }
 
-  // 팁 생성
-  public async createTip(data: { userId: number; title: string; content: string; category: string }) {
-    try {
-      // Validation: 중복된 팁을 생성하려 할 때 발생하는 에러 처리
-      const existingTip = await this.communityRepository.getTipByTitle(data.title);
-      if (existingTip) {
-        throw new ValidationError('Duplicate tip title', { title: data.title });
-      }
-
-      const newTip: Tip = await this.communityRepository.createTip(data);
-
-      // Validation: 생성된 팁이 필요한 필드를 포함하도록 처리
-      newTip.user = { user_id: data.userId, nickname: "Unknown", profile_image_url: "" }; // 예시: 기본값 처리
-      newTip.likes = newTip.likes || [];
-      newTip.comments = newTip.comments || [];
-      newTip.media = newTip.media || [];
-
-      return toCommunityDto(newTip, data.userId);  // 팁 DTO 반환
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        throw error; // 중복 팁 오류는 그대로 던짐
-      }
-      throw new DatabaseError('An error occurred while creating the tip.', error);
-    }
-  }
-
-  // 팁 조회
-  public async getTipById(tipId: number, currentUserId: number) {
-    try {
-      const tip: Tip | null = await this.communityRepository.getTipById(tipId);
-      if (!tip) {
-        throw new ResourceNotFoundError('Tip not found', { tipId });
-      }
-
-      return toCommunityDto(tip, currentUserId);  // 팁 DTO 반환
-    } catch (error) {
-      if (error instanceof ResourceNotFoundError) {
-        throw error;  // 팁을 찾을 수 없을 때 발생하는 에러
-      }
-      throw new DatabaseError('An error occurred while retrieving the tip.', error);
-    }
-  }
 
   // 팁 저장 (토글)
   public async saveTip(userId: number, tipId: number) {
@@ -88,6 +45,25 @@ export class CommunityService {
     }
   }
   
+  // 팁 저장 취소
+  public async removeSave(userId: number, tipId: number) {
+    try {
+      const tip = await this.communityRepository.getTipById(tipId);
+      if (!tip) {
+        throw new ResourceNotFoundError('Tip not found', { tipId });
+      }
+
+      await this.communityRepository.removeSave(userId, tipId);  // 저장 취소
+      return { message: 'Tip successfully removed from saved' };  // 저장 취소에 대한 응답
+    } catch (error) {
+      if (error instanceof ResourceNotFoundError) {
+        throw error;  // 팁을 찾을 수 없을 때 발생하는 에러
+      }
+      throw new DatabaseError('An error occurred while removing the saved tip.', error);
+    }
+  }
+
+
 
   // 팁 좋아요 (토글)
   public async likeTip(userId: number, tipId: number) {
@@ -115,6 +91,25 @@ export class CommunityService {
     }
   }
 
+      // 좋아요 삭제
+      public async removeLike(userId: number, tipId: number) {
+        try {
+          const tip = await this.communityRepository.getTipById(tipId);
+          if (!tip) {
+            throw new ResourceNotFoundError('Tip not found', { tipId });
+          }
+    
+          await this.communityRepository.removeLike(userId, tipId);  // 좋아요 취소
+          return { message: 'Like successfully removed' };  // 좋아요 취소에 대한 응답
+        } catch (error) {
+          if (error instanceof ResourceNotFoundError) {
+            throw error;  // 팁을 찾을 수 없을 때 발생하는 에러
+          }
+          throw new DatabaseError('An error occurred while removing the like.', error);
+        }
+      }
+
+
   // 팁에 댓글 작성
   public async commentOnTip(userId: number, tipId: number, comment: string) {
     try {
@@ -139,4 +134,49 @@ export class CommunityService {
       throw new DatabaseError('An error occurred while commenting on the tip.', error);
     }
   }
+
+       // 댓글 삭제
+    public async deleteComment(commentId: number) {
+      try {
+          // 댓글 존재 여부 확인
+          const comment = await this.communityRepository.getCommentById(commentId);
+          if (!comment) {
+            throw new ResourceNotFoundError('Comment not found', { commentId });
+        }
+    
+          // 댓글 삭제 처리
+          await this.communityRepository.deleteComment(commentId);
+          return { message: 'Comment successfully deleted' };
+        } catch (error) {
+          if (error instanceof ResourceNotFoundError) {
+            throw error;  // 댓글을 찾을 수 없을 때 발생하는 에러
+          }
+          throw new DatabaseError('An error occurred while deleting the comment.', error);
+        }
+   }
+   
+   public async updateComment(userId: number, tipId: number, commentId: number, comment: string) {
+    try {
+      // 댓글 존재 여부 확인
+      const existingComment = await this.communityRepository.getCommentById(commentId);
+      if (!existingComment) {
+        throw new ResourceNotFoundError('Comment not found', { commentId });
+      }
+  
+      // 댓글이 요청한 사용자와 연관되어 있는지 확인
+      if (existingComment.user_id !== userId) {
+        throw new ValidationError('You are not authorized to modify this comment', { commentId });
+      }
+  
+      // 댓글 업데이트
+      return await this.communityRepository.updateComment(commentId, comment);
+    } catch (error) {
+      if (error instanceof ResourceNotFoundError || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new DatabaseError('An error occurred while updating the comment.', error);
+    }
+  }
+  
+
 }

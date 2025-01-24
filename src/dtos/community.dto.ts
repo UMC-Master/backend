@@ -6,7 +6,6 @@ export interface CommunityDto {
   tipId: number; // 팁 ID
   title: string; // 팁 제목
   content: string; // 팁 내용
-  category: string; // 카테고리
   author: {
     userId: number; // 작성자 ID
     nickname: string; // 작성자 닉네임
@@ -32,7 +31,6 @@ export interface Tip {
   tips_id: number;
   title: string;
   content: string;
-  category: string;
   user: {
     user_id: number; // 데이터베이스에서 제공되는 user_id
     nickname: string;
@@ -51,7 +49,6 @@ export function toCommunityDto(tip: Tip, currentUserId: number): CommunityDto {
     tipId: tip.tips_id,
     title: tip.title,
     content: tip.content,
-    category: tip.category,
     author: {
       userId: tip.user?.user_id,
       nickname: tip.user.nickname || "Unknown",
