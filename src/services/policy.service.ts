@@ -1,4 +1,8 @@
 import { policyRequestDto } from '../dtos/policy.dto.js';
+import { HashtagNotFoundError } from '../errors/hashtag.error.js';
+import { LocationNotFoundError } from '../errors/location.error.js';
+import { OrganizationNotFoundError } from '../errors/organization.error.js';
+import { PolicyNotFoundError } from '../errors/policy.error.js';
 import { HashtagRepository } from '../repositories/hashtag.repository.js';
 import { LocationRepository } from '../repositories/location.repository.js';
 import { MagazineBookmarkRepository } from '../repositories/magazineBookmark.repository.js';
@@ -32,18 +36,20 @@ export class PolicyService {
       data.organization_id
     );
     if (organization === null) {
-      throw new Error();
+      throw new OrganizationNotFoundError({
+        organization_id: data.organization_id,
+      });
     }
     const location = await this.locationRepository.getById(data.location_id);
     if (location === null) {
-      throw new Error();
+      throw new LocationNotFoundError({ location_id: data.location_id });
     }
     // validation: 존재하는 해시태그인지 확인
     let hashtag_list = [];
     for (const hashtag of data.magazine_hashtag_id_list) {
       const foundHashtag = await this.hashtagRepository.getById(hashtag);
       if (foundHashtag === null) {
-        throw new Error();
+        throw new HashtagNotFoundError({ hashtag_id: hashtag });
       }
       hashtag_list = [...hashtag_list, foundHashtag];
     }
@@ -91,15 +97,17 @@ export class PolicyService {
       data.organization_id
     );
     if (organization === null) {
-      throw new Error();
+      throw new OrganizationNotFoundError({
+        organization_id: data.organization_id,
+      });
     }
     const location = await this.locationRepository.getById(data.location_id);
     if (location === null) {
-      throw new Error();
+      throw new LocationNotFoundError({ location_id: data.location_id });
     }
     const policy = await this.policyRepository.getById(policy_id);
     if (policy === null) {
-      throw new Error();
+      throw new PolicyNotFoundError({ policy_id: policy_id });
     }
 
     // business logic & response: 업데이트 및 반환
@@ -119,7 +127,7 @@ export class PolicyService {
     // validation & business logic: 존재하는 정책인지 확인
     const policy = await this.policyRepository.getById(policy_id);
     if (policy === null) {
-      throw new Error();
+      throw new PolicyNotFoundError({ policy_id: policy_id });
     }
 
     const likes =
@@ -153,7 +161,7 @@ export class PolicyService {
     // validation: 존재하는 지역인지 확인
     const location = await this.locationRepository.getById(location_id);
     if (location === null) {
-      throw new Error();
+      throw new LocationNotFoundError({ location_id: location_id });
     }
 
     // business logic: 해당 지역에 존재하는 정책 조회
@@ -167,7 +175,7 @@ export class PolicyService {
     // validation: 존재하는 정책인지 확인
     const policy = await this.policyRepository.getById(policy_id);
     if (policy === null) {
-      throw new Error();
+      throw new PolicyNotFoundError({ policy_id: policy_id });
     }
 
     // business logic: 삭제

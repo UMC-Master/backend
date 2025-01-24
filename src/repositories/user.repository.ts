@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma, User } from '@prisma/client';
-import { DuplicateUserEmailError } from '../errors';
+import { DuplicateUserEmailError } from '../errors/errors';
 
 interface UserData {
   email?: string;
@@ -31,7 +31,10 @@ export class UserRepository {
   }
 
   // 사용자 업데이트
-  async updateUser(userId: number, data: Prisma.UserUpdateInput): Promise<User> {
+  async updateUser(
+    userId: number,
+    data: Prisma.UserUpdateInput
+  ): Promise<User> {
     return this.prisma.user.update({
       where: { user_id: userId },
       data,
@@ -44,9 +47,12 @@ export class UserRepository {
       return await this.prisma.user.create({ data });
     } catch (error: unknown) {
       if (this.isPrismaError(error) && error.code === 'P2002') {
-        throw new DuplicateUserEmailError('이미 사용 중인 이메일 또는 닉네임입니다.', {
-          target: error.meta?.target,
-        });
+        throw new DuplicateUserEmailError(
+          '이미 사용 중인 이메일 또는 닉네임입니다.',
+          {
+            target: error.meta?.target,
+          }
+        );
       }
       throw error;
     }
@@ -84,7 +90,10 @@ export class UserRepository {
         });
       } catch (error: unknown) {
         if (this.isPrismaError(error) && error.code === 'P2002') {
-          throw new DuplicateUserEmailError('이미 등록된 이메일입니다.', userData.email);
+          throw new DuplicateUserEmailError(
+            '이미 등록된 이메일입니다.',
+            userData.email
+          );
         }
         throw error;
       }
@@ -94,7 +103,9 @@ export class UserRepository {
   }
 
   // Prisma 에러 타입 확인
-  private isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  private isPrismaError(
+    error: unknown
+  ): error is Prisma.PrismaClientKnownRequestError {
     return (
       typeof error === 'object' &&
       error !== null &&
