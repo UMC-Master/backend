@@ -468,7 +468,7 @@ export class PolicyController {
       })),
     };
 
-    res.status(StatusCodes.OK).json(output);
+    res.status(StatusCodes.OK).success(output);
   }
 
   private async getPolicyGuide(req: Request, res: Response) {
@@ -494,7 +494,7 @@ export class PolicyController {
       hashtag: policy.hashtag_list,
     };
 
-    res.status(StatusCodes.OK).json(output);
+    res.status(StatusCodes.OK).success(output);
   }
 
   private async createPolicy(req: Request, res: Response) {
@@ -529,7 +529,7 @@ export class PolicyController {
       hashtag: policy.hashtag_list,
     };
 
-    res.status(StatusCodes.OK).json(output);
+    res.status(StatusCodes.OK).success(output);
   }
 
   private async deletePolicy(req: Request, res: Response) {
@@ -537,7 +537,9 @@ export class PolicyController {
 
     await this.policyService.deletePolicy(policy_id);
 
-    res.status(StatusCodes.OK).json({ answer: '성공적으로 삭제되었습니다!' });
+    res
+      .status(StatusCodes.OK)
+      .success({ answer: '성공적으로 삭제되었습니다!' });
   }
 
   private async updatePolicy(req: Request, res: Response) {
@@ -558,7 +560,7 @@ export class PolicyController {
       input
     );
 
-    res.status(StatusCodes.OK).json({
+    res.status(StatusCodes.OK).success({
       id: updatedPolicy.magazine_id,
       title: updatedPolicy.title,
       description: updatedPolicy.description,
