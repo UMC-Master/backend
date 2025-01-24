@@ -8,6 +8,7 @@ declare global {
       user?: {
         userId: number;
         email: string;
+        role: string;
       };
     }
   }
@@ -29,13 +30,15 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
       return;
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET) as { userId: number; email: string };
+    // JWT 토큰 검증 및 디코딩
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as { userId: number; email: string; role: string };
 
+    // req.user에 사용자 정보 설정
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
+      role: decoded.role, // role 추가
     };
-
 
     next();
   } catch (error) {
