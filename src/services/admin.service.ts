@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { AdminRepository } from '../repositories/admin.repository';
-import { UnauthorizedError, ValidationError } from '../errors';
+import { UnauthorizedError, ValidationError } from '../errors/errors';
 
 export class AdminService {
   private adminRepository: AdminRepository;
@@ -23,7 +23,10 @@ export class AdminService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newAdmin = await this.adminRepository.createAdmin(email, hashedPassword);
+    const newAdmin = await this.adminRepository.createAdmin(
+      email,
+      hashedPassword
+    );
 
     return {
       message: '관리자 계정이 성공적으로 생성되었습니다.',
@@ -40,7 +43,9 @@ export class AdminService {
   async loginAdmin(email: string, password: string) {
     const admin = await this.adminRepository.findAdminByEmail(email);
     if (!admin || admin.role !== 'ADMIN') {
-      throw new UnauthorizedError('관리자 계정이 아니거나 존재하지 않습니다.', { email });
+      throw new UnauthorizedError('관리자 계정이 아니거나 존재하지 않습니다.', {
+        email,
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(password, admin.password!);
@@ -67,16 +72,24 @@ export class AdminService {
    * @param newPassword - 새 비밀번호
    * @returns 비밀번호 변경 메시지
    */
-  async updatePassword(userId: number, oldPassword: string, newPassword: string) {
+  async updatePassword(
+    userId: number,
+    oldPassword: string,
+    newPassword: string
+  ) {
     const admin = await this.adminRepository.findAdminById(userId);
 
     if (!admin || admin.role !== 'ADMIN') {
-      throw new UnauthorizedError('관리자 계정이 아니거나 존재하지 않습니다.', { userId });
+      throw new UnauthorizedError('관리자 계정이 아니거나 존재하지 않습니다.', {
+        userId,
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(oldPassword, admin.password!);
     if (!isPasswordValid) {
-      throw new ValidationError('기존 비밀번호가 일치하지 않습니다.', { userId });
+      throw new ValidationError('기존 비밀번호가 일치하지 않습니다.', {
+        userId,
+      });
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
