@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import 'express-async-errors';
 
 export class AnalyzeController {
   private analyzeService: unknown;

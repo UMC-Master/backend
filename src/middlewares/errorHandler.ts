@@ -7,6 +7,10 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  if (res.headersSent) {
+    return next(error);
+  }
+
   if (isCommonError(error)) {
     res.status(getHttpStatusCode(error.errorCode)).json({
       isSuccess: false,
@@ -22,6 +26,8 @@ export const errorHandler = (
       message: '서버 에러가 발생했습니다.',
     });
   }
+
+  next();
 };
 
 // 에러 코드에 따른 상태 코드 반환 함수

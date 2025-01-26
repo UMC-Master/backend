@@ -1,4 +1,5 @@
 import { Router ,Request, Response } from 'express';
+import 'express-async-errors';
 
 export class BookmarkController {
     public router: Router;

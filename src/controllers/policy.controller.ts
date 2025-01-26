@@ -6,6 +6,7 @@ import {
 } from '../dtos/policy.dto.js';
 import { StatusCodes } from 'http-status-codes';
 import { PolicyService } from '../services/policy.service.js';
+import 'express-async-errors';
 
 export class PolicyController {
   private policyService: PolicyService;
