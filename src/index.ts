@@ -12,6 +12,7 @@ import { PolicyController } from './controllers/policy.controller.js';
 import { UserManageController } from './controllers/user.manage.controller.js';
 import { QuizController } from './controllers/quiz.controller.js';
 import { AdminController } from './controllers/admin.controller';
+import { CommonError } from './errors/errors.js';
 
 dotenv.config();
 
@@ -19,8 +20,12 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // 응답 헬퍼 미들웨어 정의
-const setupResponseHelpers = (req: Request, res: Response, next: NextFunction) => {
-  res.success = (response: unknown, message = '성공입니다.', code = 'COMMON200') => {
+const setupResponseHelpers = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  res.success = (response, message = '성공입니다.', code = 'COMMON200') => {
     return res.json({ isSuccess: true, code, message, result: response });
   };
 
@@ -29,7 +34,12 @@ const setupResponseHelpers = (req: Request, res: Response, next: NextFunction) =
     reason = '요청 처리 중 오류가 발생했습니다.',
     data = null,
   }) => {
-    return res.json({ isSuccess: false, code: errorCode, message: reason, result: data });
+    return res.status(400).json({
+      isSuccess: false,
+      code: errorCode,
+      message: reason,
+      result: data,
+    });
   };
 
   next();
@@ -63,7 +73,9 @@ const setupControllers = (app: express.Express) => {
     new AdminController(),
   ];
 
-  controllers.forEach((controller) => app.use(controller.router));
+  controllers.forEach((controller) => {
+    app.use(controller.router);
+  });
 };
 
 // 루트 경로 설정

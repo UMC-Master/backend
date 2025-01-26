@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { AdminService } from '../services/admin.service';
 import { AdminCreateDto, AdminLoginDto, PasswordUpdateDto } from '../dtos/admin.dto';
 import { authenticateJWT } from '../middlewares/authenticateJWT';
+import 'express-async-errors';
 
 export class AdminController {
   private adminService: AdminService;

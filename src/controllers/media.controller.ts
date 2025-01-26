@@ -1,5 +1,6 @@
 // media.controller.ts
 import { Router, Request, Response } from 'express';
+import 'express-async-errors';
 
 export class MediaController {
   public router: Router;

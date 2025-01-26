@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { QuizListDto } from '../dtos/quiz.dto.js';
+import 'express-async-errors';
 
 export class QuizController {
   private quizService: unknown; // 이후 QuizService로 설정;

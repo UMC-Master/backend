@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { CommunityService } from '../services/community.service.js';
 import { StatusCodes } from 'http-status-codes'; // StatusCodes를 임포트
 import { authenticateJWT } from '../middlewares/authenticateJWT'; // 인증 미들웨어 import
+import 'express-async-errors';
 
 export class CommunityController {
   public router: Router;

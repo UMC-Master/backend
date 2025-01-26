@@ -13,6 +13,7 @@ import {
   UnauthorizedError,
   ResourceNotFoundError,
 } from '../errors/errors.js';
+import 'express-async-errors';
 
 export class UserController {
   private userService: UserService;

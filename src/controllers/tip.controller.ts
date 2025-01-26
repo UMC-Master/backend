@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { TipService } from '../services/tip.service.js'; // 팁 서비스 import
 import { StatusCodes } from 'http-status-codes'; // StatusCodes import
 import { authenticateJWT } from '../middlewares/authenticateJWT'; // 인증 미들웨어 import
+import 'express-async-errors';
 
 export class TipController {
   public tipService: TipService; // TipService 타입 명시
