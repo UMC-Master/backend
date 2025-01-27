@@ -12,12 +12,23 @@ const options = {
     servers: [
       {
         url: 'http://localhost:3000', // 서버 URL
+        description: '로컬 서버',
       },
       {
         url: 'http://43.200.212.90:3000', // ec2 서버 URL
+        description: 'ec2 서버',
       },
       {
         url: 'http://43.200.212.90:4000', // 이해승 test용 서버 URL
+        description: 'test용 서버 URL',
+      },
+      {
+        url: 'https://d22ej74ddyza9b.cloudfront.net', // 배포된 서버 URL 1
+        description: '임시 배포 서버',
+      },
+      {
+        url: 'https://https://api.hmaster.shop', // 배포된 서버 URL 1
+        description: '실배포 서버',
       },
     ],
   },
