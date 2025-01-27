@@ -1,3 +1,7 @@
+import {
+  LocationAlreadyExistError,
+  LocationNotFoundError,
+} from '../errors/location.error.js';
 import { LocationRepository } from '../repositories/location.repository.js';
 
 export class LocationService {
@@ -12,12 +16,12 @@ export class LocationService {
     if (parent_id) {
       const parent = await this.locationRepository.getById(parent_id);
       if (!parent) {
-        throw new Error(); // todo
+        throw new LocationNotFoundError({ location_id: parent_id });
       }
     }
     const location = await this.locationRepository.getByName(location_name);
     if (location) {
-      throw new Error(); // todo
+      throw new LocationAlreadyExistError({ location_name: location_name });
     }
 
     const createdLocation = await this.locationRepository.createLocation(
