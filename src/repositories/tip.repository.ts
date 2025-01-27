@@ -57,6 +57,19 @@ export class TipRepository {
       skipDuplicates: true,
     });
   }
+  public async getTips(skip: number, limit: number, orderBy?: object) {
+    return await prisma.tip.findMany({
+      skip,
+      take: limit,
+      orderBy,
+      include: {
+        likes: true, // 좋아요 정보 포함
+        saves: true, // 저장 정보 포함
+        hashtags: { include: { hashtag: true } }, // 해시태그 포함
+      },
+    });
+  }
+
 }
 
 

@@ -55,4 +55,29 @@ export class TipService {
     await this.tipRepository.deleteTip(tipId);
     return { isSuccess: true, message: 'Tip successfully deleted' };
   }
+ // 전체 꿀팁 조회 (페이지네이션)
+ public async getAllTips(options: { page: number; limit: number }) {
+  const { page, limit } = options;
+  const skip = (page - 1) * limit;
+
+  return await this.tipRepository.getTips(skip, limit);
+}
+
+// 정렬된 꿀팁 조회
+public async getSortedTips(options: { page: number; limit: number; sort: string }) {
+  const { page, limit, sort } = options;
+  const skip = (page - 1) * limit;
+
+  let orderBy;
+  if (sort === 'popular') {
+    orderBy = { likes: { _count: 'desc' } }; // 좋아요 기준 정렬
+  } else if (sort === 'saved') {
+    orderBy = { saves: { _count: 'desc' } }; // 저장 기준 정렬
+  } else {
+    orderBy = { created_at: 'desc' }; // 최신순 정렬
+  }
+
+  return await this.tipRepository.getTips(skip, limit, orderBy);
+}
+
 }
