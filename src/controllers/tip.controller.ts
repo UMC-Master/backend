@@ -40,21 +40,83 @@ export class TipController {
    *                 type: string
    *               content:
    *                 type: string
+   *               hashtags:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                   example: ["#food", "#travel"]
    *     responses:
-   *       200:
+   *       201:
    *         description: "새로운 팁 생성 성공"
    *         content:
    *           application/json:
    *             schema:
    *               type: object
    *               properties:
-   *                 tipId:
-   *                   type: integer
-   *                   example: 1
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "팁이 생성되었습니다."
+   *                 result:
+   *                   type: object
+   *                   properties:
+   *                     tip:
+   *                       type: object
+   *                       properties:
+   *                         tipId:
+   *                           type: integer
+   *                           example: 1
+   *                         title:
+   *                           type: string
+   *                           example: "Amazing Food Tips"
+   *                         description:
+   *                           type: string
+   *                           example: "Don't miss the local cuisine when traveling."
+   *                         author:
+   *                           type: object
+   *                           properties:
+   *                             userId:
+   *                               type: integer
+   *                               example: 1
+   *                             nickname:
+   *                               type: string
+   *                               example: "John Doe"
+   *                             profileImageUrl:
+   *                               type: string
+   *                               example: "https://example.com/profile.jpg"
+   *                         createdAt:
+   *                           type: string
+   *                           example: "2023-01-01T00:00:00Z"
+   *                         updatedAt:
+   *                           type: string
+   *                           example: "2023-01-01T00:00:00Z"
+   *                         likesCount:
+   *                           type: integer
+   *                           example: 5
+   *                         commentsCount:
+   *                           type: integer
+   *                           example: 3
+   *                         mediaUrls:
+   *                           type: array
+   *                           items:
+   *                             type: string
+   *                             example: ["https://example.com/media1.jpg"]
    *       400:
    *         description: "잘못된 요청"
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "제목 혹은 내용을 입력하셔야합니다다."
    */
-  // 팁 생성
   public async createTip(req: Request, res: Response, next: NextFunction) {
     try {
       const { title, content, hashtags } = req.body;
@@ -119,9 +181,24 @@ export class TipController {
    *             schema:
    *               type: object
    *               properties:
-   *                 tipId:
-   *                   type: integer
-   *                   example: 1
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "팁 수정 성공"
+   *                 result:
+   *                   type: object
+   *                   properties:
+   *                     tipId:
+   *                       type: integer
+   *                       example: 1
+   *                     title:
+   *                       type: string
+   *                       example: "Updated Food Tips"
+   *                     content:
+   *                       type: string
+   *                       example: "Make sure to try the street food!"
    *       400:
    *         description: "잘못된 요청"
    */
