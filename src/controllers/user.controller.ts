@@ -13,7 +13,6 @@ import {
   UnauthorizedError,
   ResourceNotFoundError,
 } from '../errors/errors.js';
-import 'express-async-errors';
 
 export class UserController {
   private userService: UserService;
@@ -64,7 +63,17 @@ export class UserController {
    *       content:
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/EmailSignupDto'
+   *             type: object
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 description: 회원가입할 이메일 주소
+   *               password:
+   *                 type: string
+   *                 description: 계정 비밀번호
+   *               nickname:
+   *                 type: string
+   *                 description: 사용자 닉네임
    *     responses:
    *       201:
    *         description: 회원가입 성공
@@ -98,7 +107,14 @@ export class UserController {
    *       content:
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/EmailLoginDto'
+   *             type: object
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 description: 로그인 이메일
+   *               password:
+   *                 type: string
+   *                 description: 계정 비밀번호
    *     responses:
    *       200:
    *         description: 로그인 성공
@@ -132,7 +148,11 @@ export class UserController {
    *       content:
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/KakaoLoginDto'
+   *             type: object
+   *             properties:
+   *               kakaoAccessToken:
+   *                 type: string
+   *                 description: 카카오 발급 액세스 토큰
    *     responses:
    *       200:
    *         description: 로그인 성공
@@ -142,32 +162,26 @@ export class UserController {
   public async kakaoLogin(req: Request, res: Response): Promise<void> {
     const { kakaoAccessToken }: KakaoLoginDto = req.body;
     if (!kakaoAccessToken) {
-      res
-        .status(400)
-        .json({
-          isSuccess: false,
-          message: '카카오 Access Token이 필요합니다.',
-        });
+      res.status(400).json({
+        isSuccess: false,
+        message: '카카오 Access Token이 필요합니다.',
+      });
       return;
     }
 
     try {
       const tokens = await this.userService.kakaoLogin(kakaoAccessToken);
-      res
-        .status(200)
-        .json({
-          isSuccess: true,
-          message: '카카오 로그인 성공',
-          result: tokens,
-        });
+      res.status(200).json({
+        isSuccess: true,
+        message: '카카오 로그인 성공',
+        result: tokens,
+      });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          isSuccess: false,
-          message: '카카오 로그인 실패',
-          error: error.message,
-        });
+      res.status(500).json({
+        isSuccess: false,
+        message: '카카오 로그인 실패',
+        error: error.message,
+      });
     }
   }
 
@@ -215,7 +229,17 @@ export class UserController {
    *       content:
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/ProfileUpdateDto'
+   *             type: object
+   *             properties:
+   *               nickname:
+   *                 type: string
+   *                 description: 새로운 닉네임
+   *               city:
+   *                 type: string
+   *                 description: 새로운 도시 정보
+   *               district:
+   *                 type: string
+   *                 description: 새로운 구 정보
    *     responses:
    *       200:
    *         description: 프로필 수정 성공
@@ -226,13 +250,11 @@ export class UserController {
     const userId = req.user?.userId;
     const data: ProfileUpdateDto = req.body;
     const updatedProfile = await this.userService.updateProfile(userId, data);
-    res
-      .status(200)
-      .json({
-        isSuccess: true,
-        message: '프로필 수정 성공',
-        result: updatedProfile,
-      });
+    res.status(200).json({
+      isSuccess: true,
+      message: '프로필 수정 성공',
+      result: updatedProfile,
+    });
   }
 
   /**
@@ -252,7 +274,7 @@ export class UserController {
    *             properties:
    *               email:
    *                 type: string
-   *                 description: 사용자 이메일
+   *                 description: 비밀번호 재설정을 요청할 이메일
    *     responses:
    *       200:
    *         description: 비밀번호 재설정 요청 성공
@@ -288,7 +310,7 @@ export class UserController {
    *                 description: 비밀번호 재설정 토큰
    *               newPassword:
    *                 type: string
-   *                 description: 새 비밀번호
+   *                 description: 새로운 비밀번호
    *     responses:
    *       200:
    *         description: 비밀번호 재설정 성공
