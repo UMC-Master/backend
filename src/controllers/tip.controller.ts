@@ -54,29 +54,33 @@ export class TipController {
    *       400:
    *         description: "잘못된 요청"
    */
-  private async createTip(req: Request, res: Response, next: NextFunction) {
+  // 팁 생성
+  public async createTip(req: Request, res: Response, next: NextFunction) {
     try {
-      const { title, content } = req.body;  // 요청 바디에서 제목과 내용 추출
-      const userId = req.user?.userId; // 인증된 사용자의 ID
+      const { title, content, hashtags } = req.body;
+      const userId = req.user?.userId;
 
       if (!title || !content) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           isSuccess: false,
-          code: 'COMMON400',
-          message: 'Title and content are required.',
+          message: '제목 혹은 내용을 입력하셔야합니다다.',
         });
       }
 
-      // 팁 생성
-      const newTip = await this.tipService.createTip(userId, title, content); 
-      res.status(StatusCodes.OK).json({
+      const newTip = await this.tipService.createTip({
+        userId: userId,
+        title: title,
+        content: content,
+        hashtags: hashtags, // 사용자가 선택한 해시태그
+      });
+
+      res.status(StatusCodes.CREATED).json({
         isSuccess: true,
-        code: 'COMMON200',
-        message: 'Tip created successfully.',
-        result: { data: newTip },  // 생성된 팁을 반환
+        message: '팁이 생성되었습니다.',
+        result: { tip: newTip },
       });
     } catch (error) {
-      next(error);  // 에러 처리
+      next(error);
     }
   }
 

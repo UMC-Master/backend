@@ -44,4 +44,20 @@ export class TipRepository {
       where: { tips_id: tipId },
     });
   }
+
+  // 팁과 해시태그 연결
+  public async associateHashtagsWithTip(tips_id: number, hashtagIds: number[]) {
+    const data = hashtagIds.map((hashtag_id) => ({
+      tips_id,
+      hashtag_id,
+    }));
+
+    return await prisma.tipHashtag.createMany({
+      data,
+      skipDuplicates: true,
+    });
+  }
 }
+
+
+
