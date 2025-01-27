@@ -29,7 +29,7 @@ export class PolicyController {
      *       - Policy
      *     parameters:
      *       - in: query
-     *         name: region_id
+     *         name: location_id
      *         required: true
      *         description: "정책을 조회할 지역의 ID"
      *         schema:
@@ -455,9 +455,9 @@ export class PolicyController {
   }
 
   private async getPolicies(req: Request, res: Response) {
-    const region_id: number = +req.query.region_id;
+    const location_id: number = +req.query.location_id;
     const policy_list =
-      await this.policyService.getPolicyListByLocation(region_id);
+      await this.policyService.getPolicyListByLocation(location_id);
     const output: PolicyListDto = {
       policy_list: policy_list.map((policy) => ({
         id: policy.magazine_id,
