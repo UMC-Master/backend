@@ -19,6 +19,8 @@ export class TipController {
     this.router.post('/api/v1/tips', authenticateJWT, this.createTip.bind(this)); // 팁 생성
     this.router.put('/api/v1/tips/:tipId', authenticateJWT, this.updateTip.bind(this)); // 팁 수정
     this.router.delete('/api/v1/tips/:tipId', authenticateJWT, this.deleteTip.bind(this)); // 팁 삭제
+    this.router.get('/api/v1/tips', this.getAllTips.bind(this)); // 전체 꿀팁 조회
+    this.router.get('/api/v1/tips/sorted', this.getSortedTips.bind(this)); // 정렬된 꿀팁 조회
   }
 
   /**
@@ -40,43 +42,109 @@ export class TipController {
    *                 type: string
    *               content:
    *                 type: string
+   *               hashtags:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                   example: ["#food", "#travel"]
    *     responses:
-   *       200:
+   *       201:
    *         description: "새로운 팁 생성 성공"
    *         content:
    *           application/json:
    *             schema:
    *               type: object
    *               properties:
-   *                 tipId:
-   *                   type: integer
-   *                   example: 1
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "팁이 생성되었습니다."
+   *                 result:
+   *                   type: object
+   *                   properties:
+   *                     tip:
+   *                       type: object
+   *                       properties:
+   *                         tipId:
+   *                           type: integer
+   *                           example: 1
+   *                         title:
+   *                           type: string
+   *                           example: "Amazing Food Tips"
+   *                         description:
+   *                           type: string
+   *                           example: "Don't miss the local cuisine when traveling."
+   *                         author:
+   *                           type: object
+   *                           properties:
+   *                             userId:
+   *                               type: integer
+   *                               example: 1
+   *                             nickname:
+   *                               type: string
+   *                               example: "John Doe"
+   *                             profileImageUrl:
+   *                               type: string
+   *                               example: "https://example.com/profile.jpg"
+   *                         createdAt:
+   *                           type: string
+   *                           example: "2023-01-01T00:00:00Z"
+   *                         updatedAt:
+   *                           type: string
+   *                           example: "2023-01-01T00:00:00Z"
+   *                         likesCount:
+   *                           type: integer
+   *                           example: 5
+   *                         commentsCount:
+   *                           type: integer
+   *                           example: 3
+   *                         mediaUrls:
+   *                           type: array
+   *                           items:
+   *                             type: string
+   *                             example: ["https://example.com/media1.jpg"]
    *       400:
    *         description: "잘못된 요청"
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "제목 혹은 내용을 입력하셔야합니다다."
    */
-  private async createTip(req: Request, res: Response, next: NextFunction) {
+  public async createTip(req: Request, res: Response, next: NextFunction) {
     try {
-      const { title, content } = req.body;  // 요청 바디에서 제목과 내용 추출
-      const userId = req.user?.userId; // 인증된 사용자의 ID
+      const { title, content, hashtags } = req.body;
+      const userId = req.user?.userId;
 
       if (!title || !content) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           isSuccess: false,
-          code: 'COMMON400',
-          message: 'Title and content are required.',
+          message: '제목 혹은 내용을 입력하셔야합니다다.',
         });
       }
 
-      // 팁 생성
-      const newTip = await this.tipService.createTip(userId, title, content); 
-      res.status(StatusCodes.OK).json({
+      const newTip = await this.tipService.createTip({
+        userId: userId,
+        title: title,
+        content: content,
+        hashtags: hashtags, // 사용자가 선택한 해시태그
+      });
+
+      res.status(StatusCodes.CREATED).json({
         isSuccess: true,
-        code: 'COMMON200',
-        message: 'Tip created successfully.',
-        result: { data: newTip },  // 생성된 팁을 반환
+        message: '팁이 생성되었습니다.',
+        result: { tip: newTip },
       });
     } catch (error) {
-      next(error);  // 에러 처리
+      next(error);
     }
   }
 
@@ -115,9 +183,24 @@ export class TipController {
    *             schema:
    *               type: object
    *               properties:
-   *                 tipId:
-   *                   type: integer
-   *                   example: 1
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "팁 수정 성공"
+   *                 result:
+   *                   type: object
+   *                   properties:
+   *                     tipId:
+   *                       type: integer
+   *                       example: 1
+   *                     title:
+   *                       type: string
+   *                       example: "Updated Food Tips"
+   *                     content:
+   *                       type: string
+   *                       example: "Make sure to try the street food!"
    *       400:
    *         description: "잘못된 요청"
    */
@@ -184,4 +267,203 @@ export class TipController {
       next(error);  // 에러 처리
     }
   }
+
+  
+   /**
+   * @swagger
+   * /api/v1/tips:
+   *   get:
+   *     summary: "전체 꿀팁 조회 (페이지네이션)"
+   *     description: "전체 꿀팁을 페이지네이션을 통해 조회합니다."
+   *     tags:
+   *       - Tips
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         required: false
+   *         description: "현재 페이지 번호"
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *       - in: query
+   *         name: limit
+   *         required: false
+   *         description: "한 페이지에 표시될 꿀팁의 수"
+   *         schema:
+   *           type: integer
+   *           default: 10
+   *     responses:
+   *       200:
+   *         description: "전체 꿀팁 조회 성공"
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "전체 꿀팁 조회 성공"
+   *                 result:
+   *                   type: object
+   *                   properties:
+   *                     tips:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           tipId:
+   *                             type: integer
+   *                             example: 1
+   *                           title:
+   *                             type: string
+   *                             example: "Amazing Food Tips"
+   *                           description:
+   *                             type: string
+   *                             example: "Don't miss the local cuisine when traveling."
+   *                           author:
+   *                             type: object
+   *                             properties:
+   *                               userId:
+   *                                 type: integer
+   *                                 example: 1
+   *                               nickname:
+   *                                 type: string
+   *                                 example: "John Doe"
+   *                               profileImageUrl:
+   *                                 type: string
+   *                                 example: "https://example.com/profile.jpg"
+   *                           createdAt:
+   *                             type: string
+   *                             example: "2023-01-01T00:00:00Z"
+   *                           updatedAt:
+   *                             type: string
+   *                             example: "2023-01-01T00:00:00Z"
+   *       400:
+   *         description: "잘못된 요청"
+   */
+   public async getAllTips(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      
+      const tips = await this.tipService.getAllTips({
+        page: Number(page),
+        limit: Number(limit),
+      });
+
+      res.status(StatusCodes.OK).json({
+        isSuccess: true,
+        message: '전체 꿀팁 조회 성공',
+        result: { tips },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/v1/tips/sorted:
+   *   get:
+   *     summary: "정렬된 꿀팁 조회"
+   *     description: "정렬된 꿀팁을 조회합니다. 정렬 기준을 설정할 수 있습니다."
+   *     tags:
+   *       - Tips
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         required: false
+   *         description: "현재 페이지 번호"
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *       - in: query
+   *         name: limit
+   *         required: false
+   *         description: "한 페이지에 표시될 꿀팁의 수"
+   *         schema:
+   *           type: integer
+   *           default: 10
+   *       - in: query
+   *         name: sort
+   *         required: false
+   *         description: "정렬 기준 (latest, likes, saves)"
+   *         schema:
+   *           type: string
+   *           enum: [latest, likes, saves]
+   *           default: "latest"
+   *     responses:
+   *       200:
+   *         description: "정렬된 꿀팁 조회 성공"
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "정렬된 꿀팁 조회 성공"
+   *                 result:
+   *                   type: object
+   *                   properties:
+   *                     tips:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           tipId:
+   *                             type: integer
+   *                             example: 1
+   *                           title:
+   *                             type: string
+   *                             example: "Amazing Food Tips"
+   *                           description:
+   *                             type: string
+   *                             example: "Don't miss the local cuisine when traveling."
+   *                           author:
+   *                             type: object
+   *                             properties:
+   *                               userId:
+   *                                 type: integer
+   *                                 example: 1
+   *                               nickname:
+   *                                 type: string
+   *                                 example: "John Doe"
+   *                               profileImageUrl:
+   *                                 type: string
+   *                                 example: "https://example.com/profile.jpg"
+   *                           createdAt:
+   *                             type: string
+   *                             example: "2023-01-01T00:00:00Z"
+   *                           updatedAt:
+   *                             type: string
+   *                             example: "2023-01-01T00:00:00Z"
+   *       400:
+   *         description: "잘못된 요청"
+   */
+  public async getSortedTips(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { page = 1, limit = 10, sort = 'latest' } = req.query;
+
+      const tips = await this.tipService.getSortedTips({
+        page: Number(page),
+        limit: Number(limit),
+        sort: String(sort),
+      });
+
+      res.status(StatusCodes.OK).json({
+        isSuccess: true,
+        message: '정렬된 꿀팁 조회 성공',
+        result: { tips },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
 }

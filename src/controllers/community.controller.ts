@@ -22,8 +22,8 @@ export class CommunityController {
     this.router.post('/api/v1/tips/:tipId/like', authenticateJWT, this.likeTip.bind(this)); // 꿀팁 좋아요 
     this.router.delete('/api/v1/tips/:tipId/like', authenticateJWT, this.removeLike.bind(this)); // 꿀팁 좋아요 삭제 
     this.router.post('/api/v1/tips/:tipId/save', authenticateJWT, this.saveTip.bind(this));//꿀팁 저장 
-    this.router.delete('/api/v1/tips/:tipId/save', authenticateJWT, this.removeSave.bind(this));// 꿑팁 저장 삭제  
-     
+    this.router.delete('/api/v1/tips/:tipId/save', authenticateJWT, this.removeSave.bind(this));// 꿀팁 저장 삭제  
+  
   }
 
 
