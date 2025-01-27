@@ -42,17 +42,31 @@ export class PolicyController {
      *             schema:
      *               type: object
      *               properties:
-     *                 policyList:
-     *                   type: array
-     *                   items:
-     *                     type: object
-     *                     properties:
-     *                       title:
-     *                         type: string
-     *                         description: "정책의 제목"
-     *                       image:
-     *                         type: string
-     *                         description: "정책 관련 이미지 URL"
+     *                 isSuccess:
+     *                   type: boolean
+     *                   description: "요청 성공 여부"
+     *                 code:
+     *                   type: string
+     *                   description: "응답 코드"
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   description: "응답 메시지"
+     *                   example: "성공입니다."
+     *                 result:
+     *                   type: object
+     *                   properties:
+     *                     policyList:
+     *                       type: array
+     *                       items:
+     *                         type: object
+     *                         properties:
+     *                           title:
+     *                             type: string
+     *                             description: "정책의 제목"
+     *                           image:
+     *                             type: string
+     *                             description: "정책 관련 이미지 URL"
      *       400:
      *         description: "잘못된 요청"
      */
@@ -82,20 +96,34 @@ export class PolicyController {
      *             schema:
      *               type: object
      *               properties:
-     *                 policyId:
-     *                   type: integer
-     *                   example: 1
-     *                   description: "정책의 고유 ID"
-     *                 description:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   description: "요청 성공 여부"
+     *                 code:
      *                   type: string
-     *                   example: "이 정책은 특정 지역의 환경 보호를 위한 정책입니다."
-     *                   description: "정책에 대한 설명"
-     *                 imageUrlList:
-     *                   type: array
-     *                   items:
-     *                     type: string
-     *                     example: "https://example.com/guide-image.png"
-     *                   description: "정책에 관련된 이미지 URL 리스트"
+     *                   description: "응답 코드"
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   description: "응답 메시지"
+     *                   example: "성공입니다."
+     *                 result:
+     *                   type: object
+     *                   properties:
+     *                     policyId:
+     *                       type: integer
+     *                       example: 1
+     *                       description: "정책의 고유 ID"
+     *                     description:
+     *                       type: string
+     *                       example: "이 정책은 특정 지역의 환경 보호를 위한 정책입니다."
+     *                       description: "정책에 대한 설명"
+     *                     imageUrlList:
+     *                       type: array
+     *                       items:
+     *                         type: string
+     *                         example: "https://example.com/guide-image.png"
+     *                       description: "정책에 관련된 이미지 URL 리스트"
      *       400:
      *         description: "잘못된 요청"
      *       500:
@@ -162,90 +190,104 @@ export class PolicyController {
      *             schema:
      *               type: object
      *               properties:
-     *                 id:
-     *                   type: integer
-     *                   example: 123
-     *                   description: "생성된 정책의 ID"
-     *                 title:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   description: "요청 성공 여부"
+     *                 code:
      *                   type: string
-     *                   example: "환경 보호 정책"
-     *                   description: "정책 제목"
-     *                 description:
+     *                   description: "응답 코드"
+     *                   example: "COMMON200"
+     *                 message:
      *                   type: string
-     *                   example: "지구 환경 보호를 위한 정책"
-     *                   description: "정책 설명"
-     *                 created_at:
-     *                   type: string
-     *                   format: date-time
-     *                   example: "2025-01-19T12:00:00Z"
-     *                   description: "정책 생성 시간"
-     *                 updated_at:
-     *                   type: string
-     *                   format: date-time
-     *                   example: "2025-01-19T12:00:00Z"
-     *                   description: "정책 수정 시간"
-     *                 policy_url:
-     *                   type: string
-     *                   example: "https://example.com/policy"
-     *                   description: "정책 URL"
-     *                 magazine_image_url_list:
-     *                   type: array
-     *                   items:
-     *                     type: object
-     *                     properties:
-     *                       image_name:
-     *                         type: string
-     *                         example: "policy-image.jpg"
-     *                         description: "이미지 파일 이름"
-     *                       image_url:
-     *                         type: string
-     *                         example: "https://example.com/policy-image.jpg"
-     *                         description: "이미지 URL"
-     *                   description: "정책과 관련된 이미지 리스트 (옵션)"
-     *                 magazine_likes:
-     *                   type: integer
-     *                   example: 10
-     *                   description: "정책 좋아요 수"
-     *                 magazine_bookmarks:
-     *                   type: integer
-     *                   example: 5
-     *                   description: "정책 북마크 수"
-     *                 organization:
+     *                   description: "응답 메시지"
+     *                   example: "성공입니다."
+     *                 result:
      *                   type: object
      *                   properties:
      *                     id:
      *                       type: integer
-     *                       example: 1
-     *                       description: "조직 ID"
-     *                     name:
+     *                       example: 123
+     *                       description: "생성된 정책의 ID"
+     *                     title:
      *                       type: string
-     *                       example: "환경 보호 재단"
-     *                       description: "조직 이름"
-     *                 location:
-     *                   type: object
-     *                   properties:
-     *                     id:
+     *                       example: "환경 보호 정책"
+     *                       description: "정책 제목"
+     *                     description:
+     *                       type: string
+     *                       example: "지구 환경 보호를 위한 정책"
+     *                       description: "정책 설명"
+     *                     created_at:
+     *                       type: string
+     *                       format: date-time
+     *                       example: "2025-01-19T12:00:00Z"
+     *                       description: "정책 생성 시간"
+     *                     updated_at:
+     *                       type: string
+     *                       format: date-time
+     *                       example: "2025-01-19T12:00:00Z"
+     *                       description: "정책 수정 시간"
+     *                     policy_url:
+     *                       type: string
+     *                       example: "https://example.com/policy"
+     *                       description: "정책 URL"
+     *                     magazine_image_url_list:
+     *                       type: array
+     *                       items:
+     *                         type: object
+     *                         properties:
+     *                           image_name:
+     *                             type: string
+     *                             example: "policy-image.jpg"
+     *                             description: "이미지 파일 이름"
+     *                           image_url:
+     *                             type: string
+     *                             example: "https://example.com/policy-image.jpg"
+     *                             description: "이미지 URL"
+     *                       description: "정책과 관련된 이미지 리스트 (옵션)"
+     *                     magazine_likes:
      *                       type: integer
-     *                       example: 101
-     *                       description: "위치 ID"
-     *                     name:
-     *                       type: string
-     *                       example: "서울"
-     *                       description: "위치 이름"
-     *                 hashtag:
-     *                   type: array
-     *                   items:
-     *                     type: object
-     *                     properties:
-     *                       id:
-     *                         type: integer
-     *                         example: 101
-     *                         description: "해시태그 ID"
-     *                       name:
-     *                         type: string
-     *                         example: "#환경"
-     *                         description: "해시태그 이름"
-     *                   description: "정책과 관련된 해시태그 목록"
+     *                       example: 10
+     *                       description: "정책 좋아요 수"
+     *                     magazine_bookmarks:
+     *                       type: integer
+     *                       example: 5
+     *                       description: "정책 북마크 수"
+     *                     organization:
+     *                       type: object
+     *                       properties:
+     *                         id:
+     *                           type: integer
+     *                           example: 1
+     *                           description: "조직 ID"
+     *                         name:
+     *                           type: string
+     *                           example: "환경 보호 재단"
+     *                           description: "조직 이름"
+     *                     location:
+     *                       type: object
+     *                       properties:
+     *                         id:
+     *                           type: integer
+     *                           example: 101
+     *                           description: "위치 ID"
+     *                         name:
+     *                           type: string
+     *                           example: "서울"
+     *                           description: "위치 이름"
+     *                     hashtag:
+     *                       type: array
+     *                       items:
+     *                         type: object
+     *                         properties:
+     *                           id:
+     *                             type: integer
+     *                             example: 101
+     *                             description: "해시태그 ID"
+     *                           name:
+     *                             type: string
+     *                             example: "환경"
+     *                             description: "해시태그 이름"
+     *                       description: "정책과 관련된 해시태그 목록"
      *       400:
      *         description: "잘못된 요청"
      *       500:
@@ -277,10 +319,24 @@ export class PolicyController {
      *             schema:
      *               type: object
      *               properties:
-     *                 answer:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   description: "요청 성공 여부"
+     *                 code:
      *                   type: string
-     *                   example: "성공적으로 삭제되었습니다!"
-     *                   description: "성공 메시지"
+     *                   description: "응답 코드"
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   description: "응답 메시지"
+     *                   example: "성공입니다."
+     *                 result:
+     *                   type: object
+     *                   properties:
+     *                     answer:
+     *                       type: string
+     *                       example: "성공적으로 삭제되었습니다!"
+     *                       description: "성공 메시지"
      *       400:
      *         description: "잘못된 요청 (유효하지 않은 정책 ID)"
      *       404:
@@ -357,90 +413,105 @@ export class PolicyController {
      *             schema:
      *               type: object
      *               properties:
-     *                 id:
-     *                   type: integer
-     *                   example: 123
-     *                   description: "생성된 정책의 ID"
-     *                 title:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   description: "요청 성공 여부"
+     *                 code:
      *                   type: string
-     *                   example: "환경 보호 정책"
-     *                   description: "정책 제목"
-     *                 description:
+     *                   description: "응답 코드"
+     *                   example: "COMMON200"
+     *                 message:
      *                   type: string
-     *                   example: "지구 환경 보호를 위한 정책"
-     *                   description: "정책 설명"
-     *                 created_at:
-     *                   type: string
-     *                   format: date-time
-     *                   example: "2025-01-19T12:00:00Z"
-     *                   description: "정책 생성 시간"
-     *                 updated_at:
-     *                   type: string
-     *                   format: date-time
-     *                   example: "2025-01-19T12:00:00Z"
-     *                   description: "정책 수정 시간"
-     *                 policy_url:
-     *                   type: string
-     *                   example: "https://example.com/policy"
-     *                   description: "정책 URL"
-     *                 magazine_image_url_list:
-     *                   type: array
-     *                   items:
-     *                     type: object
-     *                     properties:
-     *                       image_name:
-     *                         type: string
-     *                         example: "policy-image.jpg"
-     *                         description: "이미지 파일 이름"
-     *                       image_url:
-     *                         type: string
-     *                         example: "https://example.com/policy-image.jpg"
-     *                         description: "이미지 URL"
-     *                   description: "정책과 관련된 이미지 리스트 (옵션)"
-     *                 magazine_likes:
-     *                   type: integer
-     *                   example: 10
-     *                   description: "정책 좋아요 수"
-     *                 magazine_bookmarks:
-     *                   type: integer
-     *                   example: 5
-     *                   description: "정책 북마크 수"
-     *                 organization:
+     *                   description: "응답 메시지"
+     *                   example: "성공입니다."
+     *                 result:
      *                   type: object
      *                   properties:
      *                     id:
      *                       type: integer
-     *                       example: 1
-     *                       description: "조직 ID"
-     *                     name:
+     *                       example: 123
+     *                       description: "생성된 정책의 ID"
+     *                     title:
      *                       type: string
-     *                       example: "환경 보호 재단"
-     *                       description: "조직 이름"
-     *                 location:
-     *                   type: object
-     *                   properties:
-     *                     id:
+     *                       example: "환경 보호 정책"
+     *                       description: "정책 제목"
+     *                     description:
+     *                       type: string
+     *                       example: "지구 환경 보호를 위한 정책"
+     *                       description: "정책 설명"
+     *                     created_at:
+     *                       type: string
+     *                       format: date-time
+     *                       example: "2025-01-19T12:00:00Z"
+     *                       description: "정책 생성 시간"
+     *                     updated_at:
+     *                       type: string
+     *                       format: date-time
+     *                       example: "2025-01-19T12:00:00Z"
+     *                       description: "정책 수정 시간"
+     *                     policy_url:
+     *                       type: string
+     *                       example: "https://example.com/policy"
+     *                       description: "정책 URL"
+     *                     magazine_image_url_list:
+     *                       type: array
+     *                       items:
+     *                         type: object
+     *                         properties:
+     *                           image_name:
+     *                             type: string
+     *                             example: "policy-image.jpg"
+     *                             description: "이미지 파일 이름"
+     *                           image_url:
+     *                             type: string
+     *                             example: "https://example.com/policy-image.jpg"
+     *                             description: "이미지 URL"
+     *                       description: "정책과 관련된 이미지 리스트 (옵션)"
+     *                     magazine_likes:
      *                       type: integer
-     *                       example: 101
-     *                       description: "위치 ID"
-     *                     name:
-     *                       type: string
-     *                       example: "서울"
-     *                       description: "위치 이름"
-     *                 hashtag:
-     *                   type: array
-     *                   items:
-     *                     type: object
-     *                     properties:
-     *                       id:
-     *                         type: integer
-     *                         example: 101
-     *                         description: "해시태그 ID"
-     *                       name:
-     *                         type: string
-     *                         example: "#환경"
-     *                         description: "해시태그 이름"
-     *                   description: "정책과 관련된 해시태그 목록"
+     *                       example: 10
+     *                       description: "정책 좋아요 수"
+     *                     magazine_bookmarks:
+     *                       type: integer
+     *                       example: 5
+     *                       description: "정책 북마크 수"
+     *                     organization:
+     *                       type: object
+     *                       properties:
+     *                         id:
+     *                           type: integer
+     *                           example: 1
+     *                           description: "조직 ID"
+     *                         name:
+     *                           type: string
+     *                           example: "환경 보호 재단"
+     *                           description: "조직 이름"
+     *                     location:
+     *                       type: object
+     *                       properties:
+     *                         id:
+     *                           type: integer
+     *                           example: 101
+     *                           description: "위치 ID"
+     *                         name:
+     *                           type: string
+     *                           example: "서울"
+     *                           description: "위치 이름"
+     *                     hashtag:
+     *                       type: array
+     *                       items:
+     *                         type: object
+     *                         properties:
+     *                           id:
+     *                             type: integer
+     *                             example: 101
+     *                             description: "해시태그 ID"
+     *                           name:
+     *                             type: string
+     *                             example: "#환경"
+     *                             description: "해시태그 이름"
+     *                       description: "정책과 관련된 해시태그 목록"
+     *
      *       400:
      *         description: "잘못된 요청"
      *       404:
