@@ -22,4 +22,16 @@ export class LocationRepository {
       },
     });
   }
+
+  async createLocation(name: string, parent_id: number) {
+    return await this.prisma.location.create({
+      data: {
+        parent_id: parent_id,
+        name: name,
+      },
+      include: {
+        parent: true,
+      },
+    });
+  }
 }
