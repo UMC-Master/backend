@@ -13,6 +13,12 @@ const options = {
       {
         url: 'http://localhost:3000', // 서버 URL
       },
+      {
+        url: 'http://43.200.212.90:3000', // ec2 서버 URL
+      },
+      {
+        url: 'http://43.200.212.90:4000', // 이해승 test용 서버 URL
+      },
     ],
   },
   apis: ['./src/controllers/*.ts'], // 컨트롤러 파일 경로
