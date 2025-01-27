@@ -34,4 +34,12 @@ export class LocationRepository {
       },
     });
   }
+
+  async getAll() {
+    return await this.prisma.location.findMany({
+      include: {
+        parent: true,
+      },
+    });
+  }
 }

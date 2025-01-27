@@ -27,4 +27,8 @@ export class LocationService {
 
     return createdLocation;
   }
+
+  public async getAll() {
+    return await this.locationRepository.getAll();
+  }
 }
