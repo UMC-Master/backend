@@ -3,9 +3,11 @@ import { DuplicateUserEmailError } from '../errors/errors';
 
 interface UserData {
   email?: string;
+  password?: string;
   nickname?: string;
   provider: string;
   providerId: string;
+  profileImage?: string;
   status: string; // 추가
 }
 
@@ -30,6 +32,19 @@ export class UserRepository {
     });
   }
 
+  // ✅ 특정 providerId로 사용자 조회 (추가)
+  async findUserByProviderId(
+    provider: string,
+    providerId: string
+  ): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        provider,
+        providerId,
+      },
+    });
+  }
+
   // 사용자 업데이트
   async updateUser(
     userId: number,
@@ -41,17 +56,24 @@ export class UserRepository {
     });
   }
 
-  // 사용자 생성
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+  // ✅ 사용자 생성 (providerId 포함)
+  async createUser(userData: UserData): Promise<User> {
     try {
-      return await this.prisma.user.create({ data });
+      return await this.prisma.user.create({
+        data: {
+          email: userData.email,
+          nickname: userData.nickname,
+          provider: userData.provider,
+          providerId: userData.providerId,
+          profile_image_url: userData.profileImage,
+          status: userData.status,
+        },
+      });
     } catch (error: unknown) {
       if (this.isPrismaError(error) && error.code === 'P2002') {
         throw new DuplicateUserEmailError(
-          '이미 사용 중인 이메일 또는 닉네임입니다.',
-          {
-            target: error.meta?.target,
-          }
+          '이미 등록된 이메일입니다.',
+          userData.email
         );
       }
       throw error;
@@ -66,37 +88,15 @@ export class UserRepository {
     });
   }
 
-  // 카카오 사용자 데이터베이스 확인 또는 생성
+  // ✅ 특정 providerId로 사용자 조회 후 없으면 생성
   async findOrCreate(userData: UserData): Promise<User> {
-    // Step 1: 소셜 계정으로 사용자 조회
-    let user = await this.prisma.user.findFirst({
-      where: {
-        provider: userData.provider,
-        providerId: userData.providerId,
-      },
-    });
+    let user = await this.findUserByProviderId(
+      userData.provider,
+      userData.providerId
+    );
 
-    // Step 2: 사용자 생성 (존재하지 않을 경우)
     if (!user) {
-      try {
-        user = await this.prisma.user.create({
-          data: {
-            email: userData.email,
-            nickname: userData.nickname,
-            provider: userData.provider,
-            providerId: userData.providerId,
-            status: userData.status,
-          },
-        });
-      } catch (error: unknown) {
-        if (this.isPrismaError(error) && error.code === 'P2002') {
-          throw new DuplicateUserEmailError(
-            '이미 등록된 이메일입니다.',
-            userData.email
-          );
-        }
-        throw error;
-      }
+      user = await this.createUser(userData);
     }
 
     return user;
