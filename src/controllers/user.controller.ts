@@ -25,34 +25,51 @@ export class UserController {
   }
 
   private initializeRoutes() {
-    this.router.post('/signup', this.emailSignup.bind(this));
-    this.router.post('/login', this.emailLogin.bind(this));
-    this.router.post('/login/kakao', this.kakaoLogin.bind(this));
-    this.router.get('/profile', authenticateJWT, this.getProfile.bind(this));
-    this.router.put('/profile', authenticateJWT, this.updateProfile.bind(this));
-    this.router.post('/password/reset', this.requestPasswordReset.bind(this));
-    this.router.post('/password/reset/confirm', this.resetPassword.bind(this));
+    this.router.post('/api/v1/signup', this.emailSignup.bind(this));
+    this.router.post('/api/v1/login', this.emailLogin.bind(this));
+    this.router.post('/api/v1/login/kakao', this.kakaoLogin.bind(this));
+    this.router.get(
+      '/api/v1/profile',
+      authenticateJWT,
+      this.getProfile.bind(this)
+    );
+    this.router.put(
+      '/api/v1/profile',
+      authenticateJWT,
+      this.updateProfile.bind(this)
+    );
+    this.router.post(
+      '/api/v1/password/reset',
+      this.requestPasswordReset.bind(this)
+    );
+    this.router.post(
+      '/api/v1/password/reset/confirm',
+      this.resetPassword.bind(this)
+    );
     this.router.delete(
-      '/deactivate',
+      '/api/v1/deactivate',
       authenticateJWT,
       this.deactivateAccount.bind(this)
     );
     this.router.post(
-      '/reactivate',
+      '/api/v1/reactivate',
       authenticateJWT,
       this.reactivateAccount.bind(this)
     );
     this.router.get(
-      '/statistics',
+      '/api/v1/statistics',
       authenticateJWT,
       this.getStatistics.bind(this)
     );
-    this.router.post('/token/refresh', this.refreshAccessToken.bind(this));
+    this.router.post(
+      '/api/v1/token/refresh',
+      this.refreshAccessToken.bind(this)
+    );
   }
 
   /**
    * @swagger
-   * /signup:
+   * /api/v1/signup:
    *   post:
    *     summary: 이메일 회원가입
    *     description: 이메일, 비밀번호, 닉네임으로 회원가입합니다.
@@ -96,7 +113,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /login:
+   * /api/v1/login:
    *   post:
    *     summary: 이메일 로그인
    *     description: 이메일과 비밀번호를 사용하여 로그인합니다.
@@ -137,7 +154,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /login/kakao:
+   * /api/v1/login/kakao:
    *   post:
    *     summary: 카카오 로그인
    *     description: 카카오 액세스 토큰을 사용하여 로그인합니다.
@@ -187,7 +204,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /profile:
+   * /api/v1/profile:
    *   get:
    *     summary: 사용자 프로필 조회
    *     description: 현재 로그인된 사용자의 프로필 정보를 조회합니다.
@@ -216,7 +233,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /profile:
+   * /api/v1/profile:
    *   put:
    *     summary: 사용자 프로필 수정
    *     description: 현재 로그인된 사용자의 프로필 정보를 수정합니다.
@@ -259,7 +276,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /password/reset:
+   * /api/v1/password/reset:
    *   post:
    *     summary: 비밀번호 재설정 요청
    *     description: 이메일을 통해 비밀번호 재설정을 요청합니다.
@@ -292,7 +309,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /password/reset/confirm:
+   * /api/v1/password/reset/confirm:
    *   post:
    *     summary: 비밀번호 재설정 확인
    *     description: 토큰과 새 비밀번호를 사용하여 비밀번호를 재설정합니다.
@@ -328,7 +345,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /deactivate:
+   * /api/v1/deactivate:
    *   delete:
    *     summary: 계정 비활성화
    *     description: 현재 로그인된 사용자의 계정을 비활성화합니다.
@@ -350,7 +367,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /reactivate:
+   * /api/v1/reactivate:
    *   post:
    *     summary: 계정 활성화
    *     description: 비활성화된 계정을 다시 활성화합니다.
@@ -372,7 +389,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /statistics:
+   * /api/v1/statistics:
    *   get:
    *     summary: 사용자 통계 조회
    *     description: 현재 로그인된 사용자의 통계 정보를 조회합니다.
@@ -396,7 +413,7 @@ export class UserController {
 
   /**
    * @swagger
-   * /token/refresh:
+   * /api/v1/token/refresh:
    *   post:
    *     summary: Access Token 갱신
    *     description: Refresh Token을 사용하여 새로운 Access Token을 발급받습니다.
