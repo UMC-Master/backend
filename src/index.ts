@@ -16,6 +16,10 @@ import { LocationController } from './controllers/location.controller.js';
 
 dotenv.config();
 
+console.log('✅ JWT_SECRET 값:', process.env.JWT_SECRET);
+console.log('✅ ACCESS_TOKEN_SECRET 값:', process.env.ACCESS_TOKEN_SECRET);
+console.log('✅ REFRESH_TOKEN_SECRET 값:', process.env.REFRESH_TOKEN_SECRET);
+
 const app = express();
 const port = process.env.PORT || 3000;
 
