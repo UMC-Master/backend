@@ -12,7 +12,7 @@ import { PolicyController } from './controllers/policy.controller.js';
 import { UserManageController } from './controllers/user.manage.controller.js';
 import { QuizController } from './controllers/quiz.controller.js';
 import { AdminController } from './controllers/admin.controller';
-import { CommonError } from './errors/errors.js';
+import { LocationController } from './controllers/location.controller.js';
 
 dotenv.config();
 
@@ -71,6 +71,7 @@ const setupControllers = (app: express.Express) => {
     new UserManageController(),
     new QuizController(),
     new AdminController(),
+    new LocationController(),
   ];
 
   controllers.forEach((controller) => {
