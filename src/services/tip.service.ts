@@ -13,7 +13,12 @@ export class TipService {
   }
 
   // 팁 생성
-  public async createTip(data: { userId: number; title: string; content: string; hashtags: string[] }) {
+  public async createTip(data: {
+    userId: number;
+    title: string;
+    content: string;
+    hashtags: string[];
+  }) {
     // 중복된 팁 제목 검사
     const existingTip = await this.tipRepository.getTipByTitle(data.title);
     if (existingTip) {
@@ -21,23 +26,86 @@ export class TipService {
     }
 
     // 팁 생성
-    const newTip = await this.tipRepository.createTip({ userId: data.userId, title: data.title, content: data.content });
+    const newTip = await this.tipRepository.createTip({
+      userId: data.userId,
+      title: data.title,
+      content: data.content,
+    });
 
     // 해시태그 처리
-    const hashtagIds = [];
-    for (const hashtagName of data.hashtags) {
-      let hashtag = await this.hashtagRepository.getByName(hashtagName);
-      if (!hashtag) {
-        // 해시태그가 없으면 새로 생성
-        hashtag = await this.hashtagRepository.createHashtag(hashtagName, 1); // 예시로 `hashtag_type_id`는 1로 설정
+    const hashtagIds = new Set<number>();
+
+    for (const hashtag of data.hashtags) {
+      let hashtagId: number;
+
+      if (typeof hashtag === 'number') {
+        hashtagId = hashtag;
+      } else {
+        let existingHashtag = await this.hashtagRepository.getByName(
+          hashtag.trim()
+        );
+        if (!existingHashtag) {
+          existingHashtag = await this.hashtagRepository.createHashtag(
+            hashtag.trim(),
+            1
+          );
+        }
+        hashtagId = existingHashtag.hashtag_id;
       }
-      hashtagIds.push(hashtag.hashtag_id);
+
+      hashtagIds.add(hashtagId); // ✅ 중복 방지
     }
 
-    // 팁과 해시태그 연결
-    await this.tipRepository.associateHashtagsWithTip(newTip.tips_id, hashtagIds);
+    const hashtagMap = new Map<string, number>();
 
-    return toTipDto(newTip);
+    for (const hashtag of data.hashtags) {
+      let hashtagId: number;
+      let existingHashtag = await this.hashtagRepository.getByName(
+        hashtag.trim()
+      );
+
+      if (!existingHashtag) {
+        existingHashtag = await this.hashtagRepository.createHashtag(
+          hashtag.trim(),
+          1
+        );
+      }
+      hashtagId = existingHashtag.hashtag_id;
+
+      hashtagMap.set(hashtag.trim(), hashtagId);
+    }
+
+    // 팁과 해시태그 연결 (Set → Array 변환)
+    await this.tipRepository.associateHashtagsWithTip(
+      newTip.tips_id,
+      Array.from(hashtagIds)
+    );
+
+    // 해시태그 ID와 실제 이름 매칭
+    const hashtagData = await Promise.all(
+      Array.from(hashtagIds).map(async (id) => {
+        const hashtag = await this.hashtagRepository.getById(id);
+        return { hashtag_id: id, name: hashtag?.name || 'Unknown' };
+      })
+    );
+
+    return {
+      ...newTip,
+      hashtags: hashtagData,
+    };
+  }
+
+  // 팁 조회 (해시태그 변환 추가)
+  public async getTipById(tipId: number) {
+    const tip = await this.tipRepository.getTipById(tipId);
+
+    return {
+      ...tip,
+      hashtags: tip.hashtags.map((h) => ({
+        hashtag_id: h.hashtag.hashtag_id,
+        name: h.hashtag.name,
+      })),
+    };
   }
 
   // 팁 수정
@@ -55,29 +123,33 @@ export class TipService {
     await this.tipRepository.deleteTip(tipId);
     return { isSuccess: true, message: 'Tip successfully deleted' };
   }
- // 전체 꿀팁 조회 (페이지네이션)
- public async getAllTips(options: { page: number; limit: number }) {
-  const { page, limit } = options;
-  const skip = (page - 1) * limit;
 
-  return await this.tipRepository.getTips(skip, limit);
-}
+  // 전체 꿀팁 조회 (페이지네이션)
+  public async getAllTips(options: { page: number; limit: number }) {
+    const { page, limit } = options;
+    const skip = (page - 1) * limit;
 
-// 정렬된 꿀팁 조회
-public async getSortedTips(options: { page: number; limit: number; sort: string }) {
-  const { page, limit, sort } = options;
-  const skip = (page - 1) * limit;
-
-  let orderBy;
-  if (sort === 'popular') {
-    orderBy = { likes: { _count: 'desc' } }; // 좋아요 기준 정렬
-  } else if (sort === 'saved') {
-    orderBy = { saves: { _count: 'desc' } }; // 저장 기준 정렬
-  } else {
-    orderBy = { created_at: 'desc' }; // 최신순 정렬
+    return await this.tipRepository.getTips(skip, limit);
   }
 
-  return await this.tipRepository.getTips(skip, limit, orderBy);
-}
+  // 정렬된 꿀팁 조회
+  public async getSortedTips(options: {
+    page: number;
+    limit: number;
+    sort: string;
+  }) {
+    const { page, limit, sort } = options;
+    const skip = (page - 1) * limit;
 
+    let orderBy;
+    if (sort === 'popular') {
+      orderBy = { likes: { _count: 'desc' } }; // 좋아요 기준 정렬
+    } else if (sort === 'saved') {
+      orderBy = { saves: { _count: 'desc' } }; // 저장 기준 정렬
+    } else {
+      orderBy = { created_at: 'desc' }; // 최신순 정렬
+    }
+
+    return await this.tipRepository.getTips(skip, limit, orderBy);
+  }
 }
