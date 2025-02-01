@@ -27,7 +27,7 @@ const options = {
         description: '임시 배포 서버',
       },
       {
-        url: 'https://https://api.hmaster.shop', // 배포된 서버 URL 1
+        url: 'https://api.hmaster.shop', // 배포된 서버 URL 1
         description: '실배포 서버',
       },
     ],
