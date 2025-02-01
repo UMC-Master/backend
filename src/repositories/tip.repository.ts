@@ -1,6 +1,12 @@
-import { prisma } from '../db.config.js';
+import { PrismaClient } from '@prisma/client';
+import prisma from '../db.config.js'; // ✅ Prisma 싱글톤 사용
 
 export class TipRepository {
+  private prisma: PrismaClient;
+
+  constructor() {
+    this.prisma = new PrismaClient(); // ✅ Prisma 인스턴스 생성
+  }
 
   // 팁 제목으로 조회
   public async getTipByTitle(title: string) {
@@ -10,15 +16,25 @@ export class TipRepository {
   }
 
   // 팁 ID로 조회
-  public async getTipById(tipId: number) {
-    return await prisma.tip.findUnique({
+  async getTipById(tipId: number) {
+    return await this.prisma.tip.findUnique({
       where: { tips_id: tipId },
-      include: { likes: true, comments: true, media: true }  // 좋아요, 댓글, 미디어 포함
+      include: {
+        hashtags: {
+          include: {
+            hashtag: true, // ✅ 실제 해시태그 정보 포함
+          },
+        },
+      },
     });
   }
 
   // 팁 생성
-  public async createTip(data: { userId: number; title: string; content: string }) {
+  public async createTip(data: {
+    userId: number;
+    title: string;
+    content: string;
+  }) {
     return await prisma.tip.create({
       data: {
         title: data.title,
@@ -45,7 +61,7 @@ export class TipRepository {
     });
   }
 
-  // 팁과 해시태그 연결
+  // 팁과 해시태그 연결 (중복 방지)
   public async associateHashtagsWithTip(tips_id: number, hashtagIds: number[]) {
     const data = hashtagIds.map((hashtag_id) => ({
       tips_id,
@@ -54,9 +70,10 @@ export class TipRepository {
 
     return await prisma.tipHashtag.createMany({
       data,
-      skipDuplicates: true,
+      skipDuplicates: true, // ✅ 중복 방지
     });
   }
+
   public async getTips(skip: number, limit: number, orderBy?: object) {
     return await prisma.tip.findMany({
       skip,
@@ -69,8 +86,4 @@ export class TipRepository {
       },
     });
   }
-
 }
-
-
-
