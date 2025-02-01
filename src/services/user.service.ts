@@ -26,6 +26,8 @@ export class UserService {
     const user = await this.userRepository.createUser({
       ...data,
       password: hashedPassword,
+      provider: 'local',
+      providerId: data.email,
       status: 'ACTIVE',
     });
 
@@ -46,7 +48,7 @@ export class UserService {
 
     const accessToken = jwt.sign(
       { userId: user.user_id, email: user.email },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET || 'default_secret', // ✅ 환경변수가 없으면 기본값 사용
       { expiresIn: '1h' }
     );
 
@@ -76,46 +78,78 @@ export class UserService {
   }
 
   // 카카오 로그인
+  // ✅ 카카오 로그인 처리
   public async kakaoLogin(kakaoAccessToken: string) {
-    // Step 1: 카카오 사용자 정보 가져오기
-    const kakaoUserInfo = await this.getKakaoUserInfo(kakaoAccessToken);
+    try {
+      // ✅ 1. 카카오 사용자 정보 가져오기
+      const kakaoUserInfo = await this.getKakaoUserInfo(kakaoAccessToken);
 
-    // Step 2: 사용자 데이터베이스 확인 또는 생성
-    const user = await this.userRepository.findOrCreate({
-      email: kakaoUserInfo.email,
-      nickname: kakaoUserInfo.nickname,
-      provider: 'kakao',
-      providerId: kakaoUserInfo.id,
-      status: 'ACTIVE',
-    });
+      // ✅ 2. DB에서 사용자 조회 또는 생성
+      let user = await this.findOrCreateUserByKakaoId(kakaoUserInfo);
 
-    // Step 3: JWT 토큰 생성
-    const accessToken = this.generateAccessToken({
-      id: user.user_id,
-      email: user.email,
-    });
-    const refreshToken = this.generateRefreshToken({ id: user.user_id });
+      // ✅ 3. JWT 토큰 발급
+      const accessToken = this.generateAccessToken({
+        id: user.user_id, // ✅ user_id를 id로 매핑
+        email: user.email,
+      });
+      const refreshToken = this.generateRefreshToken({ id: user.user_id });
 
-    return { accessToken, refreshToken };
+      return { accessToken, refreshToken, user };
+    } catch (error) {
+      console.error('❌ 카카오 로그인 실패:', error.message);
+      throw new Error('카카오 로그인 중 오류 발생');
+    }
   }
 
+  // ✅ 카카오 사용자 정보 가져오기
   private async getKakaoUserInfo(accessToken: string) {
     try {
       const response = await axios.get('https://kapi.kakao.com/v2/user/me', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const data = response.data;
+
       if (!data || !data.kakao_account) {
         throw new Error('유효하지 않은 카카오 Access Token입니다.');
       }
+
       return {
-        id: data.id,
-        email: data.kakao_account.email,
-        nickname: data.kakao_account.profile.nickname,
+        id: data.id.toString(), // ✅ 유저 고유 ID (providerId)
+        email: data.kakao_account?.email || null, // ✅ 이메일 없으면 null
+        nickname: data.kakao_account?.profile.nickname || '사용자',
+        profileImage: data.kakao_account?.profile.profile_image_url || null,
       };
     } catch (error) {
-      throw new Error('카카오 사용자 정보 요청 실패');
+      console.error('❌ 카카오 사용자 정보 요청 실패:', error.message);
+      throw new Error('카카오 사용자 정보를 가져오는 중 오류 발생');
     }
+  }
+
+  // ✅ DB에서 카카오 사용자 조회 또는 생성
+  private async findOrCreateUserByKakaoId(kakaoUserInfo: {
+    id: string;
+    email: string | null;
+    nickname: string;
+    profileImage: string | null;
+  }) {
+    let user = await this.userRepository.findUserByProviderId(
+      'kakao',
+      kakaoUserInfo.id
+    );
+
+    if (!user) {
+      // 신규 회원가입 처리
+      user = await this.userRepository.createUser({
+        provider: 'kakao',
+        providerId: kakaoUserInfo.id,
+        email: kakaoUserInfo.email || `${kakaoUserInfo.id}@kakao.com`, // ✅ 이메일이 없으면 가짜 이메일 사용
+        nickname: kakaoUserInfo.nickname,
+        profileImage: kakaoUserInfo.profileImage,
+        status: 'ACTIVE',
+      });
+    }
+
+    return user;
   }
 
   // 비밀번호 재설정 요청

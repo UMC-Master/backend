@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Router, Request, Response } from 'express';
+import jwt from 'jsonwebtoken'; // JWT 토큰 발급
 import { UserService } from '../services/user.service';
 import { authenticateJWT } from '../middlewares/authenticateJWT';
 import {
@@ -13,6 +14,9 @@ import {
   UnauthorizedError,
   ResourceNotFoundError,
 } from '../errors/errors.js';
+
+const KAKAO_USER_INFO_URL = 'https://kapi.kakao.com/v2/user/me';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export class UserController {
   private userService: UserService;
@@ -176,8 +180,10 @@ export class UserController {
    *       400:
    *         description: 잘못된 요청 데이터
    */
+  // ✅ 카카오 로그인 요청 처리
   public async kakaoLogin(req: Request, res: Response): Promise<void> {
     const { kakaoAccessToken }: KakaoLoginDto = req.body;
+
     if (!kakaoAccessToken) {
       res.status(400).json({
         isSuccess: false,
@@ -187,13 +193,22 @@ export class UserController {
     }
 
     try {
-      const tokens = await this.userService.kakaoLogin(kakaoAccessToken);
+      // ✅ UserService의 kakaoLogin 메서드 호출
+      const { accessToken, refreshToken, user } =
+        await this.userService.kakaoLogin(kakaoAccessToken);
+
+      // ✅ 응답 반환
       res.status(200).json({
         isSuccess: true,
         message: '카카오 로그인 성공',
-        result: tokens,
+        result: {
+          user,
+          accessToken,
+          refreshToken,
+        },
       });
     } catch (error) {
+      console.error('❌ 카카오 로그인 실패:', error.message);
       res.status(500).json({
         isSuccess: false,
         message: '카카오 로그인 실패',
