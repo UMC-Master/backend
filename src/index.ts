@@ -13,15 +13,14 @@ import { UserManageController } from './controllers/user.manage.controller.js';
 import { QuizController } from './controllers/quiz.controller.js';
 import { AdminController } from './controllers/admin.controller';
 import { LocationController } from './controllers/location.controller.js';
+import { ChatbotController } from './controllers/chatbot.controller.js';
 
 dotenv.config();
 
-console.log('✅ JWT_SECRET 값:', process.env.JWT_SECRET);
-console.log('✅ ACCESS_TOKEN_SECRET 값:', process.env.ACCESS_TOKEN_SECRET);
-console.log('✅ REFRESH_TOKEN_SECRET 값:', process.env.REFRESH_TOKEN_SECRET);
-
 const app = express();
 const port = process.env.PORT || 3000;
+
+console.log('✅ OPENAI_API_KEY:', process.env.OPENAI_API_KEY); // ✅ 환경 변수 확인용 로그 추가
 
 // 응답 헬퍼 미들웨어 정의
 const setupResponseHelpers = (
@@ -76,10 +75,11 @@ const setupControllers = (app: express.Express) => {
     new QuizController(),
     new AdminController(),
     new LocationController(),
+    new ChatbotController(),
   ];
 
   controllers.forEach((controller) => {
-    app.use(controller.router);
+    app.use('/api/v1', controller.router); // ✅ /api/v1 prefix 추가
   });
 };
 
