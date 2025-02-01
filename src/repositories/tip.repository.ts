@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import prisma from '../db.config.js'; // ✅ Prisma 싱글톤 사용
-
+import { prisma } from '../db.config.js';
 export class TipRepository {
   private prisma: PrismaClient;
 
