@@ -178,7 +178,8 @@ model UserStatistic {
 model Quiz {
   quiz_id        Int          @id @default(autoincrement())
   question       String
-  correct_answer String
+  correct_answer Boolean
+  description    String
   quiz_at        DateTime     @default(now())
   quiz_answers   QuizAnswer[]
 

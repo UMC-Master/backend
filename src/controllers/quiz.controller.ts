@@ -1,19 +1,90 @@
 import { Router, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { QuizListDto } from '../dtos/quiz.dto.js';
+import { QuizDto, QuizListDto } from '../dtos/quiz.dto.js';
 import 'express-async-errors';
+import { QuizService } from '../services/quiz.service.js';
 
 export class QuizController {
-  private quizService: unknown; // 이후 QuizService로 설정;
+  private quizService: QuizService;
   public router: Router;
 
   constructor() {
-    this.quizService = null;
+    this.quizService = new QuizService();
     this.router = Router();
     this.initializeRoutes();
   }
 
   private initializeRoutes() {
+    /**
+     * @swagger
+     * /api/v1/quizzes:
+     *   post:
+     *     summary: "퀴즈 생성"
+     *     description: "자취 지식 테스트를 위한 새로운 퀴즈 생성"
+     *     tags:
+     *       - Quiz
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               question:
+     *                 type: string
+     *                 example: "플라스틱 빨대는 일반쓰레기로 버려야 한다?"
+     *                 description: "퀴즈 내용"
+     *               answer:
+     *                 type: boolean
+     *                 example: true
+     *                 description: "true"
+     *               description:
+     *                 type: string
+     *                 example: "빨대는 재활용하기에 너무 작아서 일반쓰레기로 버려야 합니다."
+     *                 description: "퀴즈 정답에 대한 설명"
+     *     responses:
+     *       201:
+     *         description: "퀴즈 생성 성공"
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   example: true
+     *                 code:
+     *                   type: string
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   example: "성공입니다."
+     *                 result:
+     *                   type: object
+     *                   properties:
+     *                     quiz_id:
+     *                       type: integer
+     *                       example: 1
+     *                       description: "퀴즈의 고유 ID"
+     *                     question:
+     *                       type: string
+     *                       example: "플라스틱 빨대는 일반쓰레기로 버려야 한다?"
+     *                       description: "퀴즈"
+     *                     answer:
+     *                       type: boolean
+     *                       example: true
+     *                       description: "퀴즈 문제에 대한 정답 (true/false)"
+     *                     description:
+     *                       type: string
+     *                       example: "빨대는 재활용하기에 너무 작아서 일반쓰레기로 버려야 합니다."
+     *                       description: "퀴즈 정답 설명"
+     *       400:
+     *         description: "잘못된 요청 (필수 입력 값 누락 등)"
+     *       500:
+     *         description: "서버 오류"
+     */
+    this.router.post('/quizzes', this.createQuiz.bind(this));
+
     /**
      * @swagger
      * /api/v1/quizzes:
@@ -55,18 +126,22 @@ export class QuizController {
      *                             type: integer
      *                             example: 1
      *                             description: "퀴즈의 고유 ID"
-     *                           description:
+     *                           question:
      *                             type: string
-     *                             example: "이 문제의 정답은 무엇일까요?"
-     *                             description: "퀴즈 문제 설명"
+     *                             example: "이 문제의 정답은 뭘까요?"
+     *                             description: "퀴즈"
      *                           answer:
      *                             type: boolean
      *                             example: true
      *                             description: "퀴즈 문제에 대한 정답 (true/false)"
+     *                           description:
+     *                             type: string
+     *                             example: "이 문제의 정답은 이래이래서 이겁니다."
+     *                             description: "퀴즈 정답 설명"
      *       400:
      *         description: "잘못된 요청"
      */
-    this.router.get('/api/v1/quizzes', this.getQuizzes.bind(this));
+    this.router.get('/quizzes', this.getQuizzes.bind(this));
 
     /**
      * @swagger
@@ -124,48 +199,58 @@ export class QuizController {
      *         description: "인증 실패 (토큰이 없거나 유효하지 않음)"
      */
     this.router.post(
-      '/api/v1/quizzes/:quizId',
+      '/quizzes/:quizId',
       this.saveQuizAnswerHistory.bind(this)
     );
   }
 
-  private async getQuizzes(req: Request, res: Response) {
-    const data: QuizListDto = null;
-    res.status(StatusCodes.OK).success({
-      number_of_quiz: 5,
-      quiz_list: [
-        {
-          quiz_id: 1,
-          description: '사자는 동물이다?',
-          answer: true,
-        },
-        {
-          quiz_id: 2,
-          description: '사자는 개미다?',
-          answer: false,
-        },
-        {
-          quiz_id: 3,
-          description: '사자는 포유류다?',
-          answer: true,
-        },
-        {
-          quiz_id: 4,
-          description: '사자는 고양이다?',
-          answer: false,
-        },
-        {
-          quiz_id: 5,
-          description: '사자는 사자다?',
-          answer: true,
-        },
-      ],
+  private async createQuiz(req: Request, res: Response) {
+    const { question, answer, description } = req.body;
+
+    const createdQuiz = await this.quizService.createQuiz({
+      question,
+      answer,
+      description,
     });
+
+    const response: QuizDto = {
+      id: createdQuiz.quiz_id,
+      question: createdQuiz.question,
+      answer: createdQuiz.correct_answer,
+      description: createdQuiz.description,
+    };
+
+    res.status(StatusCodes.OK).success({ response });
+  }
+
+  private async getQuizzes(req: Request, res: Response) {
+    const quizzes = await this.quizService.getRandomQuizzes();
+
+    const response: QuizListDto = {
+      number_of_quiz: quizzes.length,
+      quiz_list: quizzes.map((quiz) => ({
+        id: quiz.quiz_id,
+        question: quiz.question,
+        answer: quiz.correct_answer,
+        description: quiz.description,
+      })),
+    };
+
+    res.status(StatusCodes.OK).success({ response });
   }
 
   private async saveQuizAnswerHistory(req: Request, res: Response) {
-    res
-      .status(StatusCodes.OK)
-      .success({ message: '퀴즈 기록이 저장되었습니다.' });
+    const user = req.user;
+    const { quizId, isCorrect } = req.body;
+
+    await this.quizService.saveQuizAnswerHistory({
+      userId: user.userId,
+      quizId,
+      isCorrect,
+    });
+
+    res.status(StatusCodes.OK).success({
+      message: '퀴즈 기록이 저장되었습니다.',
+    });
   }
 }

@@ -1,9 +1,11 @@
 export interface QuizListDto {
-  numberOfQuiz: number;
-  quizList: [
-    {
-      description: string;
-      answer: boolean;
-    },
-  ];
+  number_of_quiz: number;
+  quiz_list: QuizDto[];
+}
+
+export interface QuizDto {
+  id: number;
+  question: string;
+  answer: boolean;
+  description: string;
 }
