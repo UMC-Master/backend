@@ -22,4 +22,24 @@ export class OrganizationRepository {
       },
     });
   }
+
+  async createOrganization(name: string, location_id: number) {
+    return await this.prisma.organization.create({
+      data: {
+        location_id: location_id,
+        name: name,
+      },
+      include: {
+        location: true,
+      },
+    });
+  }
+
+  async getAll() {
+    return await this.prisma.organization.findMany({
+      include: {
+        location: true,
+      },
+    });
+  }
 }

@@ -14,6 +14,7 @@ import { QuizController } from './controllers/quiz.controller.js';
 import { AdminController } from './controllers/admin.controller';
 import { LocationController } from './controllers/location.controller.js';
 import { ChatbotController } from './controllers/chatbot.controller.js';
+import { OrganizationController } from './controllers/organization.controller.js';
 
 dotenv.config();
 
@@ -76,6 +77,7 @@ const setupControllers = (app: express.Express) => {
     new AdminController(),
     new LocationController(),
     new ChatbotController(),
+    new OrganizationController(),
   ];
 
   controllers.forEach((controller) => {
