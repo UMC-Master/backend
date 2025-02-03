@@ -70,13 +70,16 @@ export class UserController {
    *             type: object
    *             properties:
    *               email:
-   *                 type: test@example.com
+   *                 type: string
+   *                 example: "test@example.com"
    *                 description: 회원가입할 이메일 주소
    *               password:
-   *                 type: password123
+   *                 type: string
+   *                 example: "password123"
    *                 description: 계정 비밀번호
    *               nickname:
-   *                 type: testuser
+   *                 type: string
+   *                 example: "testuser"
    *                 description: 사용자 닉네임
    *     responses:
    *       201:
@@ -114,10 +117,12 @@ export class UserController {
    *             type: object
    *             properties:
    *               email:
-   *                 type: test@example.com
+   *                 type: string
+   *                 example: "test@example.com"
    *                 description: 로그인 이메일
    *               password:
-   *                 type: password123
+   *                 type: string
+   *                 example: "password123"
    *                 description: 계정 비밀번호
    *     responses:
    *       200:
@@ -247,13 +252,16 @@ export class UserController {
    *             type: object
    *             properties:
    *               nickname:
-   *                 type: newNickname
+   *                 type: string
+   *                 example: "newNickname"
    *                 description: 새로운 닉네임
    *               city:
-   *                 type: newCity
+   *                 type: string
+   *                 example: "newCity"
    *                 description: 새로운 도시 정보
    *               district:
-   *                 type: newDistrict
+   *                 type: string
+   *                 example: "newDistrict"
    *                 description: 새로운 구 정보
    *     responses:
    *       200:
@@ -277,7 +285,7 @@ export class UserController {
    * /api/v1/password/reset:
    *   post:
    *     summary: 비밀번호 재설정 요청
-   *     description: 이메일을 통해 비밀번호 재설정을 요청합니다.
+   *     description: 사용자가 이메일을 입력하면 비밀번호 재설정 링크를 전송합니다.
    *     tags:
    *       - Users
    *     requestBody:
@@ -288,14 +296,38 @@ export class UserController {
    *             type: object
    *             properties:
    *               email:
-   *                 type: test@example.com
-   *                 description: 비밀번호 재설정을 요청할 이메일
+   *                 type: string
+   *                 example: "test@example.com"
+   *                 description: 비밀번호 재설정을 요청할 이메일 주소
    *     responses:
    *       200:
    *         description: 비밀번호 재설정 요청 성공
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "비밀번호 재설정 이메일이 발송되었습니다."
    *       400:
    *         description: 잘못된 요청 데이터
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "올바른 이메일 주소를 입력해주세요."
    */
+
   public async requestPasswordReset(
     req: Request,
     res: Response
@@ -321,10 +353,12 @@ export class UserController {
    *             type: object
    *             properties:
    *               resetToken:
-   *                 type: your_reset_token
+   *                 type: string
+   *                 example: "abcdef123456"
    *                 description: 비밀번호 재설정 토큰
    *               newPassword:
-   *                 type: newPassword123
+   *                 type: string
+   *                 example: "newStrongPassword"
    *                 description: 새로운 비밀번호
    *     responses:
    *       200:
