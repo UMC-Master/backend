@@ -34,16 +34,21 @@ jobs:
 
       - name: Copy Workspace
         run: |
+          echo "Copying workspace..."
           ssh umc_home_master 'sudo mkdir -p /opt/app'
           ssh umc_home_master 'sudo chown ubuntu:ubuntu /opt/app'
           scp -r ./[!.]* umc_home_master:/opt/app
+          echo "Workspace copied."
 
       - name: Install dependencies
         run: |
+          echo "Installing dependencies..."
           ssh umc_home_master 'cd /opt/app && npm install'
+          echo "Dependencies installed."
 
       - name: Copy systemd service file
         run: |
+          echo "Copying systemd service file..."
           ssh umc_home_master '
             echo "[Unit]
             Description=umc_home_master
@@ -59,16 +64,23 @@ jobs:
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/app.service
           '
+          echo "Systemd service file copied."
 
       - name: Enable systemd service
         run: |
+          echo "Enabling systemd service..."
           ssh umc_home_master 'sudo systemctl daemon-reload'
           ssh umc_home_master 'sudo systemctl enable app'
+          echo "Systemd service enabled."
 
       - name: Run Prisma Migrations
         run: |
+          echo "Running Prisma migrations..."
           ssh umc_home_master 'cd /opt/app && npx prisma migrate deploy'
+          echo "Prisma migrations complete."
 
       - name: Restart systemd service
         run: |
+          echo "Restarting systemd service..."
           ssh umc_home_master 'sudo systemctl restart app'
+          echo "Systemd service restarted."
