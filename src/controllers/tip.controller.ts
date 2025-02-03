@@ -44,15 +44,26 @@ export class TipController {
    *           schema:
    *             type: object
    *             properties:
+   *               userId:
+   *                 type: integer
+   *                 description: "작성자 ID"
+   *                 example: 1
    *               title:
    *                 type: string
+   *                 description: "팁 제목"
+   *                 example: "Amazing Food Tips"
    *               content:
    *                 type: string
+   *                 description: "팁 내용"
+   *                 example: "Don't miss the local cuisine when traveling."
    *               hashtags:
    *                 type: array
    *                 items:
-   *                   type: string
-   *                   example: ["#food", "#travel"]
+   *                   type: array
+   *                   items:
+   *                     type: string
+   *                 description: "팁에 포함될 해시태그 (이중 배열)"
+   *                 example: [["#food", "#travel"]]
    *     responses:
    *       201:
    *         description: "새로운 팁 생성 성공"
@@ -96,21 +107,23 @@ export class TipController {
    *                               example: "https://example.com/profile.jpg"
    *                         createdAt:
    *                           type: string
+   *                           format: date-time
    *                           example: "2023-01-01T00:00:00Z"
    *                         updatedAt:
    *                           type: string
+   *                           format: date-time
    *                           example: "2023-01-01T00:00:00Z"
-   *                         likesCount:
-   *                           type: integer
-   *                           example: 5
-   *                         commentsCount:
-   *                           type: integer
-   *                           example: 3
-   *                         mediaUrls:
+   *                         hashtags:
    *                           type: array
    *                           items:
-   *                             type: string
-   *                             example: ["https://example.com/media1.jpg"]
+   *                             type: object
+   *                             properties:
+   *                               hashtagId:
+   *                                 type: integer
+   *                                 example: 1
+   *                               name:
+   *                                 type: string
+   *                                 example: "#food"
    *       400:
    *         description: "잘못된 요청"
    *         content:
@@ -123,7 +136,7 @@ export class TipController {
    *                   example: false
    *                 message:
    *                   type: string
-   *                   example: "제목 혹은 내용을 입력하셔야합니다다."
+   *                   example: "제목 혹은 내용을 입력해야 합니다."
    */
   public async createTip(req: Request, res: Response, next: NextFunction) {
     try {
