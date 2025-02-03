@@ -1,17 +1,17 @@
 import { Router, Request, Response } from 'express';
-import { LocationService } from '../services/location.service.js';
+import { OrganizationService } from '../services/organization.service.js';
 import {
-  LocationListResponseDto,
-  LocationResponseDto,
-} from '../dtos/location.dto.js';
+  OrganizationListResponseDto,
+  OrganizationResponseDto,
+} from '../dtos/organization.dto.js';
 import { StatusCodes } from 'http-status-codes';
 
-export class LocationController {
-  private locationService: LocationService;
+export class OrganizationController {
+  private organizationService: OrganizationService;
   public router: Router;
 
   constructor() {
-    this.locationService = new LocationService();
+    this.organizationService = new OrganizationService();
     this.router = Router();
     this.initializeRoutes();
   }
@@ -19,11 +19,11 @@ export class LocationController {
   private initializeRoutes() {
     /**
      * @swagger
-     * /api/v1/locations:
+     * /api/v1/organizations:
      *   post:
-     *     summary: "위치 생성"
+     *     summary: "기관 생성"
      *     tags:
-     *       - Location
+     *       - Organization
      *     requestBody:
      *       required: true
      *       content:
@@ -31,15 +31,15 @@ export class LocationController {
      *           schema:
      *             type: object
      *             properties:
-     *               location_name:
+     *               organization_name:
      *                 type: string
-     *                 description: "지역 이름"
-     *               parent_id:
+     *                 description: "기관 이름"
+     *               location_id:
      *                 type: integer
-     *                 description: "상위 지역 ID"
+     *                 description: "지역 ID"
      *     responses:
      *       200:
-     *         description: "위치 생성 성공"
+     *         description: "기관 생성성 성공"
      *         content:
      *           application/json:
      *             schema:
@@ -59,25 +59,25 @@ export class LocationController {
      *                 result:
      *                   type: object
      *                   properties:
-     *                     location_id:
+     *                     organization_id:
      *                       type: integer
      *                       example: 1
-     *                       description: "위치의 고유 ID"
+     *                       description: "기관의 고유 ID"
      *                     name:
      *                       type: string
-     *                       example: "서울"
-     *                       description: "위치 이름"
-     *                     parent:
+     *                       example: "영등포구청청"
+     *                       description: "기관 이름"
+     *                     location:
      *                       type: object
      *                       properties:
      *                         id:
      *                           type: integer
-     *                           example: 0
-     *                           description: "부모 위치의 ID"
+     *                           example: 1
+     *                           description: "위치의 ID"
      *                         name:
      *                           type: string
-     *                           example: "국가"
-     *                           description: "부모 위치 이름"
+     *                           example: "영등포"
+     *                           description: "위치 이름"
      *       400:
      *         description: "잘못된 요청 (유효하지 않은 위치 ID)"
      *       404:
@@ -85,19 +85,22 @@ export class LocationController {
      *       500:
      *         description: "서버 내부 오류"
      */
-    this.router.post('/locations', this.createLocation.bind(this));
+    this.router.post(
+      '/organizations',
+      this.createOrganization.bind(this)
+    );
 
     /**
      * @swagger
-     * /api/v1/locations:
+     * /api/v1/organizations:
      *   get:
-     *     summary: "위치 리스트 조회"
-     *     description: "모든 위치 정보를 조회합니다."
+     *     summary: "기관 리스트 조회"
+     *     description: "모든 기관 정보를 조회합니다."
      *     tags:
-     *       - Location
+     *       - Organization
      *     responses:
      *       200:
-     *         description: "위치 리스트 조회 성공"
+     *         description: "기관 리스트 조회 성공"
      *         content:
      *           application/json:
      *             schema:
@@ -117,71 +120,81 @@ export class LocationController {
      *                 result:
      *                   type: object
      *                   properties:
-     *                     location_list:
+     *                     organization_list:
      *                       type: array
      *                       items:
      *                         type: object
      *                         properties:
-     *                           location_id:
+     *                           organization_id:
      *                             type: integer
      *                             example: 1
-     *                             description: "위치의 고유 ID"
+     *                             description: "기관의 고유 ID"
      *                           name:
      *                             type: string
-     *                             example: "서울"
-     *                             description: "위치 이름"
-     *                           parent:
+     *                             example: "영등포구청"
+     *                             description: "기관 이름"
+     *                           location:
      *                             type: object
      *                             properties:
      *                               id:
      *                                 type: integer
-     *                                 example: 0
-     *                                 description: "부모 위치의 ID"
+     *                                 example: 1
+     *                                 description: "위치의 ID"
      *                               name:
      *                                 type: string
-     *                                 example: "국가"
-     *                                 description: "부모 위치 이름"
+     *                                 example: "영등포"
+     *                                 description: "위치 이름"
      *       500:
      *         description: "서버 내부 오류"
      */
-    this.router.get('/locations', this.getAllLocation.bind(this));
+    this.router.get(
+      '/organizations',
+      this.getAllOrganization.bind(this)
+    );
   }
 
-  private async createLocation(req: Request, res: Response) {
-    const location: string = req.body.location_name;
-    const parent_id: number = +req.body.parent_id;
+  private async createOrganization(req: Request, res: Response) {
+    const organization: string = req.body.organization_name;
+    const location_id: number = +req.body.location_id;
 
-    const savedLocation = await this.locationService.createLocation(
-      location,
-      parent_id
+    const savedOrganization = await this.organizationService.createOrganization(
+      organization,
+      location_id
     );
 
-    const output: LocationResponseDto = {
-      location_id: savedLocation.location_id,
-      name: savedLocation.name,
-      parent: {
+    const output: OrganizationResponseDto = {
+      organization_id: savedOrganization.organization_id,
+      name: savedOrganization.name,
+      location: {
         id:
-          savedLocation.parent != null
-            ? savedLocation.parent.location_id
+          savedOrganization.location != null
+            ? savedOrganization.location.location_id
             : null,
-        name: savedLocation.parent != null ? savedLocation.parent.name : null,
+        name:
+          savedOrganization.location != null
+            ? savedOrganization.location.name
+            : null,
       },
     };
 
     res.status(StatusCodes.OK).success(output);
   }
 
-  private async getAllLocation(req: Request, res: Response) {
-    const location_list = await this.locationService.getAll();
+  private async getAllOrganization(req: Request, res: Response) {
+    const organization_list = await this.organizationService.getAll();
 
-    const output: LocationListResponseDto = {
-      location_list: location_list.map((location) => {
+    const output: OrganizationListResponseDto = {
+      organization_list: organization_list.map((organization) => {
         return {
-          location_id: location.location_id,
-          name: location.name,
-          parent: {
-            id: location.parent != null ? location.parent.location_id : null,
-            name: location.parent != null ? location.parent.name : null,
+          organization_id: organization.organization_id,
+          name: organization.name,
+          location: {
+            id:
+              organization.location != null
+                ? organization.location.location_id
+                : null,
+            name:
+              organization.location != null ? organization.location.name : null,
           },
         };
       }),

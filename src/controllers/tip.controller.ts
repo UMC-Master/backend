@@ -268,7 +268,7 @@ export class TipController {
     }
   }
 
-  /**
+/**
  * @swagger
  * /api/v1/tips/sorted:
  *   get:
