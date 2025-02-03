@@ -1,8 +1,15 @@
 import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url'; // ✅ 추가
+
+// ES Module 환경에서 `__dirname` 대체 방법
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 import { swaggerUi, specs } from './swagger';
-import { errorHandler } from './middlewares/errorHandler'; // 에러 핸들러 불러오기
+import { errorHandler } from './middlewares/errorHandler';
 import { UserController } from './controllers/user.controller.js';
 import { NotificationController } from './controllers/notification.controller.js';
 import { TipController } from './controllers/tip.controller.js';
@@ -20,9 +27,12 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-console.log('✅ OPENAI_API_KEY:', process.env.OPENAI_API_KEY); // ✅ 환경 변수 확인용 로그 추가
+console.log('✅ OPENAI_API_KEY:', process.env.OPENAI_API_KEY);
 
-// 응답 헬퍼 미들웨어 정의
+// ✅ 수정된 정적 파일 경로
+const staticFilePath = path.join(__dirname, '../public');
+console.log(`📂 정적 파일 제공 경로: ${staticFilePath}`);
+
 const setupResponseHelpers = (
   req: Request,
   res: Response,
@@ -51,10 +61,10 @@ const setupResponseHelpers = (
 // 미들웨어 설정
 const setupMiddlewares = (app: express.Express) => {
   app.use(cors());
-  app.use(express.static('public')); // 정적 파일 제공
-  app.use(express.json()); // JSON 요청 바디 파싱
-  app.use(express.urlencoded({ extended: false })); // URL-encoded 요청 바디 파싱
-  app.use(setupResponseHelpers); // 응답 헬퍼 미들웨어 추가
+  app.use('/static', express.static(staticFilePath)); // ✅ 절대 경로 사용
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
+  app.use(setupResponseHelpers);
 };
 
 // Swagger 문서 설정
@@ -79,7 +89,7 @@ const setupControllers = (app: express.Express) => {
   ];
 
   controllers.forEach((controller) => {
-    app.use('/api/v1', controller.router); // ✅ /api/v1 prefix 추가
+    app.use('/api/v1', controller.router);
   });
 };
 
@@ -98,16 +108,17 @@ const setupRootRoute = (app: express.Express) => {
 
 // 애플리케이션 설정
 const setupApp = (app: express.Express) => {
-  setupMiddlewares(app); // 미들웨어 설정
-  setupSwaggerDocs(app); // Swagger 문서 설정
-  setupControllers(app); // 컨트롤러 등록
-  setupRootRoute(app); // 루트 경로 설정
-  app.use(errorHandler); // 전역 에러 핸들러 등록
+  setupMiddlewares(app);
+  setupSwaggerDocs(app);
+  setupControllers(app);
+  setupRootRoute(app);
+  app.use(errorHandler);
 };
 
 // 서버 실행
 setupApp(app);
 app.listen(port, () => {
-  console.log(`서버가 실행 중입니다: http://localhost:${port}`);
-  console.log(`Swagger 문서 확인: http://localhost:${port}/api-docs`);
+  console.log(`🚀 서버가 실행 중입니다: http://localhost:${port}`);
+  console.log(`📜 Swagger 문서 확인: http://localhost:${port}/api-docs`);
+  console.log(`📂 정적 파일 확인: http://localhost:${port}/static/test.txt`);
 });
