@@ -67,7 +67,7 @@ jobs:
 
       - name: Run Prisma Migrations
         run: |
-          ssh umc_home_master 'cd /opt/app && npx prisma migrate dev'
+          ssh umc_home_master 'cd /opt/app && npx prisma migrate deploy'
 
       - name: Restart systemd service
         run: |
