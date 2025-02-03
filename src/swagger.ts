@@ -31,6 +31,16 @@ const options = {
         description: '실배포 서버',
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT', // JWT 인증 사용
+        },
+      },
+    },
+    security: [{ bearerAuth: [] }], // 모든 API 엔드포인트에 JWT 인증 적용
   },
   apis: ['./src/controllers/*.ts'], // 컨트롤러 파일 경로
 };

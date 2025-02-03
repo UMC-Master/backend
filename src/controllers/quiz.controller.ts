@@ -167,7 +167,7 @@ export class QuizController {
      *           schema:
      *             type: object
      *             properties:
-     *               submittedAnswer:
+     *               isCorrect:
      *                 type: boolean
      *                 example: true
      *                 description: "사용자가 퀴즈의 정답을 맞췄는지 여부 (true/false)"
