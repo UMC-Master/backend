@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { QuizDto, QuizListDto } from '../dtos/quiz.dto.js';
 import 'express-async-errors';
 import { QuizService } from '../services/quiz.service.js';
+import { authenticateJWT } from '../middlewares/authenticateJWT.js';
 
 export class QuizController {
   private quizService: QuizService;
@@ -83,7 +84,7 @@ export class QuizController {
      *       500:
      *         description: "서버 오류"
      */
-    this.router.post('/quizzes', this.createQuiz.bind(this));
+    this.router.post('/quizzes', authenticateJWT, this.createQuiz.bind(this));
 
     /**
      * @swagger
@@ -141,7 +142,7 @@ export class QuizController {
      *       400:
      *         description: "잘못된 요청"
      */
-    this.router.get('/quizzes', this.getQuizzes.bind(this));
+    this.router.get('/quizzes', authenticateJWT, this.getQuizzes.bind(this));
 
     /**
      * @swagger
@@ -166,7 +167,7 @@ export class QuizController {
      *           schema:
      *             type: object
      *             properties:
-     *               isCorrect:
+     *               submittedAnswer:
      *                 type: boolean
      *                 example: true
      *                 description: "사용자가 퀴즈의 정답을 맞췄는지 여부 (true/false)"
@@ -200,6 +201,7 @@ export class QuizController {
      */
     this.router.post(
       '/quizzes/:quizId',
+      authenticateJWT,
       this.saveQuizAnswerHistory.bind(this)
     );
   }
@@ -241,11 +243,12 @@ export class QuizController {
 
   private async saveQuizAnswerHistory(req: Request, res: Response) {
     const user = req.user;
-    const { quizId, isCorrect } = req.body;
+    const quizId = req.params.quizId;
+    const isCorrect = req.body.isCorrect;
 
     await this.quizService.saveQuizAnswerHistory({
-      userId: user.userId,
-      quizId,
+      userId: +user.userId,
+      quizId: +quizId,
       isCorrect,
     });
 

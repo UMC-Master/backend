@@ -36,9 +36,9 @@ export class QuizRepository {
   }
 
   async getById(id) {
-    return await this.prisma.quiz.findUnique({
+    return await this.prisma.quiz.findFirst({
       where: {
-        quiz_id: id,
+        quiz_id: +id,
       },
     });
   }

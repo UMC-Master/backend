@@ -36,10 +36,10 @@ export class QuizService {
     }
 
     const history = await this.quizAnswerRepository.create({
-      userId: data.userId,
-      quizId: data.quizId,
-      isCorrect: data.isCorrect,
-      answeredAt: new Date(),
+      user_id: data.userId,
+      quiz_id: data.quizId,
+      is_correct: data.isCorrect,
+      submitted_at: new Date(),
     });
     return history;
   }

@@ -190,7 +190,7 @@ model QuizAnswer {
   answer_id        Int      @id @default(autoincrement())
   user_id          Int
   quiz_id          Int
-  submitted_answer Answer
+  is_correct       Boolean
   submitted_at     DateTime @default(now())
   quiz             Quiz     @relation(fields: [quiz_id], references: [quiz_id])
   user             User     @relation(fields: [user_id], references: [user_id])
@@ -346,11 +346,6 @@ enum NotificationType {
   SCRAP
   COMMENT
   REPLY
-}
-
-enum Answer {
-  O
-  X
 }
 
 enum SocialProvider {
