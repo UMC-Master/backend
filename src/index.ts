@@ -28,8 +28,6 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-console.log('✅ OPENAI_API_KEY:', process.env.OPENAI_API_KEY);
-
 // ✅ 수정된 정적 파일 경로
 const staticFilePath = path.join(__dirname, '../public');
 console.log(`📂 정적 파일 제공 경로: ${staticFilePath}`);
