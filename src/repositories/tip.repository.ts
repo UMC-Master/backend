@@ -45,6 +45,8 @@ export class TipRepository {
     });
   }
 
+  
+
   // 팁 수정
   public async updateTip(tipId: number, title: string, content: string) {
     return await prisma.tip.update({
@@ -84,5 +86,5 @@ export class TipRepository {
         hashtags: { include: { hashtag: true } }, // 해시태그 포함
       },
     });
-  }
+  }//팁 정보 반환 
 }
