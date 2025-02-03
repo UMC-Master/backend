@@ -15,6 +15,8 @@ export class TipController {
   }
 
   private initializeRoutes() {
+    console.log('✅ TipController 라우트 등록됨');
+
     // 팁 생성, 수정, 삭제 라우트 정의
     this.router.post('/tips', authenticateJWT, this.createTip.bind(this));
     this.router.put('/tips/:tipId', authenticateJWT, this.updateTip.bind(this));

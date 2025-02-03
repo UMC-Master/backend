@@ -89,7 +89,14 @@ const setupControllers = (app: express.Express) => {
   ];
 
   controllers.forEach((controller) => {
-    app.use('/api/v1', controller.router);
+    if (!controller.router) {
+      console.error(`❌ ${controller.constructor.name} 라우터가 없음`);
+    } else {
+      console.log(
+        `✅ ${controller.constructor.name} 라우터 등록됨: ${controller.router.stack.map((r) => r.route?.path || '미들웨어')}`
+      );
+      app.use('/api/v1', controller.router); // ✅ 각 컨트롤러의 router를 app에 등록
+    }
   });
 };
 
@@ -117,8 +124,20 @@ const setupApp = (app: express.Express) => {
 
 // 서버 실행
 setupApp(app);
+
 app.listen(port, () => {
   console.log(`🚀 서버가 실행 중입니다: http://localhost:${port}`);
   console.log(`📜 Swagger 문서 확인: http://localhost:${port}/api-docs`);
   console.log(`📂 정적 파일 확인: http://localhost:${port}/static/test.txt`);
+
+  // ✅ Express 라우트 상세 확인
+  console.log('🔍 등록된 모든 미들웨어 및 라우트:');
+  console.log(
+    app._router.stack.map((middleware: any) => ({
+      path: middleware.route ? middleware.route.path : '미들웨어',
+      method: middleware.route
+        ? Object.keys(middleware.route.methods)[0].toUpperCase()
+        : '',
+    }))
+  );
 });

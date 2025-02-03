@@ -29,46 +29,29 @@ export class UserController {
   }
 
   private initializeRoutes() {
-    this.router.post('/api/v1/signup', this.emailSignup.bind(this));
-    this.router.post('/api/v1/login', this.emailLogin.bind(this));
-    this.router.post('/api/v1/login/kakao', this.kakaoLogin.bind(this));
-    this.router.get(
-      '/api/v1/profile',
-      authenticateJWT,
-      this.getProfile.bind(this)
-    );
-    this.router.put(
-      '/api/v1/profile',
-      authenticateJWT,
-      this.updateProfile.bind(this)
-    );
-    this.router.post(
-      '/api/v1/password/reset',
-      this.requestPasswordReset.bind(this)
-    );
-    this.router.post(
-      '/api/v1/password/reset/confirm',
-      this.resetPassword.bind(this)
-    );
+    this.router.post('/signup', this.emailSignup.bind(this));
+    this.router.post('/login', this.emailLogin.bind(this));
+    this.router.post('/login/kakao', this.kakaoLogin.bind(this));
+    this.router.get('/profile', authenticateJWT, this.getProfile.bind(this));
+    this.router.put('/profile', authenticateJWT, this.updateProfile.bind(this));
+    this.router.post('/password/reset', this.requestPasswordReset.bind(this));
+    this.router.post('/password/reset/confirm', this.resetPassword.bind(this));
     this.router.delete(
-      '/api/v1/deactivate',
+      '/deactivate',
       authenticateJWT,
       this.deactivateAccount.bind(this)
     );
     this.router.post(
-      '/api/v1/reactivate',
+      '/reactivate',
       authenticateJWT,
       this.reactivateAccount.bind(this)
     );
     this.router.get(
-      '/api/v1/statistics',
+      '/statistics',
       authenticateJWT,
       this.getStatistics.bind(this)
     );
-    this.router.post(
-      '/api/v1/token/refresh',
-      this.refreshAccessToken.bind(this)
-    );
+    this.router.post('/token/refresh', this.refreshAccessToken.bind(this));
   }
 
   /**
@@ -87,13 +70,13 @@ export class UserController {
    *             type: object
    *             properties:
    *               email:
-   *                 type: string
+   *                 type: test@example.com
    *                 description: 회원가입할 이메일 주소
    *               password:
-   *                 type: string
+   *                 type: password123
    *                 description: 계정 비밀번호
    *               nickname:
-   *                 type: string
+   *                 type: testuser
    *                 description: 사용자 닉네임
    *     responses:
    *       201:
@@ -131,10 +114,10 @@ export class UserController {
    *             type: object
    *             properties:
    *               email:
-   *                 type: string
+   *                 type: test@example.com
    *                 description: 로그인 이메일
    *               password:
-   *                 type: string
+   *                 type: password123
    *                 description: 계정 비밀번호
    *     responses:
    *       200:
@@ -264,13 +247,13 @@ export class UserController {
    *             type: object
    *             properties:
    *               nickname:
-   *                 type: string
+   *                 type: newNickname
    *                 description: 새로운 닉네임
    *               city:
-   *                 type: string
+   *                 type: newCity
    *                 description: 새로운 도시 정보
    *               district:
-   *                 type: string
+   *                 type: newDistrict
    *                 description: 새로운 구 정보
    *     responses:
    *       200:
@@ -305,7 +288,7 @@ export class UserController {
    *             type: object
    *             properties:
    *               email:
-   *                 type: string
+   *                 type: test@example.com
    *                 description: 비밀번호 재설정을 요청할 이메일
    *     responses:
    *       200:
@@ -338,10 +321,10 @@ export class UserController {
    *             type: object
    *             properties:
    *               resetToken:
-   *                 type: string
+   *                 type: your_reset_token
    *                 description: 비밀번호 재설정 토큰
    *               newPassword:
-   *                 type: string
+   *                 type: newPassword123
    *                 description: 새로운 비밀번호
    *     responses:
    *       200:
