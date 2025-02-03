@@ -1,18 +1,23 @@
 name: deploy-develop
-        
+
 on:
   push:
     branches:
       - develop
-  workflow_dispatch:  # 수동 실행 가능하도록 설정
+  workflow_dispatch:  # 수동 실행 가능
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # 실행 환경 지정
-    steps:  
+    runs-on: ubuntu-latest
+    env:
+      EC2_USER: ubuntu
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+    steps:
       - name: Checkout
         uses: actions/checkout@v4
-          
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
@@ -24,13 +29,8 @@ jobs:
             HostName $EC2_HOST
             User $EC2_USER
             IdentityFile ~/.ssh/id_rsa
-            StrictHostKeyChecking no   
+            StrictHostKeyChecking no
           END
-
-      env:
-          EC2_USER: ubuntu
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
 
       - name: Copy Workspace
         run: |
@@ -40,35 +40,36 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ssh umc_home_master 'npm install --prefix /opt/app/'
-            
+          ssh umc_home_master 'cd /opt/app && npm install'
+
       - name: Copy systemd service file
         run: |
           ssh umc_home_master '
-            echo "[Unit]  
+            echo "[Unit]
             Description=umc_home_master
             After=network.target
 
             [Service]
-            User=${USER}
-            ExecStart=/usr/bin/npm run dev --prefix /opt/app/
+            User=ubuntu
+            WorkingDirectory=/opt/app
+            ExecStart=/usr/bin/npm run start
             Restart=always
+            Environment=NODE_ENV=production
 
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/app.service
-          '   
-          
+          '
+
       - name: Enable systemd service
         run: |
           ssh umc_home_master 'sudo systemctl daemon-reload'
           ssh umc_home_master 'sudo systemctl enable app'
 
-      - name: Run Prisma Migrations  # ✅ Prisma 마이그레이션 실행 추가
+      - name: Run Prisma Migrations
         run: |
-          ssh umc_home_master 'npx prisma generate --prefix /opt/app/'
-          ssh umc_home_master 'npx prisma migrate deploy --prefix /opt/app/'
+          ssh umc_home_master 'cd /opt/app && npx prisma generate'
+          ssh umc_home_master 'cd /opt/app && npx prisma migrate deploy'
 
-      - name: Restart systemd service  
+      - name: Restart systemd service
         run: |
           ssh umc_home_master 'sudo systemctl restart app'
-
