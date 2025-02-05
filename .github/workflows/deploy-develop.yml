@@ -77,7 +77,7 @@ jobs:
       - name: Run Prisma Migrations
         run: |
           echo "Running Prisma migrations..."
-          ssh umc_home_master 'cd /opt/app && npx prisma migrate deploy'
+          ssh umc_home_master 'cd /home/ubuntu/backend && npx prisma migrate deploy'
           echo "Prisma migrations complete."
 
       - name: Restart systemd service
