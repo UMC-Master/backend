@@ -35,15 +35,15 @@ jobs:
       - name: Copy Workspace
         run: |
           echo "Copying workspace..."
-          ssh umc_home_master 'sudo mkdir -p /opt/app'
-          ssh umc_home_master 'sudo chown ubuntu:ubuntu /opt/app'
-          scp -r ./[!.]* umc_home_master:/opt/app
+          ssh umc_home_master 'sudo mkdir -p /home/ubuntu/backend'
+          ssh umc_home_master 'sudo chown ubuntu:ubuntu /home/ubuntu/backend'
+          scp -r ./[!.]* umc_home_master:/home/ubuntu/backend
           echo "Workspace copied."
 
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
-          ssh umc_home_master 'cd /opt/app && npm install'
+          ssh umc_home_master 'cd /home/ubuntu/backend && npm install'
           echo "Dependencies installed."
 
       - name: Copy systemd service file
