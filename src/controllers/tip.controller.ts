@@ -785,6 +785,7 @@ public async searchTips(req: Request, res: Response, next: NextFunction) {
   } catch (error) {
     next(error);
   }
+
 }
 
 }
