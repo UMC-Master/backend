@@ -27,6 +27,7 @@ export class TipController {
     );
     this.router.get('/tips', this.getAllTips.bind(this));
     this.router.get('/tips/sorted', this.getSortedTips.bind(this));
+    this.router.get("/tips/search", this.searchTips.bind(this)); 
   }
 
   /**
@@ -669,4 +670,121 @@ export class TipController {
       next(error);
     }
   }
+/**
+   * @swagger
+   * /api/v1/tips/search:
+   *   get:
+   *     summary: "팁 검색"
+   *     description: "제목, 내용, 해시태그에서 검색어를 포함하는 팁을 검색합니다."
+   *     tags:
+   *       - Tips
+   *     parameters:
+   *       - in: query
+   *         name: query
+   *         schema:
+   *           type: string
+   *         required: true
+   *         description: "검색어 (제목, 내용, 해시태그에서 검색)"
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *         required: false
+   *         description: "페이지 번호"
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           default: 10
+   *         required: false
+   *         description: "한 페이지에 표시할 팁 개수"
+   *     responses:
+   *       200:
+   *         description: "팁 검색 결과 반환"
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "팁 검색 성공"
+   *                 result:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       tipId:
+   *                         type: integer
+   *                         example: 1
+   *                       title:
+   *                         type: string
+   *                         example: "Amazing Food Tips"
+   *                       description:
+   *                         type: string
+   *                         example: "Don't miss the local cuisine when traveling."
+   *                       author:
+   *                         type: object
+   *                         properties:
+   *                           userId:
+   *                             type: integer
+   *                             example: 1
+   *                           nickname:
+   *                             type: string
+   *                             example: "John Doe"
+   *                           profileImageUrl:
+   *                             type: string
+   *                             example: "https://example.com/profile.jpg"
+   *                       createdAt:
+   *                         type: string
+   *                         format: date-time
+   *                         example: "2023-01-01T00:00:00Z"
+   *                       updatedAt:
+   *                         type: string
+   *                         format: date-time
+   *                         example: "2023-01-01T00:00:00Z"
+   *                       hashtags:
+   *                         type: array
+   *                         items:
+   *                           type: object
+   *                           properties:
+   *                             hashtagId:
+   *                               type: integer
+   *                               example: 1
+   *                             name:
+   *                               type: string
+   *                               example: "#food"
+   *       400:
+   *         description: "잘못된 요청 (검색어 누락)"
+   */
+
+public async searchTips(req: Request, res: Response, next: NextFunction) {
+  try {
+    const query = req.query.query as string;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    if (!query) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        isSuccess: false,
+        message: "검색어(query)는 필수입니다.",
+      });
+    }
+
+    const tips = await this.tipService.searchTips(query, page, limit); // ✅ `this.tipService` 오류 방지
+
+    res.status(StatusCodes.OK).json({
+      isSuccess: true,
+      message: "팁 검색 성공",
+      result: tips,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 }
