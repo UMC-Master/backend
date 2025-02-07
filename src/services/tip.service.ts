@@ -56,7 +56,7 @@ export class TipService {
     return { isSuccess: true, message: 'Tip successfully deleted' };
   }
  // 전체 꿀팁 조회 (페이지네이션)
- public async getAllTips(options: { page: number; limit: number }) {
+  public async getAllTips(options: { page: number; limit: number }) {
   const { page, limit } = options;
   const skip = (page - 1) * limit;
 
@@ -80,7 +80,7 @@ public async getSortedTips(options: { page: number; limit: number; sort: string 
   return await this.tipRepository.getTips(skip, limit, orderBy);
 }
 
-//꿀팁 검색 기능 
+//꿀팁 검색 기능 (제목, 내용, 해시태그그)
 public async searchTips(query: string, page: number, limit: number) {
   const skip = (page - 1) * limit;
   const tips = await this.tipRepository.searchTips(query, skip, limit);

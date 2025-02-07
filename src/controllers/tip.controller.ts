@@ -567,7 +567,7 @@ export class TipController {
       if (!query) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           isSuccess: false,
-          message: "검색어(query)는 필수입니다.",
+          message: "검색어는 필수입니다.",
         });
       }
 

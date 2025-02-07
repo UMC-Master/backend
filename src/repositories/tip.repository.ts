@@ -91,7 +91,7 @@ export class TipRepository {
       take,
       include: {
         hashtags: { include: { hashtag: true } },
-        user: true, // ✅ `user` 필드 전체 포함
+        user: true, 
         likes: true,
         comments: true,
         media: true,
