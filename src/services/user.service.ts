@@ -92,7 +92,7 @@ export class UserService {
         userId: +user.user_id, // ✅ user_id를 id로 매핑
         email: user.email,
       });
-      const refreshToken = this.generateRefreshToken({ id: user.user_id });
+      const refreshToken = this.generateRefreshToken({ userId: user.user_id });
 
       return { accessToken, refreshToken, user };
     } catch (error) {

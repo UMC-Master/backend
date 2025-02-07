@@ -130,7 +130,7 @@ export class PolicyController {
      *         description: "서버 내부 오류"
      */
     this.router.get(
-      '/api/v1/policies/:policyId/guide',
+      '/policies/:policyId/guide',
       this.getPolicyGuide.bind(this)
     );
 
@@ -293,7 +293,7 @@ export class PolicyController {
      *       500:
      *         description: "서버 내부 오류"
      */
-    this.router.post('/api/v1/policies', this.createPolicy.bind(this));
+    this.router.post('/policies', this.createPolicy.bind(this));
 
     /**
      * @swagger
@@ -344,10 +344,7 @@ export class PolicyController {
      *       500:
      *         description: "서버 내부 오류"
      */
-    this.router.delete(
-      '/api/v1/policies/:policyId',
-      this.deletePolicy.bind(this)
-    );
+    this.router.delete('/policies/:policyId', this.deletePolicy.bind(this));
 
     /**
      * @swagger
@@ -519,10 +516,7 @@ export class PolicyController {
      *       500:
      *         description: "서버 내부 오류"
      */
-    this.router.patch(
-      '/api/v1/policies/:policyId',
-      this.updatePolicy.bind(this)
-    );
+    this.router.patch('/policies/:policyId', this.updatePolicy.bind(this));
   }
 
   private async getPolicies(req: Request, res: Response) {
