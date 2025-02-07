@@ -1,7 +1,8 @@
 import { TipRepository } from '../repositories/tip.repository.js';
 import { toTipDto } from '../dtos/tip.dto.js';
 import { HashtagRepository } from '../repositories/hashtag.repository.js';
-import { ValidationError } from '../errors/errors.js'; // 에러 클래스 추가
+import { ValidationError } from '../errors/errors.js'; 
+import {HashtagNotFoundError} from '../errors/hashtag.error.js' //해시태그 에러 클래스 추가 
 
 export class TipService {
   private tipRepository: TipRepository;
@@ -17,7 +18,7 @@ public async createTip(data: {
   userId: number;
   title: string;
   content: string;
-  hashtags: string[][];
+  hashtags: string[];
 }) {
   // 1. 중복된 팁 제목 검사
   const existingTip = await this.tipRepository.getTipByTitle(data.title);
@@ -32,17 +33,15 @@ public async createTip(data: {
     content: data.content,
   });
 
-  // 3. 해시태그 처리 및 연결 (이중 배열 해제 후 정리)
-  const flattenedHashtags = data.hashtags.flat(); // [["#food", "#travel"]] → ["#food", "#travel"]
-
+  // 3. 해시태그 처리 및 연결 
   const hashtagIds = await Promise.all(
-    flattenedHashtags.map(async (hashtag) => {
+    data.hashtags.map(async (hashtag) => {
       const existingHashtag = await this.hashtagRepository.getByName(hashtag.trim());
-      if (existingHashtag) {
-        return existingHashtag.hashtag_id;
+  
+      if (!existingHashtag) {
+        throw new HashtagNotFoundError({ hashtag });
       }
-      const newHashtag = await this.hashtagRepository.createHashtag(hashtag.trim(), 1);
-      return newHashtag.hashtag_id;
+      return existingHashtag.hashtag_id;
     })
   );
 
@@ -67,7 +66,6 @@ public async createTip(data: {
     },
   };
 }
-
 
   // 팁 조회 (해시태그 변환 추가)
   public async getTipById(tipId: number) {
