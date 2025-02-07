@@ -80,4 +80,35 @@ public async getSortedTips(options: { page: number; limit: number; sort: string 
   return await this.tipRepository.getTips(skip, limit, orderBy);
 }
 
+//꿀팁 검색 기능 
+public async searchTips(query: string, page: number, limit: number) {
+  const skip = (page - 1) * limit;
+  const tips = await this.tipRepository.searchTips(query, skip, limit);
+
+  return tips.map((tip) => ({
+    tipId: tip.tips_id,
+    title: tip.title,
+    description: tip.content,
+    author: tip.user
+      ? { // ✅ `user` 필드가 존재할 경우만 사용
+          userId: tip.user.user_id,
+          nickname: tip.user.nickname,
+          profileImageUrl: tip.user.profile_image_url,
+        }
+      : { // ❗ `user` 정보가 없을 경우 기본값 설정
+          userId: null,
+          nickname: "Unknown User",
+          profileImageUrl: null,
+        },
+    createdAt: tip.created_at,
+    updatedAt: tip.updated_at,
+    likesCount: tip.likes.length,
+    commentsCount: tip.comments.length,
+    hashtags: tip.hashtags.map((h) => ({
+      hashtagId: h.hashtag.hashtag_id,
+      name: h.hashtag.name,
+    })),
+  }));
+}
+
 }
