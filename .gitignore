@@ -9,3 +9,5 @@ dist
 *.bak
 
 .DS_Store
+
+prisma/migrations/
