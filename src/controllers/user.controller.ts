@@ -117,7 +117,7 @@ export class UserController {
    *                 example: "test@example.com"
    *               password:
    *                 type: string
-   *                 example: "password123@!"ㄹ
+   *                 example: "password123@!"
    *               nickname:
    *                 type: string
    *                 example: "testuser"
