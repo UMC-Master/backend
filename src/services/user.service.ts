@@ -89,7 +89,7 @@ export class UserService {
 
       // ✅ 3. JWT 토큰 발급
       const accessToken = this.generateAccessToken({
-        userId: user.user_id, // ✅ user_id를 id로 매핑
+        userId: +user.user_id, // ✅ user_id를 id로 매핑
         email: user.email,
       });
       const refreshToken = this.generateRefreshToken({ id: user.user_id });
