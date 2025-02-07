@@ -12,17 +12,50 @@ export class UserService {
     this.userRepository = new UserRepository();
   }
 
-  // 이메일 회원가입
+  // 이메일 중복 확인
+  async checkEmailDuplicate(email: string): Promise<boolean> {
+    const existingUser = await this.userRepository.findUserByEmail(email);
+    return !!existingUser;
+  }
+
+  async addUserHashtags(userId: number, hashtags: number[]) {
+    const hashtagData = hashtags.map((hashtagId) => ({
+      user_id: userId,
+      hashtag_id: hashtagId,
+    }));
+
+    await this.userRepository.addUserHashtags(userId, hashtags);
+  }
+
+  // 이메일 회원가입 (해시태그 필수 선택)
   async emailSignup(data: EmailSignupDto) {
-    if (!data.email || !data.password || !data.nickname) {
+    if (
+      !data.email ||
+      !data.password ||
+      !data.nickname ||
+      !data.hashtags?.length
+    ) {
       throw new ValidationError(
-        '이메일, 비밀번호, 닉네임은 필수 항목입니다.',
+        '이메일, 비밀번호, 닉네임, 관심사는 필수 입력 항목입니다.',
         data
       );
     }
 
+    // 선택한 해시태그가 유효한지 확인
+    const validHashtags = await this.userRepository.findHashtagsByIds(
+      data.hashtags
+    );
+    if (validHashtags.length !== data.hashtags.length) {
+      throw new ValidationError(
+        '유효하지 않은 해시태그가 포함되어 있습니다.',
+        null
+      );
+    }
+
+    // 비밀번호 해싱
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
+    // 사용자 생성
     const user = await this.userRepository.createUser({
       ...data,
       password: hashedPassword,
@@ -30,6 +63,9 @@ export class UserService {
       providerId: data.email,
       status: 'ACTIVE',
     });
+
+    // ✅ 관심사(해시태그) 저장
+    await this.userRepository.addUserHashtags(user.user_id, data.hashtags);
 
     return user;
   }

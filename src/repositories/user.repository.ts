@@ -103,6 +103,26 @@ export class UserRepository {
     return user;
   }
 
+  // 여러 개의 해시태그 ID를 한 번에 조회하는 메서드 추가
+  async findHashtagsByIds(hashtagIds: number[]) {
+    return this.prisma.hashtag.findMany({
+      where: {
+        hashtag_id: { in: hashtagIds }, // ✅ 배열로 여러 개의 ID 조회
+      },
+    });
+  }
+
+  async addUserHashtags(userId: number, hashtags: number[]) {
+    const hashtagData = hashtags.map((hashtagId) => ({
+      user_id: userId,
+      hashtag_id: hashtagId,
+    }));
+
+    await this.prisma.userHashtag.createMany({
+      data: hashtagData,
+    });
+  }
+
   // Prisma 에러 타입 확인
   private isPrismaError(
     error: unknown

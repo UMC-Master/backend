@@ -29,6 +29,7 @@ export class UserController {
   }
 
   private initializeRoutes() {
+    this.router.post('/check-email', this.checkEmailDuplicate.bind(this));
     this.router.post('/signup', this.emailSignup.bind(this));
     this.router.post('/login', this.emailLogin.bind(this));
     this.router.post('/login/kakao', this.kakaoLogin.bind(this));
@@ -56,10 +57,10 @@ export class UserController {
 
   /**
    * @swagger
-   * /api/v1/signup:
+   * /api/v1/check-email:
    *   post:
-   *     summary: 이메일 회원가입
-   *     description: 이메일, 비밀번호, 닉네임으로 회원가입합니다.
+   *     summary: 이메일 중복 확인
+   *     description: 입력한 이메일이 이미 등록되어 있는지 확인합니다.
    *     tags:
    *       - Users
    *     requestBody:
@@ -72,15 +73,59 @@ export class UserController {
    *               email:
    *                 type: string
    *                 example: "test@example.com"
-   *                 description: 회원가입할 이메일 주소
+   *     responses:
+   *       200:
+   *         description: 사용 가능한 이메일
+   *       400:
+   *         description: 이미 사용 중인 이메일
+   */
+  public async checkEmailDuplicate(req: Request, res: Response): Promise<void> {
+    const { email } = req.body;
+    const isDuplicate = await this.userService.checkEmailDuplicate(email);
+
+    if (isDuplicate) {
+      res.status(400).json({
+        isSuccess: false,
+        message: '이미 사용 중인 이메일입니다.',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      isSuccess: true,
+      message: '사용 가능한 이메일입니다.',
+    });
+  }
+
+  /**
+   * @swagger
+   * /api/v1/signup:
+   *   post:
+   *     summary: 이메일 회원가입
+   *     description: 이메일, 비밀번호, 닉네임으로 회원가입하며, 관심사(해시태그) 선택이 필수입니다.
+   *     tags:
+   *       - Users
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 example: "test@example.com"
    *               password:
    *                 type: string
    *                 example: "password123"
-   *                 description: 계정 비밀번호
    *               nickname:
    *                 type: string
    *                 example: "testuser"
-   *                 description: 사용자 닉네임
+   *               hashtags:
+   *                 type: array
+   *                 items:
+   *                   type: integer
+   *                 example: [1, 2]
    *     responses:
    *       201:
    *         description: 회원가입 성공
@@ -89,16 +134,20 @@ export class UserController {
    */
   public async emailSignup(req: Request, res: Response): Promise<void> {
     const data: EmailSignupDto = req.body;
-    if (!data.email || !data.password || !data.nickname) {
+
+    if (!data.email || !data.password || !data.nickname || !data.hashtags) {
       throw new ValidationError(
-        '이메일, 비밀번호, 닉네임은 필수 입력 항목입니다.',
+        '이메일, 비밀번호, 닉네임, 관심사는 필수 입력 항목입니다.',
         data
       );
     }
+
     const user = await this.userService.emailSignup(data);
-    res
-      .status(201)
-      .json({ isSuccess: true, message: '회원가입 성공', result: user });
+    res.status(201).json({
+      isSuccess: true,
+      message: '회원가입 성공',
+      result: user,
+    });
   }
 
   /**

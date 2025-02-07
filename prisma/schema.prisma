@@ -22,7 +22,8 @@ model User {
   location_id           Int?
   last_login            DateTime?
   status                String
-  role                  UserRole           @default(USER) // 추가된 필드
+  role                  UserRole           @default(USER)
+  hashtags              UserHashtag[]
   comments              Comment[]
   logs                  Log[]
   magazine_bookmarks    MagazineBookmark[]
@@ -207,9 +208,22 @@ model Hashtag {
   hashtag_type    HashtagType       @relation(fields: [hashtag_type_id], references: [hashtag_type_id])
   magazines       MagazineHashtag[]
   tips            TipHashtag[]
+  users           UserHashtag[]     
 
   @@index([hashtag_type_id], map: "hashtag_hashtag_type_id_fkey")
   @@map("hashtag")
+}
+
+model UserHashtag {
+  user_hashtag_id Int     @id @default(autoincrement())
+  user_id         Int
+  hashtag_id      Int
+  user            User    @relation(fields: [user_id], references: [user_id])
+  hashtag         Hashtag @relation(fields: [hashtag_id], references: [hashtag_id])
+
+  @@index([hashtag_id], map: "user_hashtag_hashtag_id_fkey")
+  @@index([user_id], map: "user_hashtag_user_id_fkey")
+  @@map("user_hashtag")
 }
 
 model HashtagType {
