@@ -7,6 +7,7 @@ import {
 import { StatusCodes } from 'http-status-codes';
 import { PolicyService } from '../services/policy.service.js';
 import 'express-async-errors';
+import { imageUploader } from '../file.uploader.js';
 
 export class PolicyController {
   private policyService: PolicyService;
@@ -145,7 +146,7 @@ export class PolicyController {
      *     requestBody:
      *       required: true
      *       content:
-     *         application/json:
+     *         multipart/form-data:
      *           schema:
      *             type: object
      *             properties:
@@ -164,24 +165,17 @@ export class PolicyController {
      *               location_id:
      *                 type: integer
      *                 description: "위치 ID"
-     *               iamge_url_list:
+     *               image_list:
      *                 type: array
      *                 items:
      *                   type: string
-     *                 description: "정책과 관련된 이미지 URL 리스트 (옵션)"
+     *                   format: binary
+     *                 description: "파일 리스트 업로드"
      *               magazine_hashtag_list:
      *                 type: array
      *                 items:
      *                   type: integer
      *                 description: "정책과 관련된 해시태그 목록 (숫자 ID 리스트)"
-     *           example:
-     *             organization_id: 1
-     *             title: "환경 보호 정책"
-     *             description: "지구 환경 보호를 위한 정책"
-     *             policy_url: "https://example.com/policy"
-     *             location_id: 101
-     *             iamge_url_list: ["https://example.com/image1.png", "https://example.com/image2.png"]
-     *             magazine_hashtag_list: [101, 102, 103]
      *     responses:
      *       200:
      *         description: "정책 생성 성공"
@@ -293,7 +287,11 @@ export class PolicyController {
      *       500:
      *         description: "서버 내부 오류"
      */
-    this.router.post('/api/v1/policies', this.createPolicy.bind(this));
+    this.router.post(
+      '/policies',
+      imageUploader.array('image_list', 5),
+      this.createPolicy.bind(this)
+    );
 
     /**
      * @swagger
@@ -570,13 +568,17 @@ export class PolicyController {
   }
 
   private async createPolicy(req: Request, res: Response) {
+    console.log(req.files);
+    console.log(req.body);
     const input: policyRequestDto = {
       organization_id: req.body.organization_id,
       title: req.body.title,
       description: req.body.description,
       policy_url: req.body.policy_url,
       location_id: req.body.location_id,
-      magazine_hashtag_id_list: req.body.magazine_hashtag_list,
+      magazine_hashtag_id_list: req.body.magazine_hashtag_list
+        ? req.body.magazine_hashtag_list
+        : [],
     };
 
     const policy = await this.policyService.createPolicy(input);

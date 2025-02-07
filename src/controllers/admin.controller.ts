@@ -15,8 +15,8 @@ export class AdminController {
   }
 
   private initializeRoutes() {
-    this.router.post('/api/v1/admin/create', this.createAdmin.bind(this));
-    this.router.post('/api/v1/admin/login', this.loginAdmin.bind(this));
+    this.router.post('/admin/create', this.createAdmin.bind(this));
+    this.router.post('/admin/login', this.loginAdmin.bind(this));
     this.router.put('/api/v1/admin/password', authenticateJWT, this.updatePassword.bind(this));
   }
 
