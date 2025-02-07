@@ -1,4 +1,7 @@
-import { OrganizationAlreadyExistError, OrganizationNotFoundError } from '../errors/organization.error.js';
+import {
+  OrganizationAlreadyExistError,
+  OrganizationNotFoundError,
+} from '../errors/organization.error.js';
 import { OrganizationRepository } from '../repositories/organization.repository.js';
 
 export class OrganizationService {
@@ -13,7 +16,7 @@ export class OrganizationService {
     location_id: number
   ) {
     // validation: 행정 구역 유무 확인 | 중복 확인
-    const location = await this.organizationRepository.getById(location_id);
+    const location = await this.organizationRepository.getById(+location_id);
     if (!location) {
       throw new OrganizationNotFoundError({ organization_id: location_id });
     }

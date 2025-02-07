@@ -44,9 +44,6 @@ export class TipRepository {
       },
     });
   }
-
-  
-
   // 팁 수정
   public async updateTip(tipId: number, title: string, content: string) {
     return await prisma.tip.update({
@@ -62,19 +59,28 @@ export class TipRepository {
     });
   }
 
-  // 팁과 해시태그 연결 (중복 방지)
+  //해시태그 연결 
   public async associateHashtagsWithTip(tips_id: number, hashtagIds: number[]) {
+    if (!hashtagIds || hashtagIds.length === 0) {
+      console.log("❌ 저장할 해시태그가 없습니다.");
+      return;
+    }
+  
     const data = hashtagIds.map((hashtag_id) => ({
       tips_id,
       hashtag_id,
     }));
-
-    return await prisma.tipHashtag.createMany({
+  
+    console.log("✅ 해시태그 저장 데이터:", data);
+  
+    await prisma.tipHashtag.createMany({
       data,
-      skipDuplicates: true, // ✅ 중복 방지
+      skipDuplicates: true,
     });
   }
 
+
+  //팁 정보 반환 
   public async getTips(skip: number, limit: number, orderBy?: object) {
     return await prisma.tip.findMany({
       skip,
@@ -86,7 +92,7 @@ export class TipRepository {
         hashtags: { include: { hashtag: true } }, // 해시태그 포함
       },
     });
-  }//팁 정보 반환 
+  }
 
   //팁 검색 기능 (제목, 내용, 해시태그 포함)
   public async searchTips(query: string, skip: number, take: number) {
@@ -118,6 +124,4 @@ export class TipRepository {
       },
     });
   }
-
-
 }

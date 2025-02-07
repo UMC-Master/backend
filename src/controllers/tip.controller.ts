@@ -60,11 +60,9 @@ export class TipController {
    *               hashtags:
    *                 type: array
    *                 items:
-   *                   type: array
-   *                   items:
-   *                     type: string
-   *                 description: "팁에 포함될 해시태그 (이중 배열)"
-   *                 example: [["#food", "#travel"]]
+   *                   type: string
+   *                 description: "팁에 포함될 해시태그"
+   *                 example: ["#청소", "#설거지"]
    *     responses:
    *       201:
    *         description: "새로운 팁 생성 성공"
@@ -139,6 +137,7 @@ export class TipController {
    *                   type: string
    *                   example: "제목 혹은 내용을 입력해야 합니다."
    */
+
   public async createTip(req: Request, res: Response, next: NextFunction) {
     try {
       const { title, content, hashtags } = req.body;
@@ -785,6 +784,7 @@ public async searchTips(req: Request, res: Response, next: NextFunction) {
   } catch (error) {
     next(error);
   }
+
 }
 
 }

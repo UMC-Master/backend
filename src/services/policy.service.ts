@@ -33,15 +33,15 @@ export class PolicyService {
   async createPolicy(data: policyRequestDto) {
     // validation: 존재하는 기관인지, 존재하는 지역인지 확인
     const organization = await this.organizationRepository.getById(
-      data.organization_id
+      +data.organization_id
     );
-    if (organization === null) {
+    if (!organization) {
       throw new OrganizationNotFoundError({
         organization_id: data.organization_id,
       });
     }
     const location = await this.locationRepository.getById(data.location_id);
-    if (location === null) {
+    if (!location) {
       throw new LocationNotFoundError({ location_id: data.location_id });
     }
     // validation: 존재하는 해시태그인지 확인
@@ -94,15 +94,15 @@ export class PolicyService {
   async updatePolicy(policy_id: number, data: policyRequestDto) {
     // validation: 존재하는 기관인지, 존재하는 지역인지, 존재하는 정책인지 확인
     const organization = await this.organizationRepository.getById(
-      data.organization_id
+      +data.organization_id
     );
-    if (organization === null) {
+    if (!organization) {
       throw new OrganizationNotFoundError({
         organization_id: data.organization_id,
       });
     }
     const location = await this.locationRepository.getById(data.location_id);
-    if (location === null) {
+    if (!location) {
       throw new LocationNotFoundError({ location_id: data.location_id });
     }
     const policy = await this.policyRepository.getById(policy_id);
