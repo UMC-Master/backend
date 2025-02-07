@@ -117,7 +117,7 @@ export class UserController {
    *                 example: "test@example.com"
    *               password:
    *                 type: string
-   *                 example: "password123"
+   *                 example: "password123@!"ㄹ
    *               nickname:
    *                 type: string
    *                 example: "testuser"
@@ -125,7 +125,7 @@ export class UserController {
    *                 type: array
    *                 items:
    *                   type: integer
-   *                 example: [1, 2]
+   *                 example: [1, 2, 3]
    *     responses:
    *       201:
    *         description: 회원가입 성공
