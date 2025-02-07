@@ -2,14 +2,17 @@ import axios from 'axios';
 import { UserRepository } from '../repositories/user.repository';
 import { EmailSignupDto, ProfileUpdateDto } from '../dtos/user.dto'; // 사용 중인 DTO만 남김
 import { ValidationError, UnauthorizedError } from '../errors/errors'; // 필요한 에러 클래스만 남김
+import { HashtagService } from '../services/hashtag.service';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 export class UserService {
   private userRepository: UserRepository;
+  private hashtagService: HashtagService; // ✅ 해시태그 서비스 추가
 
   constructor() {
     this.userRepository = new UserRepository();
+    this.hashtagService = new HashtagService();
   }
 
   // 이메일 중복 확인
@@ -41,16 +44,18 @@ export class UserService {
       );
     }
 
-    // 선택한 해시태그가 유효한지 확인
-    const validHashtags = await this.userRepository.findHashtagsByIds(
-      data.hashtags
-    );
-    if (validHashtags.length !== data.hashtags.length) {
-      throw new ValidationError(
-        '유효하지 않은 해시태그가 포함되어 있습니다.',
-        null
-      );
+    // ✅ 해시태그 name → id 변환
+    const hashtagNames = data.hashtags; // ["봄", "여름", "패션"]
+    const hashtags = await this.hashtagService.findHashtagsByName(hashtagNames);
+
+    if (hashtags.length !== hashtagNames.length) {
+      throw new ValidationError('유효하지 않은 해시태그가 포함되어 있습니다.', {
+        invalidHashtags: hashtagNames,
+      });
     }
+
+    // 변환된 해시태그 ID 리스트
+    const hashtagIds = hashtags.map((tag) => tag.hashtag_id);
 
     // 비밀번호 해싱
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -65,7 +70,7 @@ export class UserService {
     });
 
     // ✅ 관심사(해시태그) 저장
-    await this.userRepository.addUserHashtags(user.user_id, data.hashtags);
+    await this.userRepository.addUserHashtags(user.user_id, hashtagIds);
 
     return user;
   }

@@ -4,7 +4,7 @@ export interface EmailSignupDto {
   nickname: string;
   city?: string;
   district?: string;
-  hashtags: number[];
+  hashtags: string[];
 }
 
 export interface EmailLoginDto {

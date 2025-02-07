@@ -125,7 +125,7 @@ export class UserController {
    *                 type: array
    *                 items:
    *                   type: integer
-   *                 example: [1, 2, 3]
+   *                 example: ["봄", "여름", "패션"]
    *     responses:
    *       201:
    *         description: 회원가입 성공
