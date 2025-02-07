@@ -45,16 +45,16 @@ export class UserService {
     if (!isPasswordValid) {
       throw new ValidationError('이메일 또는 비밀번호가 잘못되었습니다.', null);
     }
-
+    console.log(typeof user.user_id);
     const accessToken = jwt.sign(
       { userId: user.user_id, email: user.email },
-      process.env.JWT_SECRET || 'default_secret', // ✅ 환경변수가 없으면 기본값 사용
+      process.env.JWT_SECRET, // ✅ 환경변수가 없으면 기본값 사용
       { expiresIn: '1h' }
     );
 
     const refreshToken = jwt.sign(
       { userId: user.user_id },
-      process.env.JWT_REFRESH_SECRET!,
+      process.env.JWT_REFRESH_SECRET,
       { expiresIn: '7d' }
     );
 
@@ -89,7 +89,7 @@ export class UserService {
 
       // ✅ 3. JWT 토큰 발급
       const accessToken = this.generateAccessToken({
-        id: user.user_id, // ✅ user_id를 id로 매핑
+        userId: user.user_id, // ✅ user_id를 id로 매핑
         email: user.email,
       });
       const refreshToken = this.generateRefreshToken({ id: user.user_id });
@@ -241,7 +241,7 @@ export class UserService {
     try {
       const payload = jwt.verify(
         refreshToken,
-        process.env.JWT_REFRESH_SECRET!
+        process.env.JWT_REFRESH_SECRET
       ) as { userId: number };
 
       const user = await this.userRepository.findUserById(payload.userId);
@@ -249,8 +249,9 @@ export class UserService {
         throw new ValidationError('사용자를 찾을 수 없습니다.', null);
       }
 
+      console.log(user.user_id, user.email);
       const accessToken = this.generateAccessToken({
-        id: user.user_id,
+        userId: user.user_id,
         email: user.email,
       });
 
@@ -263,14 +264,13 @@ export class UserService {
     }
   }
 
-  private generateAccessToken(payload: { id: number; email?: string }) {
-    return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET!, {
-      expiresIn: '1h',
-    });
+  private generateAccessToken(payload) {
+    console.log(typeof payload.userId);
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
   }
 
-  private generateRefreshToken(payload: { id: number }) {
-    return jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET!, {
+  private generateRefreshToken(payload: { userId: number }) {
+    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
       expiresIn: '7d',
     });
   }
