@@ -10,7 +10,7 @@ export class LocationRepository {
   async getById(id: number) {
     return await this.prisma.location.findFirst({
       where: {
-        location_id: id,
+        location_id: +id,
       },
     });
   }

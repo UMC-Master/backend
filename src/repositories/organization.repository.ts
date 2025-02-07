@@ -10,7 +10,7 @@ export class OrganizationRepository {
   async getById(id: number) {
     return await this.prisma.organization.findFirst({
       where: {
-        organization_id: id,
+        organization_id: +id,
       },
     });
   }
