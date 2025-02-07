@@ -73,7 +73,7 @@ export class NotificationController {
      *                   type: string
      *                   example: "요청 데이터가 유효하지 않습니다."
      */
-    this.router.post('/api/v1/notifications/send', this.sendNotification);
+    this.router.post('/notifications/send', this.sendNotification);
   }
 
   private sendNotification(req: Request, res: Response) {

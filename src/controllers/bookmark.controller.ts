@@ -1,18 +1,18 @@
-import { Router ,Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import 'express-async-errors';
 
 export class BookmarkController {
-    public router: Router;
+  public router: Router;
 
-    constructor() {
-      this.router = Router();
-      this.initializeRoutes();
-    }
+  constructor() {
+    this.router = Router();
+    this.initializeRoutes();
+  }
 
-// 북마크된 꿀팁 목록을 조회하는 GET 요청 처리 (빈 응답)
+  // 북마크된 꿀팁 목록을 조회하는 GET 요청 처리 (빈 응답)
 
-private initializeRoutes() {
- /**
+  private initializeRoutes() {
+    /**
      * @swagger
      * /api/v1/users/bookmarks:
      *   get:
@@ -49,7 +49,7 @@ private initializeRoutes() {
      *                             type: string
      *                             example: "Don't forget your sunscreen!"
      *       400:
-     *         description: 잘못된 요청 
+     *         description: 잘못된 요청
      *         content:
      *           application/json:
      *             schema:
@@ -76,12 +76,10 @@ private initializeRoutes() {
      *                   nullable: true
      *                   example: null
      */
-    this.router.get('/api/v1/users/bookmarks', this.getBookmarks);
-}
+    this.router.get('/users/bookmarks', this.getBookmarks);
+  }
 
-private getBookmarks(req: Request, res: Response) {
-  res.status(200).send(); // 빈 응답 (현재 데이터 없음)
+  private getBookmarks(req: Request, res: Response) {
+    res.status(200).send(); // 빈 응답 (현재 데이터 없음)
+  }
 }
-
-}
-

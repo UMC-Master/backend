@@ -51,7 +51,7 @@ export class AnalyzeController {
      *         description: "서버 오류"
      */
     this.router.get(
-      '/api/v1/analytics/user-behavior',
+      '/analytics/user-behavior',
       this.getAnalyticsUserBehavior.bind(this)
     );
 
@@ -85,7 +85,7 @@ export class AnalyzeController {
      *       500:
      *         description: "서버 오류"
      */
-    this.router.get('/api/v1/analytics/kpi', this.getAnalyticsKpi.bind(this));
+    this.router.get('/analytics/kpi', this.getAnalyticsKpi.bind(this));
   }
 
   private async getAnalyticsUserBehavior(req: Request, res: Response) {

@@ -58,7 +58,7 @@ export class UserManageController {
      *       400:
      *         description: "잘못된 요청"
      */
-    this.router.put('/api/v1/manage/users/:userId', this.manageUser.bind(this));
+    this.router.put('/manage/users/:userId', this.manageUser.bind(this));
 
     /**
      * @swagger
@@ -109,10 +109,7 @@ export class UserManageController {
      *       400:
      *         description: "잘못된 요청"
      */
-    this.router.get(
-      '/api/v1/monitor/users/:userId',
-      this.monitorUser.bind(this)
-    );
+    this.router.get('/monitor/users/:userId', this.monitorUser.bind(this));
   }
 
   private async manageUser(req: Request, res: Response) {
