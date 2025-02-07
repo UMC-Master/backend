@@ -87,4 +87,37 @@ export class TipRepository {
       },
     });
   }//팁 정보 반환 
+
+  //팁 검색 기능 (제목, 내용, 해시태그 포함)
+  public async searchTips(query: string, skip: number, take: number) {
+    return await prisma.tip.findMany({
+      where: {
+        OR: [
+          { title: { contains: query } },
+          { content: { contains: query } },
+          {
+            hashtags: {
+              some: {
+                hashtag: {
+                  name: { contains: query },
+                },
+              },
+            },
+          },
+        ],
+      },
+      skip,
+      take,
+      include: {
+        hashtags: { include: { hashtag: true } },
+        user: true,
+        likes: true,
+        comments: true,
+        media: true,
+        saves: true,
+      },
+    });
+  }
+
+
 }
