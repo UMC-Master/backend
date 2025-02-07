@@ -80,7 +80,7 @@ public async getSortedTips(options: { page: number; limit: number; sort: string 
   return await this.tipRepository.getTips(skip, limit, orderBy);
 }
 
-//꿀팁 검색 기능 (제목, 내용, 해시태그그)
+//꿀팁 검색 기능 (제목, 내용, 해시태그)
 public async searchTips(query: string, page: number, limit: number) {
   const skip = (page - 1) * limit;
   const tips = await this.tipRepository.searchTips(query, skip, limit);

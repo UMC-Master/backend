@@ -74,13 +74,13 @@ export class TipRepository {
     return await prisma.tip.findMany({
       where: {
         OR: [
-          { title: { contains: query } }, // 제목 검색
-          { content: { contains: query } }, // 내용 검색
+          { title: { contains: query } }, // 제목 
+          { content: { contains: query } }, // 내용 
           {
             hashtags: {
               some: {
                 hashtag: {
-                  name: { contains: query }, // 해시태그 검색
+                  name: { contains: query }, // 해시태그 
                 },
               },
             },
