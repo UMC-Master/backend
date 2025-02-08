@@ -29,8 +29,8 @@ export class QuizRepository {
         description: string;
       }[]
     >`
-    SELECT * FROM Quiz
-    ORDER BY RAND()
+    SELECT * FROM quiz 
+    ORDER BY RAND() 
     LIMIT ${limit};
   `;
   }
