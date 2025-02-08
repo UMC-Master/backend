@@ -29,7 +29,7 @@ export class QuizRepository {
         description: string;
       }[]
     >`
-    SELECT * FROM \`Quiz\`
+    SELECT * FROM Quiz
     ORDER BY RAND()
     LIMIT ${limit};
   `;
