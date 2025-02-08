@@ -8,6 +8,7 @@ import { StatusCodes } from 'http-status-codes';
 import { PolicyService } from '../services/policy.service.js';
 import 'express-async-errors';
 import { imageUploader } from '../file.uploader.js';
+import { authenticateJWT } from '../middlewares/authenticateJWT.js';
 
 export class PolicyController {
   private policyService: PolicyService;
@@ -515,6 +516,124 @@ export class PolicyController {
      *         description: "서버 내부 오류"
      */
     this.router.patch('/policies/:policyId', this.updatePolicy.bind(this));
+
+    /**
+     * @swagger
+     * /api/v1/policies/{policyId}/likes:
+     *   patch:
+     *     summary: "정책 좋아요 토글"
+     *     description: "특정 정책 ID에 대해 좋아요를 추가하거나 제거합니다."
+     *     tags:
+     *       - Policy
+     *     security:
+     *       - bearerAuth: []  # JWT 인증이 필요하다는 것을 명시
+     *     parameters:
+     *       - in: path
+     *         name: policyId
+     *         required: true
+     *         description: "좋아요를 토글할 정책의 고유 ID"
+     *         schema:
+     *           type: integer
+     *           example: 1
+     *     responses:
+     *       200:
+     *         description: "정책 좋아요 토글 성공"
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   description: "요청 성공 여부"
+     *                 code:
+     *                   type: string
+     *                   description: "응답 코드"
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   description: "응답 메시지"
+     *                   example: "좋아요 상태가 변경되었습니다."
+     *                 result:
+     *                   type: object
+     *                   properties:
+     *                     liked:
+     *                       type: boolean
+     *                       description: "현재 좋아요 상태 (true: 좋아요 추가됨, false: 좋아요 제거됨)"
+     *                       example: true
+     *       400:
+     *         description: "잘못된 요청 (유효하지 않은 정책 ID)"
+     *       401:
+     *         description: "인증 실패 (유효하지 않은 JWT)"
+     *       404:
+     *         description: "정책을 찾을 수 없음"
+     *       500:
+     *         description: "서버 내부 오류"
+     */
+    this.router.patch(
+      '/policies/:policyId/likes',
+      authenticateJWT,
+      this.likePolicies.bind(this)
+    );
+
+    /**
+     * @swagger
+     * /api/v1/policies/{policyId}/bookmarks:
+     *   patch:
+     *     summary: "정책 북마크 토글"
+     *     description: "특정 정책 ID에 대해 북마크를 추가하거나 제거합니다."
+     *     tags:
+     *       - Policy
+     *     security:
+     *       - bearerAuth: []  # JWT 인증 필요
+     *     parameters:
+     *       - in: path
+     *         name: policyId
+     *         required: true
+     *         description: "북마크를 토글할 정책의 고유 ID"
+     *         schema:
+     *           type: integer
+     *           example: 1
+     *     responses:
+     *       200:
+     *         description: "정책 북마크 토글 성공"
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   description: "요청 성공 여부"
+     *                 code:
+     *                   type: string
+     *                   description: "응답 코드"
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   description: "응답 메시지"
+     *                   example: "북마크 상태가 변경되었습니다."
+     *                 result:
+     *                   type: object
+     *                   properties:
+     *                     bookmarked:
+     *                       type: boolean
+     *                       description: "현재 북마크 상태 (true: 북마크 추가됨, false: 북마크 제거됨)"
+     *                       example: true
+     *       400:
+     *         description: "잘못된 요청 (유효하지 않은 정책 ID)"
+     *       401:
+     *         description: "인증 실패 (유효하지 않은 JWT)"
+     *       404:
+     *         description: "정책을 찾을 수 없음"
+     *       500:
+     *         description: "서버 내부 오류"
+     */
+    this.router.patch(
+      '/policies/:policyId/bookmarks',
+      authenticateJWT,
+      this.bookmarkPolicies.bind(this)
+    );
   }
 
   private async getPolicies(req: Request, res: Response) {
@@ -633,6 +752,30 @@ export class PolicyController {
       title: updatedPolicy.title,
       description: updatedPolicy.description,
       updated_at: updatedPolicy.updated_at,
+    });
+  }
+
+  private async likePolicies(req: Request, res: Response) {
+    const userId = req.user.userId;
+    const policyId = +req.params.policyId;
+
+    const response = await this.policyService.likePolicy(userId, policyId);
+
+    res.status(StatusCodes.OK).success({
+      policy_id: policyId,
+      message: response.message,
+    });
+  }
+
+  private async bookmarkPolicies(req: Request, res: Response) {
+    const userId = req.user.userId;
+    const policyId = +req.params.policyId;
+
+    const response = await this.policyService.bookmarkPolicy(userId, policyId);
+
+    res.status(StatusCodes.OK).success({
+      policy_id: policyId,
+      message: response.message,
     });
   }
 }

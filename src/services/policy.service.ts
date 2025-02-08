@@ -3,6 +3,7 @@ import { HashtagNotFoundError } from '../errors/hashtag.error.js';
 import { LocationNotFoundError } from '../errors/location.error.js';
 import { OrganizationNotFoundError } from '../errors/organization.error.js';
 import { PolicyNotFoundError } from '../errors/policy.error.js';
+import { UserNotFoundError } from '../errors/user.error.js';
 import { HashtagRepository } from '../repositories/hashtag.repository.js';
 import { LocationRepository } from '../repositories/location.repository.js';
 import { MagazineBookmarkRepository } from '../repositories/magazineBookmark.repository.js';
@@ -10,8 +11,10 @@ import { MagazineHashtagRepository } from '../repositories/magazineHashtag.repos
 import { MagazineLikeRepository } from '../repositories/magezineLike.repository.js';
 import { OrganizationRepository } from '../repositories/organization.repository.js';
 import { PolicyRepository } from '../repositories/policy.repository.js';
+import { UserRepository } from '../repositories/user.repository.js';
 
 export class PolicyService {
+  private userRepository: UserRepository;
   private policyRepository: PolicyRepository;
   private locationRepository: LocationRepository;
   private organizationRepository: OrganizationRepository;
@@ -21,6 +24,7 @@ export class PolicyService {
   private magazineBookmarkRepository: MagazineBookmarkRepository;
 
   constructor() {
+    this.userRepository = new UserRepository();
     this.policyRepository = new PolicyRepository();
     this.locationRepository = new LocationRepository();
     this.organizationRepository = new OrganizationRepository();
@@ -180,5 +184,61 @@ export class PolicyService {
 
     // business logic: 삭제
     await this.policyRepository.delete(policy_id);
+  }
+
+  async likePolicy(userId: number, policyId: number) {
+    // validation
+    const user = await this.userRepository.findUserById(+userId);
+    if (!user) {
+      throw new UserNotFoundError({ userId });
+    }
+    const policy = await this.policyRepository.getById(+policyId);
+    if (!policy) {
+      throw new PolicyNotFoundError({ policyId });
+    }
+
+    // business logic
+    const policyLike =
+      await this.magazineLikeRepository.findByUserIdANdMagazineId(
+        userId,
+        policyId
+      );
+
+    if (policyLike) {
+      await this.magazineLikeRepository.delete(policyLike.magazine_like_id);
+      return { message: '좋아요 취소' };
+    } else {
+      await this.magazineLikeRepository.create(userId, policyId);
+      return { message: '좋아요' };
+    }
+  }
+
+  async bookmarkPolicy(userId: number, policyId: number) {
+    // validation
+    const user = await this.userRepository.findUserById(+userId);
+    if (!user) {
+      throw new UserNotFoundError({ userId });
+    }
+    const policy = await this.policyRepository.getById(+policyId);
+    if (!policy) {
+      throw new PolicyNotFoundError({ policyId });
+    }
+
+    // business logic
+    const policyBookmark =
+      await this.magazineBookmarkRepository.findByUserIdANdMagazineId(
+        userId,
+        policyId
+      );
+
+    if (policyBookmark) {
+      await this.magazineBookmarkRepository.delete(
+        policyBookmark.magazine_bookmark_id
+      );
+      return { message: '북마크 취소' };
+    } else {
+      await this.magazineBookmarkRepository.create(userId, policyId);
+      return { message: '북마크' };
+    }
   }
 }
