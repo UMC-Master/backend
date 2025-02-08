@@ -4,7 +4,6 @@ import { QuizDto, QuizListDto } from '../dtos/quiz.dto.js';
 import 'express-async-errors';
 import { QuizService } from '../services/quiz.service.js';
 import { authenticateJWT } from '../middlewares/authenticateJWT.js';
-import { CommonError } from '../errors/errors.js';
 
 export class QuizController {
   private quizService: QuizService;
