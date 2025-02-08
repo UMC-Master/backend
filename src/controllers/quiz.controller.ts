@@ -4,6 +4,7 @@ import { QuizDto, QuizListDto } from '../dtos/quiz.dto.js';
 import 'express-async-errors';
 import { QuizService } from '../services/quiz.service.js';
 import { authenticateJWT } from '../middlewares/authenticateJWT.js';
+import { CommonError } from '../errors/errors.js';
 
 export class QuizController {
   private quizService: QuizService;
@@ -226,19 +227,23 @@ export class QuizController {
   }
 
   private async getQuizzes(req: Request, res: Response) {
-    const quizzes = await this.quizService.getRandomQuizzes();
+    try {
+      const quizzes = await this.quizService.getRandomQuizzes();
 
-    const response: QuizListDto = {
-      number_of_quiz: quizzes.length,
-      quiz_list: quizzes.map((quiz) => ({
-        id: quiz.quiz_id,
-        question: quiz.question,
-        answer: quiz.correct_answer,
-        description: quiz.description,
-      })),
-    };
+      const response: QuizListDto = {
+        number_of_quiz: quizzes.length,
+        quiz_list: quizzes.map((quiz) => ({
+          id: quiz.quiz_id,
+          question: quiz.question,
+          answer: quiz.correct_answer,
+          description: quiz.description,
+        })),
+      };
 
-    res.status(StatusCodes.OK).success({ response });
+      res.status(StatusCodes.OK).success({ response });
+    } catch (error) {
+      throw new CommonError('', '', error);
+    }
   }
 
   private async saveQuizAnswerHistory(req: Request, res: Response) {
