@@ -242,7 +242,15 @@ export class QuizController {
 
       res.status(StatusCodes.OK).success({ response });
     } catch (error) {
-      throw new CommonError('', '', error);
+      console.error('Error fetching quizzes:', error); // 에러 로그 출력
+      res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({
+          isSuccess: false,
+          code: 'SERVER500',
+          message: '서버 오류 발생',
+          error: error.message,
+        });
     }
   }
 
