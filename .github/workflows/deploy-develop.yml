@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - develop
-  workflow_dispatch:  # 수동 실행 가능
+  workflow_dispatch: # 수동 실행 가능
 
 jobs:
   deploy:
@@ -83,5 +83,5 @@ jobs:
       - name: Restart systemd service
         run: |
           echo "Restarting systemd service..."
-          ssh umc_home_master 'sudo systemctl restart app'
+          ssh umc_home_master 'pm2 restart umc-backend'
           echo "Systemd service restarted."
