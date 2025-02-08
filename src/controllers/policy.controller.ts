@@ -72,7 +72,7 @@ export class PolicyController {
      *       400:
      *         description: "잘못된 요청"
      */
-    this.router.get('/api/v1/policies', this.getPolicies.bind(this));
+    this.router.get('/policies', this.getPolicies.bind(this));
 
     /**
      * @swagger
