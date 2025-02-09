@@ -29,6 +29,7 @@ export interface policyResponseDto {
   created_at: string | Date;
   updated_at: string | Date;
   policy_url: string;
+  image_url_list: string[];
   magazine_image_url_list?: [
     {
       image_name: string;

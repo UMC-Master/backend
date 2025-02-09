@@ -666,6 +666,7 @@ export class PolicyController {
       policy_url: policy.policy_url,
       magazine_likes: policy.magazine_likes,
       magazine_bookmarks: policy.magazine_bookmarks,
+      image_url_list: policy.image_url_list,
       organization: {
         id: policy.organization.organization_id,
         name: policy.organization.name,
@@ -681,8 +682,6 @@ export class PolicyController {
   }
 
   private async createPolicy(req: Request, res: Response) {
-    console.log(req.files);
-    console.log(req.body);
     const input: policyRequestDto = {
       organization_id: req.body.organization_id,
       title: req.body.title,
@@ -692,6 +691,7 @@ export class PolicyController {
       magazine_hashtag_id_list: req.body.magazine_hashtag_list
         ? req.body.magazine_hashtag_list.split(',').map(Number) // 쉼표 기준으로 나누고 숫자로 변환
         : [],
+      iamge_url_list: req.files.map((file) => file.location),
     };
 
     const policy = await this.policyService.createPolicy(input);
@@ -703,6 +703,7 @@ export class PolicyController {
       created_at: policy.created_at,
       updated_at: policy.updated_at,
       policy_url: policy.policy_url,
+      image_url_list: policy.image_url_list,
       magazine_likes: policy.magazine_likes,
       magazine_bookmarks: policy.magazine_bookmarks,
       organization: {
