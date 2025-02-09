@@ -8,6 +8,7 @@ import { HashtagRepository } from '../repositories/hashtag.repository.js';
 import { LocationRepository } from '../repositories/location.repository.js';
 import { MagazineBookmarkRepository } from '../repositories/magazineBookmark.repository.js';
 import { MagazineHashtagRepository } from '../repositories/magazineHashtag.repository.js';
+import { MagazineImageRepository } from '../repositories/magazineImage.repository.js';
 import { MagazineLikeRepository } from '../repositories/magezineLike.repository.js';
 import { OrganizationRepository } from '../repositories/organization.repository.js';
 import { PolicyRepository } from '../repositories/policy.repository.js';
@@ -22,6 +23,7 @@ export class PolicyService {
   private magazineHashtagRepository: MagazineHashtagRepository;
   private magazineLikeRepository: MagazineLikeRepository;
   private magazineBookmarkRepository: MagazineBookmarkRepository;
+  private magazineImageRepository: MagazineImageRepository;
 
   constructor() {
     this.userRepository = new UserRepository();
@@ -32,6 +34,7 @@ export class PolicyService {
     this.magazineHashtagRepository = new MagazineHashtagRepository();
     this.magazineLikeRepository = new MagazineLikeRepository();
     this.magazineBookmarkRepository = new MagazineBookmarkRepository();
+    this.magazineImageRepository = new MagazineImageRepository();
   }
 
   async createPolicy(data: policyRequestDto) {
@@ -58,7 +61,7 @@ export class PolicyService {
       hashtag_list = [...hashtag_list, foundHashtag];
     }
 
-    // business logic & respones : 정책 소개글 생성 및 해시태그 저장
+    // business logic: 정책 소개글 생성
     const policy = await this.policyRepository.create({
       title: data.title,
       description: data.description,
@@ -71,20 +74,28 @@ export class PolicyService {
       location: { connect: { location_id: location.location_id } },
     });
 
-    let returnHashtag = [];
+    // business logic: 해시태그 저장
+    const returnHashtag = [];
     for (const hashtag of hashtag_list) {
       const savedHashtag =
         await this.magazineHashtagRepository.createMagazineHashtag(
           policy.magazine_id,
           hashtag.hashtag_id
         );
-      returnHashtag = [
-        ...returnHashtag,
-        {
-          id: savedHashtag.hashtag.hashtag_id,
-          name: savedHashtag.hashtag.name,
-        },
-      ];
+      returnHashtag.push({
+        id: savedHashtag.hashtag.hashtag_id,
+        name: savedHashtag.hashtag.name,
+      });
+    }
+
+    // business logic: 이미지 저장
+    const returnImageUrl = [];
+    for (const imageUrl of data.iamge_url_list) {
+      const savedImageUrl = await this.magazineImageRepository.create(
+        policy.magazine_id,
+        imageUrl
+      );
+      returnImageUrl.push(savedImageUrl.image_url);
     }
 
     return {
@@ -92,6 +103,7 @@ export class PolicyService {
       magazine_likes: 0,
       magazine_bookmarks: 0,
       hashtag_list: returnHashtag,
+      image_url_list: returnImageUrl,
     };
   }
 
@@ -141,15 +153,19 @@ export class PolicyService {
 
     const hashtags =
       await this.magazineHashtagRepository.getHashtagsByPolicyId(policy_id);
-    let returnHashtag = [];
+    const returnHashtag = [];
     for (const hashtag of hashtags) {
-      returnHashtag = [
-        ...returnHashtag,
-        {
-          id: hashtag.hashtag_id,
-          name: hashtag.hashtag.name,
-        },
-      ];
+      returnHashtag.push({
+        id: hashtag.hashtag_id,
+        name: hashtag.hashtag.name,
+      });
+    }
+
+    const images =
+      await this.magazineImageRepository.getByMagazineId(policy_id);
+    const returnImageUrl = [];
+    for (const imageUrl of images) {
+      returnImageUrl.push(imageUrl.image_url);
     }
 
     // response: 반환
@@ -158,6 +174,7 @@ export class PolicyService {
       magazine_likes: likes,
       magazine_bookmarks: bookmarks,
       hashtag_list: returnHashtag,
+      image_url_list: returnImageUrl,
     };
   }
 
