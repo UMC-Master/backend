@@ -3,6 +3,7 @@ import { CommunityService } from '../services/community.service.js';
 import { StatusCodes } from 'http-status-codes'; // StatusCodes를 임포트
 import { authenticateJWT } from '../middlewares/authenticateJWT'; // 인증 미들웨어 import
 import 'express-async-errors';
+import { UnauthorizedError, ValidationError } from '../errors/errors'; // 커스텀 에러 임포트
 
 export class CommunityController {
   public router: Router;
@@ -55,19 +56,21 @@ export class CommunityController {
 
   /**
    * @swagger
-   * /api/v1/tips/{tipId}/comments:
+   * /api/v1/tips/{tipId}/comment:
    *   post:
-   *     summary: 꿀팁에 대한 댓글
-   *     description: 사용자가 특정 꿀팁에 대해 댓글을 달 수 있습니다.
+   *     summary: 꿀팁에 댓글 추가
+   *     description: 로그인한 사용자가 특정 꿀팁에 댓글을 남깁니다.
    *     tags:
-   *       - communities
+   *       - Comments
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: tipId
    *         required: true
-   *         description: 댓글을 달 꿀팁의 ID
    *         schema:
    *           type: integer
+   *         description: 댓글을 추가할 꿀팁의 ID
    *     requestBody:
    *       required: true
    *       content:
@@ -77,12 +80,15 @@ export class CommunityController {
    *             properties:
    *               comment:
    *                 type: string
-   *                 example: "좋은 꿀팁입니다! 바로 시도해보겠습니다."
+   *                 example: "이 꿀팁 정말 유용하네요!"
+   *                 description: 추가할 댓글 내용
    *     responses:
    *       200:
-   *         description: 댓글 달기 성공
+   *         description: 댓글 추가 성공
    *       400:
-   *         description: 잘못된 요청
+   *         description: 잘못된 요청 (유효하지 않은 tipId 또는 댓글 내용 없음)
+   *       401:
+   *         description: 인증 필요 (토큰 없음)
    */
   private async commentOnTip(req: Request, res: Response, next: NextFunction) {
     try {
@@ -90,12 +96,18 @@ export class CommunityController {
       const tipId = parseInt(req.params.tipId, 10);
       const { comment } = req.body;
 
-      if (!comment) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          isSuccess: false,
-          code: 'COMMON400',
-          message: '댓글 내용이 비어있습니다.',
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      if (isNaN(tipId)) {
+        throw new ValidationError('올바른 Tip ID를 입력해주세요.', {
+          tipId: req.params.tipId,
         });
+      }
+
+      if (!comment) {
+        throw new ValidationError('댓글 내용이 비어있습니다.', null);
       }
 
       const newComment = await this.communityService.commentOnTip(
@@ -103,6 +115,7 @@ export class CommunityController {
         tipId,
         comment
       );
+
       res.status(StatusCodes.OK).json({
         isSuccess: true,
         code: 'COMMON200',
@@ -232,12 +245,19 @@ export class CommunityController {
       const commentId = parseInt(req.params.commentId, 10);
       const { comment } = req.body;
 
-      if (!comment) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          isSuccess: false,
-          code: 'COMMON400',
-          message: '댓글 내용이 비어있습니다.',
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      if (isNaN(tipId) || isNaN(commentId)) {
+        throw new ValidationError('올바른 ID를 입력해주세요.', {
+          tipId: req.params.tipId,
+          commentId: req.params.commentId,
         });
+      }
+
+      if (!comment) {
+        throw new ValidationError('댓글 내용이 비어있습니다.', null);
       }
 
       const updatedComment = await this.communityService.updateComment(
@@ -246,6 +266,7 @@ export class CommunityController {
         commentId,
         comment
       );
+
       res.status(StatusCodes.OK).json({
         isSuccess: true,
         code: 'COMMON200',
@@ -261,17 +282,44 @@ export class CommunityController {
    * @swagger
    * /api/v1/tips/{tipId}/like:
    *   post:
-   *     summary: 꿀팁 추천 (좋아요 토글 기능)
-   *     description: 사용자가 특정 꿀팁에 대해 좋아요를 클릭하거나 취소할 수 있습니다.
+   *     summary: 꿀팁 좋아요 추가
+   *     description: 특정 꿀팁을 좋아요합니다.
    *     tags:
-   *       - communities
+   *       - Likes
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: tipId
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: 좋아요할 꿀팁의 ID
+   *     responses:
+   *       200:
+   *         description: 좋아요 성공
+   *       400:
+   *         description: 잘못된 요청 (유효하지 않은 tipId)
+   *       401:
+   *         description: 인증 필요 (토큰 없음)
    */
   private async likeTip(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user?.userId;
       const tipId = parseInt(req.params.tipId, 10);
 
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      if (isNaN(tipId)) {
+        throw new ValidationError('올바른 Tip ID를 입력해주세요.', {
+          tipId: req.params.tipId,
+        });
+      }
+
       const updatedTip = await this.communityService.likeTip(userId, tipId);
+
       res.status(StatusCodes.OK).json({
         isSuccess: true,
         code: 'COMMON200',
@@ -371,7 +419,18 @@ export class CommunityController {
       const userId = req.user?.userId;
       const tipId = parseInt(req.params.tipId, 10);
 
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      if (isNaN(tipId)) {
+        throw new ValidationError('올바른 Tip ID를 입력해주세요.', {
+          tipId: req.params.tipId,
+        });
+      }
+
       await this.communityService.removeLike(userId, tipId);
+
       res.status(StatusCodes.OK).json({
         isSuccess: true,
         code: 'COMMON200',
@@ -387,16 +446,43 @@ export class CommunityController {
    * /api/v1/tips/{tipId}/save:
    *   post:
    *     summary: 꿀팁 저장
-   *     description: 사용자가 특정 꿀팁을 저장할 수 있습니다.
+   *     description: 특정 꿀팁을 저장합니다.
    *     tags:
-   *       - communities
+   *       - Saves
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: tipId
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: 저장할 꿀팁의 ID
+   *     responses:
+   *       200:
+   *         description: 꿀팁 저장 성공
+   *       400:
+   *         description: 잘못된 요청 (유효하지 않은 tipId)
+   *       401:
+   *         description: 인증 필요 (토큰 없음)
    */
   private async saveTip(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user?.userId;
       const tipId = parseInt(req.params.tipId, 10);
 
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      if (isNaN(tipId)) {
+        throw new ValidationError('올바른 Tip ID를 입력해주세요.', {
+          tipId: req.params.tipId,
+        });
+      }
+
       const updatedTip = await this.communityService.saveTip(userId, tipId);
+
       res.status(StatusCodes.OK).json({
         isSuccess: true,
         code: 'COMMON200',
@@ -496,7 +582,18 @@ export class CommunityController {
       const userId = req.user?.userId;
       const tipId = parseInt(req.params.tipId, 10);
 
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      if (isNaN(tipId)) {
+        throw new ValidationError('올바른 Tip ID를 입력해주세요.', {
+          tipId: req.params.tipId,
+        });
+      }
+
       await this.communityService.removeSave(userId, tipId);
+
       res.status(StatusCodes.OK).json({
         isSuccess: true,
         code: 'COMMON200',
