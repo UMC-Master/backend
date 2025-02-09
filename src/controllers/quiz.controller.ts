@@ -226,31 +226,19 @@ export class QuizController {
   }
 
   private async getQuizzes(req: Request, res: Response) {
-    try {
-      const quizzes = await this.quizService.getRandomQuizzes();
+    const quizzes = await this.quizService.getRandomQuizzes();
 
-      const response: QuizListDto = {
-        number_of_quiz: quizzes.length,
-        quiz_list: quizzes.map((quiz) => ({
-          id: quiz.quiz_id,
-          question: quiz.question,
-          answer: quiz.correct_answer,
-          description: quiz.description,
-        })),
-      };
+    const response: QuizListDto = {
+      number_of_quiz: quizzes.length,
+      quiz_list: quizzes.map((quiz) => ({
+        id: quiz.quiz_id,
+        question: quiz.question,
+        answer: quiz.correct_answer,
+        description: quiz.description,
+      })),
+    };
 
-      res.status(StatusCodes.OK).success({ response });
-    } catch (error) {
-      console.error('Error fetching quizzes:', error); // 에러 로그 출력
-      res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json({
-          isSuccess: false,
-          code: 'SERVER500',
-          message: '서버 오류 발생',
-          error: error.message,
-        });
-    }
+    res.status(StatusCodes.OK).success({ response });
   }
 
   private async saveQuizAnswerHistory(req: Request, res: Response) {

@@ -51,7 +51,7 @@ export class PolicyService {
     // validation: 존재하는 해시태그인지 확인
     let hashtag_list = [];
     for (const hashtag of data.magazine_hashtag_id_list) {
-      const foundHashtag = await this.hashtagRepository.getById(hashtag);
+      const foundHashtag = await this.hashtagRepository.getById(+hashtag);
       if (foundHashtag === null) {
         throw new HashtagNotFoundError({ hashtag_id: hashtag });
       }
@@ -184,6 +184,8 @@ export class PolicyService {
 
     // business logic: 삭제
     await this.policyRepository.delete(policy_id);
+
+    // todo: 연관 해시태그 삭제
   }
 
   async likePolicy(userId: number, policyId: number) {

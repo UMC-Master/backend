@@ -690,7 +690,7 @@ export class PolicyController {
       policy_url: req.body.policy_url,
       location_id: req.body.location_id,
       magazine_hashtag_id_list: req.body.magazine_hashtag_list
-        ? req.body.magazine_hashtag_list
+        ? req.body.magazine_hashtag_list.split(',').map(Number) // 쉼표 기준으로 나누고 숫자로 변환
         : [],
     };
 
