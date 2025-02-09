@@ -95,32 +95,55 @@ export class TipRepository {
   }
 
   //팁 검색 기능 (제목, 내용, 해시태그 포함)
-  public async searchTips(query: string, skip: number, take: number) {
-    return await prisma.tip.findMany({
-      where: {
-        OR: [
-          { title: { contains: query } },
-          { content: { contains: query } },
-          {
-            hashtags: {
-              some: {
-                hashtag: {
-                  name: { contains: query },
-                },
+  public async searchTips(query: string, tags: string[], skip: number, take: number) {
+    // URL 인코딩 문제 해결 (한글 디코딩)
+    const decodedQuery = query ? decodeURIComponent(query) : "";
+    const decodedTags = tags.map(tag => decodeURIComponent(tag));
+
+    const whereClause: any = {
+      OR: [
+        { title: { contains: decodedQuery } }, // mode: "insensitive" 제거
+        { content: { contains: decodedQuery } },
+        {
+          hashtags: {
+            some: {
+              hashtag: {
+                name: { contains: decodedQuery }, // 검색어가 해시태그에도 포함될 수 있도록 설정
               },
             },
           },
-        ],
-      },
-      skip,
-      take,
+        },
+      ],
+    };
+
+    // 해시태그 필터가 있을 경우 추가
+    if (decodedTags.length > 0) {
+      whereClause.OR.push({
+        hashtags: {
+          some: {
+            hashtag: {
+              name: { in: decodedTags },
+            },
+          },
+        },
+      });
+    }
+
+    return await prisma.tip.findMany({
+      where: whereClause,
+      skip: skip,
+      take: take,
       include: {
         hashtags: { include: { hashtag: true } },
-        user: true,
+        user: {
+          select: {
+            user_id: true,
+            nickname: true,
+            profile_image_url: true,
+          },
+        },
         likes: true,
         comments: true,
-        media: true,
-        saves: true,
       },
     });
   }

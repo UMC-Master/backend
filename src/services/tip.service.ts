@@ -126,35 +126,9 @@ public async createTip(data: {
   }
 
    // 팁 검색 기능
-   public async searchTips(query: string, page: number, limit: number) {
+   public async searchTips(query: string, tags: string[], page: number, limit: number) {
     const skip = (page - 1) * limit;
-    const tips = await this.tipRepository.searchTips(query, skip, limit); // ✅ `this.tipRepository` 오류 방지
-
-    return tips.map((tip) => ({
-      tipId: tip.tips_id,
-      title: tip.title,
-      description: tip.content,
-      author: tip.user
-        ? {
-            userId: tip.user.user_id,
-            nickname: tip.user.nickname,
-            profileImageUrl: tip.user.profile_image_url,
-          }
-        : {
-            userId: null,
-            nickname: "Unknown User",
-            profileImageUrl: null,
-          },
-      createdAt: tip.created_at,
-      updatedAt: tip.updated_at,
-      likesCount: tip.likes.length,
-      commentsCount: tip.comments.length,
-      hashtags: tip.hashtags.map((h) => ({
-        hashtagId: h.hashtag.hashtag_id,
-        name: h.hashtag.name,
-      })),
-    }));
+    return await this.tipRepository.searchTips(query, tags, skip, limit);
   }
-
 
 }
