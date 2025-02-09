@@ -32,38 +32,12 @@ const port = process.env.PORT || 3000;
 const staticFilePath = path.join(__dirname, '../public');
 console.log(`📂 정적 파일 제공 경로: ${staticFilePath}`);
 
-const setupResponseHelpers = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  res.success = (response, message = '성공입니다.', code = 'COMMON200') => {
-    return res.json({ isSuccess: true, code, message, result: response });
-  };
-
-  res.error = ({
-    errorCode = 'COMMON400',
-    reason = '요청 처리 중 오류가 발생했습니다.',
-    data = null,
-  }) => {
-    return res.status(400).json({
-      isSuccess: false,
-      code: errorCode,
-      message: reason,
-      result: data,
-    });
-  };
-
-  next();
-};
-
 // 미들웨어 설정
 const setupMiddlewares = (app: express.Express) => {
   app.use(cors());
   app.use('/static', express.static(staticFilePath)); // ✅ 절대 경로 사용
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
-  app.use(setupResponseHelpers);
 };
 
 // Swagger 문서 설정
@@ -129,15 +103,4 @@ app.listen(port, () => {
   console.log(`🚀 서버가 실행 중입니다: http://localhost:${port}`);
   console.log(`📜 Swagger 문서 확인: http://localhost:${port}/api-docs`);
   console.log(`📂 정적 파일 확인: http://localhost:${port}/static/test.txt`);
-
-  // ✅ Express 라우트 상세 확인
-  console.log('🔍 등록된 모든 미들웨어 및 라우트:');
-  console.log(
-    app._router.stack.map((middleware: any) => ({
-      path: middleware.route ? middleware.route.path : '미들웨어',
-      method: middleware.route
-        ? Object.keys(middleware.route.methods)[0].toUpperCase()
-        : '',
-    }))
-  );
 });

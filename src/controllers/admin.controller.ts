@@ -7,6 +7,7 @@ import {
 } from '../dtos/admin.dto';
 import { authenticateJWT } from '../middlewares/authenticateJWT';
 import 'express-async-errors';
+import { UnauthorizedError, ValidationError } from '../errors/errors';
 
 export class AdminController {
   private adminService: AdminService;
@@ -54,13 +55,11 @@ export class AdminController {
       data.email,
       data.password
     );
-    res
-      .status(201)
-      .json({
-        isSuccess: true,
-        message: '관리자 계정이 생성되었습니다.',
-        result: newAdmin,
-      });
+    res.status(201).json({
+      isSuccess: true,
+      message: '관리자 계정이 생성되었습니다.',
+      result: newAdmin,
+    });
   }
 
   /**
@@ -117,13 +116,38 @@ export class AdminController {
    *         description: 인증 실패
    */
   public async updatePassword(req: Request, res: Response): Promise<void> {
-    const adminId = req.user?.userId;
-    const data: PasswordUpdateDto = req.body;
-    const result = await this.adminService.updatePassword(
-      adminId,
-      data.oldPassword,
-      data.newPassword
-    );
-    res.status(200).json({ isSuccess: true, message: result.message });
+    try {
+      const adminId = req.user?.userId;
+
+      if (adminId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      const data: PasswordUpdateDto = req.body;
+
+      if (!data.oldPassword || !data.newPassword) {
+        throw new ValidationError(
+          '현재 비밀번호와 새 비밀번호는 필수 입력 항목입니다.',
+          null
+        );
+      }
+
+      const result = await this.adminService.updatePassword(
+        adminId,
+        data.oldPassword,
+        data.newPassword
+      );
+
+      res.status(200).json({
+        isSuccess: true,
+        message: result.message,
+      });
+    } catch (error) {
+      res.status(error instanceof ValidationError ? 400 : 500).json({
+        isSuccess: false,
+        message:
+          error instanceof Error ? error.message : '비밀번호 변경 중 오류 발생',
+      });
+    }
   }
 }

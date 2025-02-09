@@ -2,9 +2,9 @@ import axios from 'axios';
 import { UserRepository } from '../repositories/user.repository';
 import { EmailSignupDto, ProfileUpdateDto } from '../dtos/user.dto'; // 사용 중인 DTO만 남김
 import { ValidationError, UnauthorizedError } from '../errors/errors'; // 필요한 에러 클래스만 남김
-import { HashtagService } from '../services/hashtag.service';
+import { HashtagService } from '../services/hashtag.service.js';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 export class UserService {
   private userRepository: UserRepository;
@@ -82,20 +82,23 @@ export class UserService {
       throw new ValidationError('이메일 또는 비밀번호가 잘못되었습니다.', null);
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      password ?? '',
+      user.password ?? ''
+    );
     if (!isPasswordValid) {
       throw new ValidationError('이메일 또는 비밀번호가 잘못되었습니다.', null);
     }
     console.log(typeof user.user_id);
     const accessToken = jwt.sign(
       { userId: user.user_id, email: user.email },
-      process.env.JWT_SECRET, // ✅ 환경변수가 없으면 기본값 사용
+      process.env.JWT_SECRET || 'default_secret', // 기본값 추가, // ✅ 환경변수가 없으면 기본값 사용
       { expiresIn: '1h' }
     );
 
     const refreshToken = jwt.sign(
       { userId: user.user_id },
-      process.env.JWT_REFRESH_SECRET,
+      process.env.JWT_REFRESH_SECRET || 'default_refresh_secret',
       { expiresIn: '7d' }
     );
 
@@ -185,7 +188,7 @@ export class UserService {
         providerId: kakaoUserInfo.id,
         email: kakaoUserInfo.email || `${kakaoUserInfo.id}@kakao.com`, // ✅ 이메일이 없으면 가짜 이메일 사용
         nickname: kakaoUserInfo.nickname,
-        profileImage: kakaoUserInfo.profileImage,
+        profileImage: kakaoUserInfo.profileImage ?? '',
         status: 'ACTIVE',
       });
     }
@@ -210,7 +213,7 @@ export class UserService {
     console.log(`Generated Reset Token: ${resetToken}`);
 
     // 이메일 발송 로직 (예: 외부 이메일 서비스 사용)
-    await this.sendPasswordResetEmail(user.email, resetToken);
+    await this.sendPasswordResetEmail(user.email ?? '', resetToken);
 
     return { message: '비밀번호 재설정 이메일이 발송되었습니다.' };
   }
@@ -280,12 +283,21 @@ export class UserService {
   // 토큰 갱신
   async refreshAccessToken(refreshToken: string) {
     try {
-      const payload = jwt.verify(
+      const decoded = jwt.verify(
         refreshToken,
-        process.env.JWT_REFRESH_SECRET
-      ) as { userId: number };
+        process.env.JWT_REFRESH_SECRET || 'default_refresh_secret'
+      ) as JwtPayload;
 
-      const user = await this.userRepository.findUserById(payload.userId);
+      if (!decoded || typeof decoded !== 'object' || !('userId' in decoded)) {
+        throw new UnauthorizedError(
+          '유효하지 않은 또는 만료된 Refresh Token입니다.',
+          null
+        );
+      }
+
+      const userId = decoded.userId as number; // ✅ userId가 존재하는지 확인 후 변환
+      const user = await this.userRepository.findUserById(userId);
+
       if (!user) {
         throw new ValidationError('사용자를 찾을 수 없습니다.', null);
       }
@@ -307,13 +319,19 @@ export class UserService {
 
   private generateAccessToken(payload) {
     console.log(typeof payload.userId);
-    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+    return jwt.sign(payload, process.env.JWT_SECRET || 'default_secret', {
+      expiresIn: '1h',
+    });
   }
 
   private generateRefreshToken(payload: { userId: number }) {
-    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-      expiresIn: '7d',
-    });
+    return jwt.sign(
+      payload,
+      process.env.JWT_REFRESH_SECRET || 'default_refresh_secret',
+      {
+        expiresIn: '7d',
+      }
+    );
   }
 
   private async sendPasswordResetEmail(email: string, resetToken: string) {

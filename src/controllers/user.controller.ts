@@ -319,14 +319,28 @@ export class UserController {
    *         description: 인증 실패
    */
   public async updateProfile(req: Request, res: Response): Promise<void> {
-    const userId = req.user?.userId;
-    const data: ProfileUpdateDto = req.body;
-    const updatedProfile = await this.userService.updateProfile(userId, data);
-    res.status(200).json({
-      isSuccess: true,
-      message: '프로필 수정 성공',
-      result: updatedProfile,
-    });
+    try {
+      const userId = req.user?.userId;
+
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      const data: ProfileUpdateDto = req.body;
+      const updatedProfile = await this.userService.updateProfile(userId, data);
+
+      res.status(200).json({
+        isSuccess: true,
+        message: '프로필 수정 성공',
+        result: updatedProfile,
+      });
+    } catch (error) {
+      res.status(error instanceof ValidationError ? 400 : 500).json({
+        isSuccess: false,
+        message:
+          error instanceof Error ? error.message : '프로필 수정 중 오류 발생',
+      });
+    }
   }
 
   /**
@@ -441,9 +455,26 @@ export class UserController {
    *         description: 인증 실패
    */
   public async deactivateAccount(req: Request, res: Response): Promise<void> {
-    const userId = req.user?.userId;
-    const result = await this.userService.deactivateAccount(userId);
-    res.status(200).json({ isSuccess: true, message: result.message });
+    try {
+      const userId = req.user?.userId;
+
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      const result = await this.userService.deactivateAccount(userId);
+
+      res.status(200).json({
+        isSuccess: true,
+        message: result.message,
+      });
+    } catch (error) {
+      res.status(error instanceof ValidationError ? 400 : 500).json({
+        isSuccess: false,
+        message:
+          error instanceof Error ? error.message : '계정 비활성화 중 오류 발생',
+      });
+    }
   }
 
   /**
@@ -463,9 +494,26 @@ export class UserController {
    *         description: 인증 실패
    */
   public async reactivateAccount(req: Request, res: Response): Promise<void> {
-    const userId = req.user?.userId;
-    const result = await this.userService.reactivateAccount(userId);
-    res.status(200).json({ isSuccess: true, message: result.message });
+    try {
+      const userId = req.user?.userId;
+
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      const result = await this.userService.reactivateAccount(userId);
+
+      res.status(200).json({
+        isSuccess: true,
+        message: result.message,
+      });
+    } catch (error) {
+      res.status(error instanceof ValidationError ? 400 : 500).json({
+        isSuccess: false,
+        message:
+          error instanceof Error ? error.message : '계정 활성화 중 오류 발생',
+      });
+    }
   }
 
   /**
@@ -485,11 +533,27 @@ export class UserController {
    *         description: 인증 실패
    */
   public async getStatistics(req: Request, res: Response): Promise<void> {
-    const userId = req.user?.userId;
-    const statistics = await this.userService.getStatistics(userId);
-    res
-      .status(200)
-      .json({ isSuccess: true, message: '통계 조회 성공', result: statistics });
+    try {
+      const userId = req.user?.userId;
+
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
+      const statistics = await this.userService.getStatistics(userId);
+
+      res.status(200).json({
+        isSuccess: true,
+        message: '통계 조회 성공',
+        result: statistics,
+      });
+    } catch (error) {
+      res.status(500).json({
+        isSuccess: false,
+        message:
+          error instanceof Error ? error.message : '통계 조회 중 오류 발생',
+      });
+    }
   }
 
   /**

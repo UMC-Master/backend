@@ -1,6 +1,5 @@
 import { PrismaClient, Prisma, User } from '@prisma/client';
 import { DuplicateUserEmailError } from '../errors/errors';
-
 interface UserData {
   email?: string;
   password?: string;
