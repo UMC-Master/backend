@@ -219,20 +219,23 @@ export class UserController {
    */
   // ✅ 카카오 로그인 요청 처리
   public async kakaoLogin(req: Request, res: Response): Promise<void> {
-    const { kakaoAccessToken }: KakaoLoginDto = req.body;
+    const {
+      kakaoAccessToken,
+      code,
+    }: { kakaoAccessToken?: string; code?: string } = req.body;
 
-    if (!kakaoAccessToken) {
+    if (!kakaoAccessToken && !code) {
       res.status(400).json({
         isSuccess: false,
-        message: '카카오 Access Token이 필요합니다.',
+        message: '카카오 Authorization Code 또는 Access Token이 필요합니다.',
       });
       return;
     }
 
     try {
-      // ✅ UserService의 kakaoLogin 메서드 호출
+      // ✅ UserService의 kakaoLogin 메서드 호출 (code 또는 kakaoAccessToken 전달)
       const { accessToken, refreshToken, user } =
-        await this.userService.kakaoLogin(kakaoAccessToken);
+        await this.userService.kakaoLogin(kakaoAccessToken, code);
 
       // ✅ 응답 반환
       res.status(200).json({

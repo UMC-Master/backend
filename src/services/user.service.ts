@@ -121,17 +121,44 @@ export class UserService {
     return this.userRepository.updateUser(userId, data);
   }
 
-  // 카카오 로그인
   // ✅ 카카오 로그인 처리
-  public async kakaoLogin(kakaoAccessToken: string) {
+  public async kakaoLogin(kakaoAccessToken?: string, code?: string) {
     try {
-      // ✅ 1. 카카오 사용자 정보 가져오기
+      // ✅ 1. `code`를 받은 경우, 카카오에서 `access_token` 요청
+      if (!kakaoAccessToken && code) {
+        console.log('🔹 Received Authorization Code:', code); // 디버깅
+
+        const tokenResponse = await axios.post(
+          'https://kauth.kakao.com/oauth/token',
+          null,
+          {
+            params: {
+              grant_type: 'authorization_code',
+              client_id: process.env.KAKAO_CLIENT_ID,
+              redirect_uri: 'https://www.hmaster.shop/oauth/kakao/callback',
+              code,
+            },
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          }
+        );
+
+        kakaoAccessToken = tokenResponse.data.access_token;
+        console.log('✅ Kakao Access Token:', kakaoAccessToken);
+      }
+
+      if (!kakaoAccessToken) {
+        throw new Error('카카오 Access Token이 필요합니다.');
+      }
+
+      // ✅ 2. 카카오 사용자 정보 가져오기
       const kakaoUserInfo = await this.getKakaoUserInfo(kakaoAccessToken);
 
-      // ✅ 2. DB에서 사용자 조회 또는 생성
+      // ✅ 3. DB에서 사용자 조회 또는 생성
       let user = await this.findOrCreateUserByKakaoId(kakaoUserInfo);
 
-      // ✅ 3. JWT 토큰 발급
+      // ✅ 4. JWT 토큰 발급
       const accessToken = this.generateAccessToken({
         userId: +user.user_id, // ✅ user_id를 id로 매핑
         email: user.email,

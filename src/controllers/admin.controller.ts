@@ -42,7 +42,14 @@ export class AdminController {
    *       content:
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/AdminCreateDto'
+   *             type: object
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 example: "admin@example.com"
+   *               password:
+   *                 type: string
+   *                 example: "StrongPassword123!"
    *     responses:
    *       201:
    *         description: 관리자 계정 생성 성공
@@ -75,7 +82,14 @@ export class AdminController {
    *       content:
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/AdminLoginDto'
+   *             type: object
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 example: "admin@example.com"
+   *               password:
+   *                 type: string
+   *                 example: "StrongPassword123!"
    *     responses:
    *       200:
    *         description: 로그인 성공
@@ -108,7 +122,14 @@ export class AdminController {
    *       content:
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/PasswordUpdateDto'
+   *             type: object
+   *             properties:
+   *               oldPassword:
+   *                 type: string
+   *                 example: "OldPassword123!"
+   *               newPassword:
+   *                 type: string
+   *                 example: "NewStrongPassword456!"
    *     responses:
    *       200:
    *         description: 비밀번호 변경 성공
