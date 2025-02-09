@@ -3,6 +3,7 @@ import { TipService } from '../services/tip.service.js'; // 팁 서비스 import
 import { StatusCodes } from 'http-status-codes'; // StatusCodes import
 import { authenticateJWT } from '../middlewares/authenticateJWT'; // 인증 미들웨어 import
 import 'express-async-errors';
+import { UnauthorizedError, ValidationError } from '../errors/errors';
 
 export class TipController {
   public tipService: TipService; // TipService 타입 명시
@@ -27,7 +28,7 @@ export class TipController {
     );
     this.router.get('/tips', this.getAllTips.bind(this));
     this.router.get('/tips/sorted', this.getSortedTips.bind(this));
-    this.router.get("/tips/search", this.searchTips.bind(this)); 
+    this.router.get('/tips/search', this.searchTips.bind(this));
   }
 
   /**
@@ -38,6 +39,8 @@ export class TipController {
    *     description: "새로운 팁을 생성하여 시스템에 저장합니다."
    *     tags:
    *       - Tips
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:
    *       required: true
    *       content:
@@ -45,10 +48,6 @@ export class TipController {
    *           schema:
    *             type: object
    *             properties:
-   *               userId:
-   *                 type: integer
-   *                 description: "작성자 ID"
-   *                 example: 1
    *               title:
    *                 type: string
    *                 description: "팁 제목"
@@ -80,51 +79,48 @@ export class TipController {
    *                 result:
    *                   type: object
    *                   properties:
-   *                     tip:
+   *                     tipId:
+   *                       type: integer
+   *                       example: 1
+   *                     title:
+   *                       type: string
+   *                       example: "Amazing Food Tips"
+   *                     content:
+   *                       type: string
+   *                       example: "Don't miss the local cuisine when traveling."
+   *                     author:
    *                       type: object
    *                       properties:
-   *                         tipId:
+   *                         userId:
    *                           type: integer
    *                           example: 1
-   *                         title:
+   *                         nickname:
    *                           type: string
-   *                           example: "Amazing Food Tips"
-   *                         description:
+   *                           example: "John Doe"
+   *                         profileImageUrl:
    *                           type: string
-   *                           example: "Don't miss the local cuisine when traveling."
-   *                         author:
-   *                           type: object
-   *                           properties:
-   *                             userId:
-   *                               type: integer
-   *                               example: 1
-   *                             nickname:
-   *                               type: string
-   *                               example: "John Doe"
-   *                             profileImageUrl:
-   *                               type: string
-   *                               example: "https://example.com/profile.jpg"
-   *                         createdAt:
-   *                           type: string
-   *                           format: date-time
-   *                           example: "2023-01-01T00:00:00Z"
-   *                         updatedAt:
-   *                           type: string
-   *                           format: date-time
-   *                           example: "2023-01-01T00:00:00Z"
-   *                         hashtags:
-   *                           type: array
-   *                           items:
-   *                             type: object
-   *                             properties:
-   *                               hashtagId:
-   *                                 type: integer
-   *                                 example: 1
-   *                               name:
-   *                                 type: string
-   *                                 example: "#food"
+   *                           example: "https://example.com/profile.jpg"
+   *                     createdAt:
+   *                       type: string
+   *                       format: date-time
+   *                       example: "2023-01-01T00:00:00Z"
+   *                     updatedAt:
+   *                       type: string
+   *                       format: date-time
+   *                       example: "2023-01-01T00:00:00Z"
+   *                     hashtags:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           hashtagId:
+   *                             type: integer
+   *                             example: 1
+   *                           name:
+   *                             type: string
+   *                             example: "#food"
    *       400:
-   *         description: "잘못된 요청"
+   *         description: "잘못된 요청 (필수 입력값 없음 또는 유효하지 않은 데이터)"
    *         content:
    *           application/json:
    *             schema:
@@ -136,6 +132,19 @@ export class TipController {
    *                 message:
    *                   type: string
    *                   example: "제목 혹은 내용을 입력해야 합니다."
+   *       401:
+   *         description: "인증 실패 (로그인 필요)"
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "로그인이 필요합니다."
    */
 
   public async createTip(req: Request, res: Response, next: NextFunction) {
@@ -143,18 +152,26 @@ export class TipController {
       const { title, content, hashtags } = req.body;
       const userId = req.user?.userId;
 
+      if (userId === undefined) {
+        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      }
+
       if (!title || !content) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          isSuccess: false,
-          message: '제목 혹은 내용을 입력하셔야합니다다.',
-        });
+        throw new ValidationError('제목 혹은 내용을 입력해야 합니다.', null);
+      }
+
+      if (!Array.isArray(hashtags) || hashtags.length === 0) {
+        throw new ValidationError(
+          '해시태그는 최소 하나 이상 입력해야 합니다.',
+          { hashtags }
+        );
       }
 
       const newTip = await this.tipService.createTip({
-        userId: userId,
-        title: title,
-        content: content,
-        hashtags: hashtags, // 사용자가 선택한 해시태그
+        userId,
+        title,
+        content,
+        hashtags, // 사용자가 선택한 해시태그
       });
 
       res.status(StatusCodes.CREATED).json({
@@ -669,7 +686,7 @@ export class TipController {
       next(error);
     }
   }
-/**
+  /**
    * @swagger
    * /api/v1/tips/search:
    *   get:
@@ -761,30 +778,28 @@ export class TipController {
    *         description: "잘못된 요청 (검색어 누락)"
    */
 
-public async searchTips(req: Request, res: Response, next: NextFunction) {
-  try {
-    const query = req.query.query as string;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+  public async searchTips(req: Request, res: Response, next: NextFunction) {
+    try {
+      const query = req.query.query as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
 
-    if (!query) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        isSuccess: false,
-        message: "검색어(query)는 필수입니다.",
+      if (!query) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          isSuccess: false,
+          message: '검색어(query)는 필수입니다.',
+        });
+      }
+
+      const tips = await this.tipService.searchTips(query, page, limit); // ✅ `this.tipService` 오류 방지
+
+      res.status(StatusCodes.OK).json({
+        isSuccess: true,
+        message: '팁 검색 성공',
+        result: tips,
       });
+    } catch (error) {
+      next(error);
     }
-
-    const tips = await this.tipService.searchTips(query, page, limit); // ✅ `this.tipService` 오류 방지
-
-    res.status(StatusCodes.OK).json({
-      isSuccess: true,
-      message: "팁 검색 성공",
-      result: tips,
-    });
-  } catch (error) {
-    next(error);
   }
-
-}
-
 }
