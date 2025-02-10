@@ -56,7 +56,7 @@ export class CommunityController {
 
   /**
    * @swagger
-   * /api/v1/tips/{tipId}/comment:
+   * /api/v1/tips/{tipId}/comments:
    *   post:
    *     summary: 꿀팁에 댓글 추가
    *     description: 로그인한 사용자가 특정 꿀팁에 댓글을 남깁니다.
