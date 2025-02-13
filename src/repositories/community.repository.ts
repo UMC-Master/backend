@@ -51,42 +51,6 @@ public async getCommentById(commentId: number) {
 
 }
 
-  // 좋아요 토글 기능: 좋아요 추가 또는 제거
-  public async likeTip(userId: number, tipId: number) {
-    // 먼저 사용자가 이미 해당 팁에 좋아요를 눌렀는지 확인
-    const existingLike = await this.getTipLike(userId, tipId);
-    if (existingLike) {
-      // 좋아요가 이미 존재하면 제거
-      return await prisma.tipLike.delete({
-        where: {
-          like_id: existingLike.like_id
-        }
-      });
-    } else {
-      // 좋아요가 없으면 새로 추가
-      return await prisma.tipLike.create({
-        data: {
-          user_id: userId,
-          tips_id: tipId,
-          liked_at: new Date(),
-        }
-      });
-    }
-  }
-
-
-// 좋아요 취소
-public async removeLike(userId: number, tipId: number) {
-  const existingLike = await this.getTipLike(userId, tipId);
-  if (existingLike) {
-    return await prisma.tipLike.delete({
-      where: {
-        like_id: existingLike.like_id,
-      }
-    });
-  }
-}
-
 
   // 댓글 작성
   public async commentOnTip(userId: number, tipId: number, comment: string) {
@@ -116,34 +80,52 @@ public async removeLike(userId: number, tipId: number) {
   });
   }
 
-
-  // 팁 저장 처리
-  public async saveTip(userId: number, tipId: number) {
-    return await prisma.tipSave.create({
-      data: {
-        user_id: userId,
-        tips_id: tipId,
-        scraped_at: new Date()
-      }
-    });
-  }
-
-  // 팁 저장 취소
-public async removeSave(userId: number, tipId: number) {
-  const existingSave = await prisma.tipSave.findFirst({
-    where: {
-      user_id: userId,
-      tips_id: tipId,
+    // 특정 커뮤니티 ID로 조회 (DB 접근만)
+    async findCommunityById(communityId: number) {
+      return await prisma.community.findUnique({
+        where: { community_id: communityId },
+      });
     }
-  });
-  if (existingSave) {
-    return await prisma.tipSave.delete({
-      where: {
-        save_id: existingSave.save_id,
-      }
-    });
-  }
-}
-
-
+  
+    // 특정 사용자와 커뮤니티의 좋아요 여부 조회
+    async findLikeByUserAndCommunity(userId: number, communityId: number) {
+      return await prisma.communityLike.findFirst({
+        where: { user_id: userId, community_id: communityId },
+      });
+    }
+  
+    // 좋아요 추가
+    async addLike(userId: number, communityId: number) {
+      return await prisma.communityLike.create({
+        data: { user_id: userId, community_id: communityId },
+      });
+    }
+  
+    // 좋아요 삭제
+    async removeLike(likeId: number) {
+      return await prisma.communityLike.delete({
+        where: { community_like_id: likeId },
+      });
+    }
+  
+    // 특정 사용자와 커뮤니티의 북마크 여부 조회
+    async findBookmarkByUserAndCommunity(userId: number, communityId: number) {
+      return await prisma.communityBookmark.findFirst({
+        where: { user_id: userId, community_id: communityId },
+      });
+    }
+  
+    // 북마크 추가
+    async addBookmark(userId: number, communityId: number) {
+      return await prisma.communityBookmark.create({
+        data: { user_id: userId, community_id: communityId },
+      });
+    }
+  
+    // 북마크 삭제
+    async removeBookmark(bookmarkId: number) {
+      return await prisma.communityBookmark.delete({
+        where: { community_bookmark_id: bookmarkId },
+      });
+    }
 }

@@ -53,6 +53,7 @@ export class ResourceNotFoundError extends CommonError {
   }
 }
 
+
 // Tip 관련 에러
 // Tip을 찾을 수 없을 때 발생하는 에러
 export class TipNotFoundError extends CommonError {
@@ -91,6 +92,14 @@ export class TipSaveError extends CommonError {
   constructor(tipId: number) {
     const reason = `ID ${tipId}인 꿀팁을 저장하는데 실패했습니다.`;
     super('T003', reason, { tipId });
+  }
+}
+
+// 커뮤니티 관련 에러 추가
+export class CommunityNotFoundError extends CommonError {
+  constructor(communityId: number) {
+    const reason = `ID ${communityId}인 커뮤니티를 찾을 수 없습니다.`;
+    super('CMT404', reason, { communityId });
   }
 }
 
