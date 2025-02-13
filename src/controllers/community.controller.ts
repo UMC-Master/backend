@@ -275,7 +275,7 @@ export class CommunityController {
  *     summary: "팁 좋아요 토글"
  *     description: "사용자가 특정 팁에 대해 좋아요를 추가하거나 취소할 수 있습니다."
  *     tags:
- *       - Tips
+ *       - Communities
  *     security:
  *       - bearerAuth: []  # JWT 인증 필요
  *     parameters:
@@ -324,58 +324,41 @@ private async toggleLike(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-
 /**
- * @swagger
- * /api/v1/tips/{tipId}/bookmark:
- *   post:
- *     summary: "팁 북마크 토글"
- *     description: "사용자가 특정 팁을 북마크하거나 해제할 수 있습니다."
- *     tags:
- *       - Tips
- *     security:
- *       - bearerAuth: []  # JWT 인증 필요
- *     parameters:
- *       - in: path
- *         name: tipId
- *         required: true
- *         description: "북마크를 토글할 팁의 ID"
- *         schema:
- *           type: integer
- *           example: 1
- *     responses:
- *       200:
- *         description: "북마크 토글 성공"
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 isSuccess:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "북마크가 처리되었습니다."
- *       400:
- *         description: "잘못된 요청 (유효하지 않은 ID)"
- *       401:
- *         description: "인증 실패 (JWT 필요)"
- *       404:
- *         description: "팁을 찾을 수 없음"
- *       500:
- *         description: "서버 내부 오류"
- */
+   * @swagger
+   * /api/v1/tips/{tipId}/bookmark:
+   *   post:
+   *     summary: "팁 북마크 토글"
+   *     description: "사용자가 특정 팁을 북마크하거나 취소합니다."
+   *     tags:
+   *       - Communities
+   *     parameters:
+   *       - in: path
+   *         name: tipId
+   *         required: true
+   *         description: "북마크할 팁의 ID"
+   *         schema:
+   *           type: integer
+   *           example: 1
+   *     responses:
+   *       200:
+   *         description: "북마크 성공 또는 취소"
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: "북마크가 추가되었습니다."
+   */
 private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user?.userId;
     const tipId = parseInt(req.params.tipId, 10);
 
-    const response = await this.communityService.toggleBookmark(userId, tipId);
-    res.status(StatusCodes.OK).json({
-      isSuccess: true,
-      message: response.message,
-    });
+    const result = await this.communityService.toggleBookmark(userId, tipId);
+    res.status(StatusCodes.OK).json({ isSuccess: true, ...result });
   } catch (error) {
     next(error);
   }

@@ -92,27 +92,42 @@ public async getCommentById(commentId: number) {
     });
   }
 
-  async removeLike(likeId: number) {
+  async removeLike(userId: number, tipId: number) {
+    // 먼저 like_id 조회
+    const like = await prisma.tipLike.findFirst({
+      where: { user_id: userId, tips_id: tipId },
+    });
+  
+    // 만약 좋아요가 없는 경우 예외 처리
+    if (!like || !like.like_id) {
+      throw new Error("좋아요 기록이 없습니다.");
+    }
+  
+    // 찾은 like_id를 사용하여 삭제
     return await prisma.tipLike.delete({
-      where: { tip_like_id: likeId },
+      where: { like_id: like.like_id }, //  
     });
   }
+  
 
+  // 사용자가 특정 팁을 북마크했는지 확인
   async findBookmarkByUserAndTip(userId: number, tipId: number) {
-    return await prisma.tipBookmark.findFirst({
+    return await prisma.tipSave.findFirst({
       where: { user_id: userId, tips_id: tipId },
     });
   }
 
+  // 북마크 추가
   async addBookmark(userId: number, tipId: number) {
-    return await prisma.tipBookmark.create({
+    return await prisma.tipSave.create({
       data: { user_id: userId, tips_id: tipId },
     });
   }
 
-  async removeBookmark(bookmarkId: number) {
-    return await prisma.tipBookmark.delete({
-      where: { tip_bookmark_id: bookmarkId },
+  // 북마크 삭제
+  async removeBookmark(saveId: number) {
+    return await prisma.tipSave.delete({
+      where: { save_id: saveId }, // 
     });
   }
 

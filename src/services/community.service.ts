@@ -20,36 +20,29 @@ export class CommunityService {
 
 
   async toggleLike(userId: number, tipId: number) {
-    const tip = await this.communityRepository.getTipById(tipId);
-    if (!tip) {
-      throw new TipNotFoundError(tipId);
-    }
-
-    const existingLike = await this.communityRepository.findLikeByUserAndTip(userId, tipId);
-
+    // 기존 좋아요 여부 확인
+    const existingLike = await this.communityRepository.getTipLike(userId, tipId);
+  
     if (existingLike) {
-      await this.communityRepository.removeLike(existingLike.tip_like_id);
-      return { message: '좋아요 취소' };
+      await this.communityRepository.removeLike(userId, tipId);
+      return { message: "좋아요가 취소되었습니다." };
     } else {
       await this.communityRepository.addLike(userId, tipId);
-      return { message: '좋아요' };
+      return { message: "좋아요가 추가되었습니다." };
     }
   }
+  
 
   async toggleBookmark(userId: number, tipId: number) {
-    const tip = await this.communityRepository.getTipById(tipId);
-    if (!tip) {
-      throw new TipNotFoundError(tipId);
-    }
-
+    // 기존 북마크 여부 확인
     const existingBookmark = await this.communityRepository.findBookmarkByUserAndTip(userId, tipId);
 
     if (existingBookmark) {
-      await this.communityRepository.removeBookmark(existingBookmark.tip_bookmark_id);
-      return { message: '북마크 취소' };
+      await this.communityRepository.removeBookmark(existingBookmark.save_id);
+      return { message: "북마크가 취소되었습니다." };
     } else {
       await this.communityRepository.addBookmark(userId, tipId);
-      return { message: '북마크' };
+      return { message: "북마크가 추가되었습니다."};
     }
   }
 
