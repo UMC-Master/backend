@@ -269,27 +269,46 @@ export class CommunityController {
     }
   }
 /**
-   * @swagger
-   * /api/v1/communities/{communityId}/like:
-   *   patch:
-   *     summary: "커뮤니티 좋아요 토글"
-   *     description: "특정 커뮤니티 ID에 대해 좋아요를 추가하거나 취소합니다."
-   *     tags:
-   *       - Communities
-   *     security:
-   *       - bearerAuth: []
-   *     parameters:
-   *       - in: path
-   *         name: communityId
-   *         required: true
-   *         description: "좋아요를 토글할 커뮤니티 ID"
-   *         schema:
-   *           type: integer
-   *           example: 1
-   *     responses:
-   *       200:
-   *         description: "좋아요 상태가 변경되었습니다."
-   */
+ * @swagger
+ * /api/v1/tips/{tipId}/like:
+ *   post:
+ *     summary: "팁 좋아요 토글"
+ *     description: "사용자가 특정 팁에 대해 좋아요를 추가하거나 취소할 수 있습니다."
+ *     tags:
+ *       - Tips
+ *     security:
+ *       - bearerAuth: []  # JWT 인증 필요
+ *     parameters:
+ *       - in: path
+ *         name: tipId
+ *         required: true
+ *         description: "좋아요를 토글할 팁의 ID"
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: "좋아요 토글 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "좋아요가 처리되었습니다."
+ *       400:
+ *         description: "잘못된 요청 (유효하지 않은 ID)"
+ *       401:
+ *         description: "인증 실패 (JWT 필요)"
+ *       404:
+ *         description: "팁을 찾을 수 없음"
+ *       500:
+ *         description: "서버 내부 오류"
+ */
 private async toggleLike(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user?.userId;
@@ -308,26 +327,46 @@ private async toggleLike(req: Request, res: Response, next: NextFunction) {
 
 /**
  * @swagger
- * /api/v1/communities/{communityId}/bookmark:
- *   patch:
- *     summary: "커뮤니티 북마크 토글"
- *     description: "특정 커뮤니티 ID에 대해 북마크를 추가하거나 취소합니다."
+ * /api/v1/tips/{tipId}/bookmark:
+ *   post:
+ *     summary: "팁 북마크 토글"
+ *     description: "사용자가 특정 팁을 북마크하거나 해제할 수 있습니다."
  *     tags:
- *       - Communities
+ *       - Tips
  *     security:
- *       - bearerAuth: []
+ *       - bearerAuth: []  # JWT 인증 필요
  *     parameters:
  *       - in: path
- *         name: communityId
+ *         name: tipId
  *         required: true
- *         description: "북마크를 토글할 커뮤니티 ID"
+ *         description: "북마크를 토글할 팁의 ID"
  *         schema:
  *           type: integer
  *           example: 1
  *     responses:
  *       200:
- *         description: "북마크 상태가 변경되었습니다."
+ *         description: "북마크 토글 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "북마크가 처리되었습니다."
+ *       400:
+ *         description: "잘못된 요청 (유효하지 않은 ID)"
+ *       401:
+ *         description: "인증 실패 (JWT 필요)"
+ *       404:
+ *         description: "팁을 찾을 수 없음"
+ *       500:
+ *         description: "서버 내부 오류"
  */
+
 private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user?.userId;
