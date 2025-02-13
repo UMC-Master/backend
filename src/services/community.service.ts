@@ -5,7 +5,7 @@ import {
   ResourceNotFoundError,
   ValidationError,
   DatabaseError,
-  CommunityNotFoundError
+  TipNotFoundError
 } from '../errors/errors.js'; // 에러 클래스 import
 
 export class CommunityService {
@@ -17,38 +17,38 @@ export class CommunityService {
     this.communityRepository = new CommunityRepository();
   }
 
-  // 커뮤니티 존재 여부 확인 (Validation)
-  async validateCommunity(communityId: number) {
-    const community = await this.communityRepository.findCommunityById(communityId);
-    if (!community) {
-      throw new CommunityNotFoundError(communityId);
+
+
+  async toggleLike(userId: number, tipId: number) {
+    const tip = await this.communityRepository.getTipById(tipId);
+    if (!tip) {
+      throw new TipNotFoundError(tipId);
     }
-  }
 
-  // 좋아요 토글 기능
-  async toggleLike(userId: number, communityId: number) {
-    await this.validateCommunity(communityId); // Validation 실행
+    const existingLike = await this.communityRepository.findLikeByUserAndTip(userId, tipId);
 
-    const existingLike = await this.communityRepository.findLikeByUserAndCommunity(userId, communityId);
     if (existingLike) {
-      await this.communityRepository.removeLike(existingLike.community_like_id);
+      await this.communityRepository.removeLike(existingLike.tip_like_id);
       return { message: '좋아요 취소' };
     } else {
-      await this.communityRepository.addLike(userId, communityId);
+      await this.communityRepository.addLike(userId, tipId);
       return { message: '좋아요' };
     }
   }
 
-  // 북마크 토글 기능
-  async toggleBookmark(userId: number, communityId: number) {
-    await this.validateCommunity(communityId); // Validation 실행
+  async toggleBookmark(userId: number, tipId: number) {
+    const tip = await this.communityRepository.getTipById(tipId);
+    if (!tip) {
+      throw new TipNotFoundError(tipId);
+    }
 
-    const existingBookmark = await this.communityRepository.findBookmarkByUserAndCommunity(userId, communityId);
+    const existingBookmark = await this.communityRepository.findBookmarkByUserAndTip(userId, tipId);
+
     if (existingBookmark) {
-      await this.communityRepository.removeBookmark(existingBookmark.community_bookmark_id);
+      await this.communityRepository.removeBookmark(existingBookmark.tip_bookmark_id);
       return { message: '북마크 취소' };
     } else {
-      await this.communityRepository.addBookmark(userId, communityId);
+      await this.communityRepository.addBookmark(userId, tipId);
       return { message: '북마크' };
     }
   }

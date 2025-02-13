@@ -79,53 +79,42 @@ public async getCommentById(commentId: number) {
     data: { comment: newContent },
   });
   }
+  
+  async findLikeByUserAndTip(userId: number, tipId: number) {
+    return await prisma.tipLike.findFirst({
+      where: { user_id: userId, tips_id: tipId },
+    });
+  }
 
-    // 특정 커뮤니티 ID로 조회 (DB 접근만)
-    async findCommunityById(communityId: number) {
-      return await prisma.community.findUnique({
-        where: { community_id: communityId },
-      });
-    }
-  
-    // 특정 사용자와 커뮤니티의 좋아요 여부 조회
-    async findLikeByUserAndCommunity(userId: number, communityId: number) {
-      return await prisma.communityLike.findFirst({
-        where: { user_id: userId, community_id: communityId },
-      });
-    }
-  
-    // 좋아요 추가
-    async addLike(userId: number, communityId: number) {
-      return await prisma.communityLike.create({
-        data: { user_id: userId, community_id: communityId },
-      });
-    }
-  
-    // 좋아요 삭제
-    async removeLike(likeId: number) {
-      return await prisma.communityLike.delete({
-        where: { community_like_id: likeId },
-      });
-    }
-  
-    // 특정 사용자와 커뮤니티의 북마크 여부 조회
-    async findBookmarkByUserAndCommunity(userId: number, communityId: number) {
-      return await prisma.communityBookmark.findFirst({
-        where: { user_id: userId, community_id: communityId },
-      });
-    }
-  
-    // 북마크 추가
-    async addBookmark(userId: number, communityId: number) {
-      return await prisma.communityBookmark.create({
-        data: { user_id: userId, community_id: communityId },
-      });
-    }
-  
-    // 북마크 삭제
-    async removeBookmark(bookmarkId: number) {
-      return await prisma.communityBookmark.delete({
-        where: { community_bookmark_id: bookmarkId },
-      });
-    }
+  async addLike(userId: number, tipId: number) {
+    return await prisma.tipLike.create({
+      data: { user_id: userId, tips_id: tipId },
+    });
+  }
+
+  async removeLike(likeId: number) {
+    return await prisma.tipLike.delete({
+      where: { tip_like_id: likeId },
+    });
+  }
+
+  async findBookmarkByUserAndTip(userId: number, tipId: number) {
+    return await prisma.tipBookmark.findFirst({
+      where: { user_id: userId, tips_id: tipId },
+    });
+  }
+
+  async addBookmark(userId: number, tipId: number) {
+    return await prisma.tipBookmark.create({
+      data: { user_id: userId, tips_id: tipId },
+    });
+  }
+
+  async removeBookmark(bookmarkId: number) {
+    return await prisma.tipBookmark.delete({
+      where: { tip_bookmark_id: bookmarkId },
+    });
+  }
+
+    
 }

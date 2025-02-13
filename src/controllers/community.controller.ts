@@ -33,17 +33,16 @@ export class CommunityController {
       this.updateComment.bind(this)
     ); //꿀팁 댓글 수정
     
-    this.router.post(
-      '/communities/:communityId/like',
-      authenticateJWT,
-      this.toggleLike.bind(this)
-    );// 꿀팁 좋아요 토글 
-
-    this.router.post(
-      '/communities/:communityId/bookmark',
-      authenticateJWT,
-      this.toggleBookmark.bind(this)
-    );//꿀팁 북마크 토글 
+    this.router.post('/tips/:tipId/like', 
+      authenticateJWT, 
+      this.toggleLike.bind(this));
+    // 꿀팁 좋아요 토글 
+  
+    this.router.post('/tips/:tipId/bookmark', 
+      authenticateJWT, 
+      this.toggleBookmark.bind(this));
+    
+    //꿀팁 북마크 토글 
   }
 
   /**
@@ -53,7 +52,7 @@ export class CommunityController {
    *     summary: 꿀팁에 댓글 추가
    *     description: 로그인한 사용자가 특정 꿀팁에 댓글을 남깁니다.
    *     tags:
-   *       - Comments
+   *       - Communities
    *     security:
    *       - bearerAuth: []
    *     parameters:
@@ -126,7 +125,7 @@ export class CommunityController {
    *     summary: 꿀팁 댓글 삭제
    *     description: 사용자가 특정 꿀팁의 댓글을 삭제합니다.
    *     tags:
-   *       - communities
+   *       - Communities
    *     parameters:
    *       - in: path
    *         name: tipId
@@ -183,7 +182,7 @@ export class CommunityController {
    *     summary: 댓글 수정
    *     description: 특정 꿀팁에 대한 댓글을 수정합니다.
    *     tags:
-   *       - communities
+   *       - Communities
    *     parameters:
    *       - in: path
    *         name: tipId
@@ -276,7 +275,7 @@ export class CommunityController {
    *     summary: "커뮤니티 좋아요 토글"
    *     description: "특정 커뮤니티 ID에 대해 좋아요를 추가하거나 취소합니다."
    *     tags:
-   *       - Community
+   *       - Communities
    *     security:
    *       - bearerAuth: []
    *     parameters:
@@ -291,20 +290,21 @@ export class CommunityController {
    *       200:
    *         description: "좋아요 상태가 변경되었습니다."
    */
-public async toggleLike(req: Request, res: Response, next: NextFunction) {
+private async toggleLike(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user?.userId;
-    const communityId = parseInt(req.params.communityId, 10);
-    const result = await this.communityService.toggleLike(userId, communityId);
+    const tipId = parseInt(req.params.tipId, 10);
 
+    const response = await this.communityService.toggleLike(userId, tipId);
     res.status(StatusCodes.OK).json({
       isSuccess: true,
-      message: result.message,
+      message: response.message,
     });
   } catch (error) {
     next(error);
   }
 }
+
 
 /**
  * @swagger
@@ -313,7 +313,7 @@ public async toggleLike(req: Request, res: Response, next: NextFunction) {
  *     summary: "커뮤니티 북마크 토글"
  *     description: "특정 커뮤니티 ID에 대해 북마크를 추가하거나 취소합니다."
  *     tags:
- *       - Community
+ *       - Communities
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -328,15 +328,15 @@ public async toggleLike(req: Request, res: Response, next: NextFunction) {
  *       200:
  *         description: "북마크 상태가 변경되었습니다."
  */
-public async toggleBookmark(req: Request, res: Response, next: NextFunction) {
+private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user?.userId;
-    const communityId = parseInt(req.params.communityId, 10);
-    const result = await this.communityService.toggleBookmark(userId, communityId);
+    const tipId = parseInt(req.params.tipId, 10);
 
+    const response = await this.communityService.toggleBookmark(userId, tipId);
     res.status(StatusCodes.OK).json({
       isSuccess: true,
-      message: result.message,
+      message: response.message,
     });
   } catch (error) {
     next(error);
