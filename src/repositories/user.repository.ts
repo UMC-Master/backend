@@ -37,6 +37,13 @@ export class UserRepository {
 
   // ✅ 이메일 인증 토큰 삭제
   async deleteEmailVerificationToken(email: string) {
+    if (!this.prisma) {
+      console.error('❌ PrismaClient가 초기화되지 않았습니다.');
+      throw new Error('PrismaClient 초기화 오류');
+    }
+
+    console.log('🗑️ 이메일 인증 토큰 삭제 요청:', email);
+
     return await this.prisma.userVerification.deleteMany({
       where: { email },
     });
