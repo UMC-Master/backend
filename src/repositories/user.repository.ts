@@ -17,7 +17,32 @@ export class UserRepository {
     this.prisma = new PrismaClient();
   }
 
-  // 사용자 ID로 사용자 조회
+  // ✅ 이메일 인증 토큰 저장
+  async saveEmailVerificationToken(email: string, token: string) {
+    return await this.prisma.userVerification.create({
+      data: {
+        email,
+        token,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000), // 1시간 후 만료
+      },
+    });
+  }
+
+  // ✅ 이메일 인증 토큰 조회
+  async findEmailVerificationToken(token: string) {
+    return await this.prisma.userVerification.findUnique({
+      where: { token },
+    });
+  }
+
+  // ✅ 이메일 인증 토큰 삭제
+  async deleteEmailVerificationToken(email: string) {
+    return await this.prisma.userVerification.deleteMany({
+      where: { email },
+    });
+  }
+
+  // ✅ 사용자 ID로 사용자 조회 (새로 추가)
   async findUserById(userId: number): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { user_id: userId },
