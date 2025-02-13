@@ -32,26 +32,17 @@ export class CommunityController {
       authenticateJWT,
       this.updateComment.bind(this)
     ); //꿀팁 댓글 수정
-    this.router.post(
-      '/tips/:tipId/like',
-      authenticateJWT,
-      this.likeTip.bind(this)
-    ); // 꿀팁 좋아요
-    this.router.delete(
-      '/tips/:tipId/like',
-      authenticateJWT,
-      this.removeLike.bind(this)
-    ); // 꿀팁 좋아요 삭제
-    this.router.post(
-      '/tips/:tipId/save',
-      authenticateJWT,
-      this.saveTip.bind(this)
-    ); //꿀팁 저장
-    this.router.delete(
-      '/tips/:tipId/save',
-      authenticateJWT,
-      this.removeSave.bind(this)
-    ); // 꿀팁 저장 삭제
+    
+    this.router.post('/tips/:tipId/like', 
+      authenticateJWT, 
+      this.toggleLike.bind(this));
+    // 꿀팁 좋아요 토글 
+  
+    this.router.post('/tips/:tipId/bookmark', 
+      authenticateJWT, 
+      this.toggleBookmark.bind(this));
+    
+    //꿀팁 북마크 토글 
   }
 
   /**
@@ -61,7 +52,7 @@ export class CommunityController {
    *     summary: 꿀팁에 댓글 추가
    *     description: 로그인한 사용자가 특정 꿀팁에 댓글을 남깁니다.
    *     tags:
-   *       - Comments
+   *       - Communities
    *     security:
    *       - bearerAuth: []
    *     parameters:
@@ -134,7 +125,7 @@ export class CommunityController {
    *     summary: 꿀팁 댓글 삭제
    *     description: 사용자가 특정 꿀팁의 댓글을 삭제합니다.
    *     tags:
-   *       - communities
+   *       - Communities
    *     parameters:
    *       - in: path
    *         name: tipId
@@ -191,7 +182,7 @@ export class CommunityController {
    *     summary: 댓글 수정
    *     description: 특정 꿀팁에 대한 댓글을 수정합니다.
    *     tags:
-   *       - communities
+   *       - Communities
    *     parameters:
    *       - in: path
    *         name: tipId
@@ -277,330 +268,102 @@ export class CommunityController {
       next(error);
     }
   }
+/**
+ * @swagger
+ * /api/v1/tips/{tipId}/like:
+ *   post:
+ *     summary: "팁 좋아요 토글"
+ *     description: "사용자가 특정 팁에 대해 좋아요를 추가하거나 취소할 수 있습니다."
+ *     tags:
+ *       - Communities
+ *     security:
+ *       - bearerAuth: []  # JWT 인증 필요
+ *     parameters:
+ *       - in: path
+ *         name: tipId
+ *         required: true
+ *         description: "좋아요를 토글할 팁의 ID"
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: "좋아요 토글 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "좋아요가 처리되었습니다."
+ *       400:
+ *         description: "잘못된 요청 (유효하지 않은 ID)"
+ *       401:
+ *         description: "인증 실패 (JWT 필요)"
+ *       404:
+ *         description: "팁을 찾을 수 없음"
+ *       500:
+ *         description: "서버 내부 오류"
+ */
+private async toggleLike(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId;
+    const tipId = parseInt(req.params.tipId, 10);
 
-  /**
-   * @swagger
-   * /api/v1/tips/{tipId}/like:
-   *   post:
-   *     summary: 꿀팁 좋아요 추가
-   *     description: 특정 꿀팁을 좋아요합니다.
-   *     tags:
-   *       - Likes
-   *     security:
-   *       - bearerAuth: []
-   *     parameters:
-   *       - in: path
-   *         name: tipId
-   *         required: true
-   *         schema:
-   *           type: integer
-   *         description: 좋아요할 꿀팁의 ID
-   *     responses:
-   *       200:
-   *         description: 좋아요 성공
-   *       400:
-   *         description: 잘못된 요청 (유효하지 않은 tipId)
-   *       401:
-   *         description: 인증 필요 (토큰 없음)
-   */
-  private async likeTip(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.user?.userId;
-      const tipId = parseInt(req.params.tipId, 10);
-
-      if (userId === undefined) {
-        throw new UnauthorizedError('로그인이 필요합니다.', null);
-      }
-
-      if (isNaN(tipId)) {
-        throw new ValidationError('올바른 Tip ID를 입력해주세요.', {
-          tipId: req.params.tipId,
-        });
-      }
-
-      const updatedTip = await this.communityService.likeTip(userId, tipId);
-
-      res.status(StatusCodes.OK).json({
-        isSuccess: true,
-        code: 'COMMON200',
-        message: '좋아요가 성공적으로 처리되었습니다.',
-        result: { data: updatedTip },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * @swagger
-   * /api/v1/tips/{tipId}/like:
-   *   delete:
-   *     summary: 좋아요 삭제 (취소)
-   *     description: 사용자가 특정 꿀팁에 대해 눌렀던 좋아요를 취소합니다.
-   *     tags:
-   *       - communities
-   *     parameters:
-   *       - in: path
-   *         name: tipId
-   *         required: true
-   *         description: 좋아요를 취소할 꿀팁의 ID
-   *         schema:
-   *           type: integer
-   *     responses:
-   *       200:
-   *         description: 좋아요 취소 성공
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 resultType:
-   *                   type: string
-   *                   example: "SUCCESS"
-   *                 success:
-   *                   type: object
-   *                   properties:
-   *                     message:
-   *                       type: string
-   *                       example: "좋아요가 성공적으로 취소되었습니다."
-   *       400:
-   *         description: 잘못된 요청
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 resultType:
-   *                   type: string
-   *                   example: "FAIL"
-   *                 error:
-   *                   type: object
-   *                   properties:
-   *                     reason:
-   *                       type: string
-   *                       example: "잘못된 꿀팁 ID"
-   *       404:
-   *         description: 좋아요 정보를 찾을 수 없음
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 resultType:
-   *                   type: string
-   *                   example: "ERROR"
-   *                 error:
-   *                   type: object
-   *                   properties:
-   *                     reason:
-   *                       type: string
-   *                       example: "좋아요 정보를 찾을 수 없습니다."
-   *       500:
-   *         description: 서버 오류
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 resultType:
-   *                   type: string
-   *                   example: "ERROR"
-   *                 error:
-   *                   type: object
-   *                   properties:
-   *                     reason:
-   *                       type: string
-   *                       example: "서버 내부 오류"
-   */
-
-  // 좋아요 삭제 (취소)
-  private async removeLike(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.user?.userId;
-      const tipId = parseInt(req.params.tipId, 10);
-
-      if (userId === undefined) {
-        throw new UnauthorizedError('로그인이 필요합니다.', null);
-      }
-
-      if (isNaN(tipId)) {
-        throw new ValidationError('올바른 Tip ID를 입력해주세요.', {
-          tipId: req.params.tipId,
-        });
-      }
-
-      await this.communityService.removeLike(userId, tipId);
-
-      res.status(StatusCodes.OK).json({
-        isSuccess: true,
-        code: 'COMMON200',
-        message: '좋아요가 성공적으로 취소되었습니다.',
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * @swagger
-   * /api/v1/tips/{tipId}/save:
-   *   post:
-   *     summary: 꿀팁 저장
-   *     description: 특정 꿀팁을 저장합니다.
-   *     tags:
-   *       - Saves
-   *     security:
-   *       - bearerAuth: []
-   *     parameters:
-   *       - in: path
-   *         name: tipId
-   *         required: true
-   *         schema:
-   *           type: integer
-   *         description: 저장할 꿀팁의 ID
-   *     responses:
-   *       200:
-   *         description: 꿀팁 저장 성공
-   *       400:
-   *         description: 잘못된 요청 (유효하지 않은 tipId)
-   *       401:
-   *         description: 인증 필요 (토큰 없음)
-   */
-  private async saveTip(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.user?.userId;
-      const tipId = parseInt(req.params.tipId, 10);
-
-      if (userId === undefined) {
-        throw new UnauthorizedError('로그인이 필요합니다.', null);
-      }
-
-      if (isNaN(tipId)) {
-        throw new ValidationError('올바른 Tip ID를 입력해주세요.', {
-          tipId: req.params.tipId,
-        });
-      }
-
-      const updatedTip = await this.communityService.saveTip(userId, tipId);
-
-      res.status(StatusCodes.OK).json({
-        isSuccess: true,
-        code: 'COMMON200',
-        message: '꿀팁이 성공적으로 저장되었습니다.',
-        result: { data: updatedTip },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * @swagger
-   * /api/v1/tips/{tipId}/save:
-   *   delete:
-   *     summary: 꿀팁 저장 삭제
-   *     description: 사용자가 저장한 팁을 삭제합니다.
-   *     tags:
-   *       - communities
-   *     parameters:
-   *       - in: path
-   *         name: tipId
-   *         required: true
-   *         description: 삭제할 저장된 팁의 ID
-   *         schema:
-   *           type: integer
-   *     responses:
-   *       200:
-   *         description: 팁 저장 삭제 성공
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 resultType:
-   *                   type: string
-   *                   example: "SUCCESS"
-   *                 success:
-   *                   type: object
-   *                   properties:
-   *                     message:
-   *                       type: string
-   *                       example: "팁 저장이 성공적으로 삭제되었습니다."
-   *       400:
-   *         description: 잘못된 요청
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 resultType:
-   *                   type: string
-   *                   example: "FAIL"
-   *                 error:
-   *                   type: object
-   *                   properties:
-   *                     reason:
-   *                       type: string
-   *                       example: "잘못된 팁 ID"
-   *       404:
-   *         description: 저장된 팁을 찾을 수 없음
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 resultType:
-   *                   type: string
-   *                   example: "ERROR"
-   *                 error:
-   *                   type: object
-   *                   properties:
-   *                     reason:
-   *                       type: string
-   *                       example: "저장된 팁을 찾을 수 없습니다."
-   *       500:
-   *         description: 서버 오류
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 resultType:
-   *                   type: string
-   *                   example: "ERROR"
-   *                 error:
-   *                   type: object
-   *                   properties:
-   *                     reason:
-   *                       type: string
-   *                       example: "서버 내부 오류"
-   */
-
-  // 팁 저장 취소
-  private async removeSave(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.user?.userId;
-      const tipId = parseInt(req.params.tipId, 10);
-
-      if (userId === undefined) {
-        throw new UnauthorizedError('로그인이 필요합니다.', null);
-      }
-
-      if (isNaN(tipId)) {
-        throw new ValidationError('올바른 Tip ID를 입력해주세요.', {
-          tipId: req.params.tipId,
-        });
-      }
-
-      await this.communityService.removeSave(userId, tipId);
-
-      res.status(StatusCodes.OK).json({
-        isSuccess: true,
-        code: 'COMMON200',
-        message: '꿀팁 저장이 취소되었습니다.',
-      });
-    } catch (error) {
-      next(error);
-    }
+    const response = await this.communityService.toggleLike(userId, tipId);
+    res.status(StatusCodes.OK).json({
+      isSuccess: true,
+      message: response.message,
+    });
+  } catch (error) {
+    next(error);
   }
 }
+
+/**
+   * @swagger
+   * /api/v1/tips/{tipId}/bookmark:
+   *   post:
+   *     summary: "팁 북마크 토글"
+   *     description: "사용자가 특정 팁을 북마크하거나 취소합니다."
+   *     tags:
+   *       - Communities
+   *     parameters:
+   *       - in: path
+   *         name: tipId
+   *         required: true
+   *         description: "북마크할 팁의 ID"
+   *         schema:
+   *           type: integer
+   *           example: 1
+   *     responses:
+   *       200:
+   *         description: "북마크 성공 또는 취소"
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: "북마크가 추가되었습니다."
+   */
+private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId;
+    const tipId = parseInt(req.params.tipId, 10);
+
+    const result = await this.communityService.toggleBookmark(userId, tipId);
+    res.status(StatusCodes.OK).json({ isSuccess: true, ...result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+}
+
+
