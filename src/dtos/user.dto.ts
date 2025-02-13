@@ -1,3 +1,7 @@
+export interface EmailVerificationDto {
+  email: string;
+}
+
 export interface EmailSignupDto {
   email: string;
   password: string;

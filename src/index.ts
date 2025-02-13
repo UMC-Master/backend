@@ -22,6 +22,7 @@ import { AdminController } from './controllers/admin.controller';
 import { LocationController } from './controllers/location.controller.js';
 import { ChatbotController } from './controllers/chatbot.controller.js';
 import { OrganizationController } from './controllers/organization.controller.js';
+import { AuthController } from './controllers/auth.controller.js';
 
 dotenv.config();
 
@@ -84,6 +85,7 @@ const setupControllers = (app: express.Express) => {
     new LocationController(),
     new ChatbotController(),
     new OrganizationController(),
+    new AuthController(),
   ];
 
   controllers.forEach((controller) => {
@@ -96,6 +98,10 @@ const setupControllers = (app: express.Express) => {
       app.use('/api/v1', controller.router); // ✅ 각 컨트롤러의 router를 app에 등록
     }
   });
+
+  // ✅ AuthController를 별도로 등록 (올바른 엔드포인트 설정)
+  const authController = new AuthController();
+  app.use('/api/v1/auth', authController.router);
 };
 
 // 루트 경로 설정

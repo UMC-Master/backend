@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer';
 import axios from 'axios';
 import { UserRepository } from '../repositories/user.repository';
 import { EmailSignupDto, ProfileUpdateDto } from '../dtos/user.dto'; // 사용 중인 DTO만 남김
@@ -7,12 +8,71 @@ import bcrypt from 'bcrypt';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 export class UserService {
-  private userRepository: UserRepository;
+  public userRepository: UserRepository;
   private hashtagService: HashtagService; // ✅ 해시태그 서비스 추가
 
   constructor() {
     this.userRepository = new UserRepository();
     this.hashtagService = new HashtagService();
+  }
+
+  async sendVerificationEmail(email: string) {
+    try {
+      if (!process.env.JWT_EMAIL_SECRET || !process.env.BASE_URL) {
+        throw new Error('환경변수가 설정되지 않았습니다.');
+      }
+      // JWT를 사용하여 이메일 인증 토큰 생성
+      const token = jwt.sign({ email }, process.env.JWT_EMAIL_SECRET!, {
+        expiresIn: '1h',
+      });
+
+      // 이메일 인증 URL
+      const verificationUrl = `${process.env.BASE_URL}/api/v1/auth/verify-email?token=${token}`;
+
+      // 이메일 전송
+      await this.sendEmail(
+        email,
+        '이메일 인증',
+        `인증 링크: ${verificationUrl}`
+      );
+
+      // ✅ 기존 이메일 인증 기록 삭제 후 저장
+      await this.userRepository.deleteEmailVerificationToken(email);
+      await this.userRepository.saveEmailVerificationToken(email, token);
+
+      return { message: '이메일 인증 링크가 전송되었습니다.' };
+    } catch (error) {
+      console.error('❌ 이메일 인증 이메일 전송 실패:', error);
+      throw new Error('이메일 인증 이메일을 전송하는 중 오류가 발생했습니다.');
+    }
+  }
+
+  private async sendEmail(to: string, subject: string, text: string) {
+    try {
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        throw new Error('SMTP 이메일 설정이 환경변수에 등록되지 않았습니다.');
+      }
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const info = await transporter.sendMail({
+        from: `"Your Service" <${process.env.EMAIL_USER}>`,
+        to,
+        subject,
+        text,
+      });
+
+      console.log(`✅ 이메일 전송 성공: ${info.messageId}`);
+    } catch (error) {
+      console.error('❌ 이메일 전송 실패:', error);
+      throw new Error('이메일 전송 중 오류가 발생했습니다.');
+    }
   }
 
   // 이메일 중복 확인

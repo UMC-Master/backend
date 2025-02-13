@@ -42,6 +42,17 @@ model User {
   @@map("user")
 }
 
+model UserVerification {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique // 인증할 이메일
+  token      String   @unique // 인증을 위한 JWT 토큰
+  expires_at DateTime // 토큰 만료 시간
+  created_at DateTime @default(now())
+
+  @@map("user_verification") // 실제 DB 테이블 이름을 user_verification으로 설정
+}
+
+
 model Location {
   location_id   Int         @id @default(autoincrement())
   name          String?
