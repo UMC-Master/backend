@@ -366,7 +366,6 @@ private async toggleLike(req: Request, res: Response, next: NextFunction) {
  *       500:
  *         description: "서버 내부 오류"
  */
-
 private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user?.userId;
