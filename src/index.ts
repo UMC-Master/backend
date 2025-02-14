@@ -139,6 +139,6 @@ setupApp(app);
 
 app.listen(port, () => {
   console.log(`🚀 서버가 실행 중입니다: http://localhost:${port}`);
-  console.log(`📜 Swagger 문서 확인: https://api.hmaster.shop/api-docs`);
+  console.log(`📜 Swagger 문서 확인: http://localhost:${port}/api-docs`);
   console.log(`📂 정적 파일 확인: http://localhost:${port}/static/test.txt`);
 });

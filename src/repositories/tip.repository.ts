@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient , MediaType } from '@prisma/client';
 import { prisma } from '../db.config.js';
 export class TipRepository {
   private prisma: PrismaClient;
@@ -14,36 +14,53 @@ export class TipRepository {
     });
   }
 
-  // 팁 ID로 조회
-  async getTipById(tipId: number) {
-    return await this.prisma.tip.findUnique({
+  //팁 ID 로 조회 (미디어 포함)
+  public async getTipById(tipId: number) {
+    return await prisma.tip.findUnique({
       where: { tips_id: tipId },
       include: {
-        hashtags: {
-          include: {
-            hashtag: true, // ✅ 실제 해시태그 정보 포함
-          },
-        },
+        user: true,
+        hashtags: { include: { hashtag: true } },
+        likes: true,
+        comments: true,
+        media: true, // ✅ 업로드된 미디어 포함
       },
     });
   }
 
-  // 팁 생성
-  public async createTip(data: {
-    userId: number;
-    title: string;
-    content: string;
-  }) {
+  public async createTip(data: { userId: number; title: string; content: string }) {
     return await prisma.tip.create({
       data: {
+        user_id: data.userId,
         title: data.title,
         content: data.content,
-        user_id: data.userId,
-        created_at: new Date(),
-        updated_at: new Date(),
       },
     });
   }
+
+  // ✅ 이미지 저장 메서드 수정
+  public async saveImages(tipId: number, images: { media_url: string; media_type: string }[]) {
+    return await prisma.tipMedia.createMany({
+      data: images.map((image) => ({
+        tips_id: tipId,
+        media_url: image.media_url,
+        media_type: this.getMediaType(image.media_type), // ✅ ENUM 변환 추가
+        uploaded_at: new Date(),
+      })),
+    });
+  }
+
+  // ✅ media_type 변환 함수 추가
+  private getMediaType(mimeType: string): MediaType {
+    if (mimeType.startsWith("image/")) {
+      return MediaType.image; // ✅ Prisma ENUM 값으로 변환
+    } else if (mimeType.startsWith("video/")) {
+      return MediaType.video;
+    } else {
+      throw new Error(`Unsupported media type: ${mimeType}`);
+    }
+  }
+
   // 팁 수정
   public async updateTip(tipId: number, title: string, content: string) {
     return await prisma.tip.update({

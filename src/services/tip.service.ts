@@ -13,59 +13,66 @@ export class TipService {
     this.hashtagRepository = new HashtagRepository();
   }
 
- // 팁 생성
-public async createTip(data: {
-  userId: number;
-  title: string;
-  content: string;
-  hashtags: string[];
-}) {
-  // 1. 중복된 팁 제목 검사
-  const existingTip = await this.tipRepository.getTipByTitle(data.title);
-  if (existingTip) {
-    throw new ValidationError('Duplicate tip title', { title: data.title });
-  }
+  // 팁 생성 (미디어 추가 포함)
+  public async createTip(data: {
+    userId: number;
+    title: string;
+    content: string;
+    hashtags: string[];
+    imageUrls: { media_url: string; media_type: string }[];
+  }) {
+    // 1. 중복된 팁 제목 검사
+    const existingTip = await this.tipRepository.getTipByTitle(data.title);
+    if (existingTip) {
+      throw new ValidationError('Duplicate tip title', { title: data.title });
+    }
 
-  // 2. 팁 생성
-  const newTip = await this.tipRepository.createTip({
-    userId: data.userId,
-    title: data.title,
-    content: data.content,
-  });
+    // 2. 팁 생성
+    const newTip = await this.tipRepository.createTip({
+      userId: data.userId,
+      title: data.title,
+      content: data.content,
+    });
 
-  // 3. 해시태그 처리 및 연결 
-  const hashtagIds = await Promise.all(
-    data.hashtags.map(async (hashtag) => {
-      const existingHashtag = await this.hashtagRepository.getByName(hashtag.trim());
-  
-      if (!existingHashtag) {
-        throw new HashtagNotFoundError({ hashtag });
-      }
-      return existingHashtag.hashtag_id;
-    })
-  );
+    // 3. 해시태그 처리 및 연결
+    const hashtagIds = await Promise.all(
+      data.hashtags.map(async (hashtag) => {
+        const existingHashtag = await this.hashtagRepository.getByName(hashtag.trim());
 
-  await this.tipRepository.associateHashtagsWithTip(newTip.tips_id, Array.from(new Set(hashtagIds)));
+        if (!existingHashtag) {
+          throw new HashtagNotFoundError({ hashtag });
+        }
+        return existingHashtag.hashtag_id;
+      })
+    );
 
-  // 4. 연결된 해시태그 가져오기
-  const hashtags = await Promise.all(
-    hashtagIds.map(async (id) => {
-      const hashtag = await this.hashtagRepository.getById(id);
-      return { hashtagId: id, name: hashtag?.name || 'Unknown' };
-    })
-  );
+    await this.tipRepository.associateHashtagsWithTip(newTip.tips_id, Array.from(new Set(hashtagIds)));
 
-  return {
-    isSuccess: true,
-    message: '팁이 생성되었습니다.',
-    result: {
-      tip: {
-        ...newTip,
-        hashtags, // 연결된 해시태그 포함
+    // 4. 미디어 저장
+    if (data.imageUrls && data.imageUrls.length > 0) {
+      await this.tipRepository.saveImages(newTip.tips_id, data.imageUrls);
+    }
+
+    // 5. 연결된 해시태그 가져오기
+    const hashtags = await Promise.all(
+      hashtagIds.map(async (id) => {
+        const hashtag = await this.hashtagRepository.getById(id);
+        return { hashtagId: id, name: hashtag?.name || 'Unknown' };
+      })
+    );
+
+    return {
+      isSuccess: true,
+      message: '팁이 생성되었습니다.',
+      result: {
+        tip: {
+          ...newTip,
+          hashtags, // 연결된 해시태그 포함
+          images: data.imageUrls, // 업로드된 미디어 포함
+        },
       },
-    },
-  };
-}
+    };
+  }
 
   // 팁 조회 (해시태그 변환 추가)
   public async getTipById(tipId: number) {
