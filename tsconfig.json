@@ -6,7 +6,8 @@
     "module": "ESNext", // 모듈 형식
     "target": "ESNext", // 컴파일 타겟
     "esModuleInterop": true, // ES 모듈 호환성
-    "moduleResolution": "node" // Node.js 모듈 방식
+    "moduleResolution": "node", // Node.js 모듈 방식
+    "types": ["Multer"]
   },
   "include": ["src/**/*"], // 소스 파일 포함
   "exclude": ["node_modules"] // 제외 폴더

@@ -1,9 +1,10 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Express, Router, Request, Response, NextFunction } from 'express';
 import { TipService } from '../services/tip.service.js'; // 팁 서비스 import
 import { StatusCodes } from 'http-status-codes'; // StatusCodes import
 import { authenticateJWT } from '../middlewares/authenticateJWT'; // 인증 미들웨어 import
 import 'express-async-errors';
-import { UnauthorizedError, ValidationError } from '../errors/errors';
+import { imageUploader } from '../middlewares/imageUploader.js';
+import {  ValidationError } from '../errors/errors';
 
 export class TipController {
   public tipService: TipService; // TipService 타입 명시
@@ -19,7 +20,12 @@ export class TipController {
     console.log('✅ TipController 라우트 등록됨');
 
     // 팁 생성, 수정, 삭제 라우트 정의
-    this.router.post('/tips', authenticateJWT, this.createTip.bind(this));
+    this.router.post(
+      '/tips',
+      authenticateJWT,
+      imageUploader.array('images', 5), // 최대 5개 이미지 업로드
+      this.createTip.bind(this)
+    );
     this.router.put('/tips/:tipId', authenticateJWT, this.updateTip.bind(this));
     this.router.delete(
       '/tips/:tipId',
@@ -35,36 +41,42 @@ export class TipController {
    * @swagger
    * /api/v1/tips:
    *   post:
-   *     summary: "새로운 팁 생성"
-   *     description: "새로운 팁을 생성하여 시스템에 저장합니다."
+   *     summary: "새로운 팁 생성 (이미지 포함)"
+   *     description: "제목, 내용과 함께 이미지를 포함하여 새로운 팁을 생성합니다."
    *     tags:
    *       - Tips
    *     security:
    *       - bearerAuth: []
+   *     consumes:
+   *       - multipart/form-data
    *     requestBody:
    *       required: true
    *       content:
-   *         application/json:
+   *         multipart/form-data:
    *           schema:
    *             type: object
    *             properties:
    *               title:
    *                 type: string
    *                 description: "팁 제목"
-   *                 example: "Amazing Food Tips"
+   *                 example: "Best Cleaning Tips"
    *               content:
    *                 type: string
    *                 description: "팁 내용"
-   *                 example: "Don't miss the local cuisine when traveling."
+   *                 example: "These are some great cleaning tips!"
    *               hashtags:
+   *                 type: string
+   *                 description: "쉼표로 구분된 해시태그 (예: 청소,설거지)"
+   *                 example: "청소,설거지"
+   *               files:
    *                 type: array
    *                 items:
    *                   type: string
-   *                 description: "팁에 포함될 해시태그"
-   *                 example: ["#청소", "#설거지"]
+   *                   format: binary
+   *                 description: "업로드할 이미지 파일"
    *     responses:
    *       201:
-   *         description: "새로운 팁 생성 성공"
+   *         description: "팁 생성 성공"
    *         content:
    *           application/json:
    *             schema:
@@ -84,101 +96,62 @@ export class TipController {
    *                       example: 1
    *                     title:
    *                       type: string
-   *                       example: "Amazing Food Tips"
+   *                       example: "Best Cleaning Tips"
    *                     content:
    *                       type: string
-   *                       example: "Don't miss the local cuisine when traveling."
-   *                     author:
-   *                       type: object
-   *                       properties:
-   *                         userId:
-   *                           type: integer
-   *                           example: 1
-   *                         nickname:
-   *                           type: string
-   *                           example: "John Doe"
-   *                         profileImageUrl:
-   *                           type: string
-   *                           example: "https://example.com/profile.jpg"
-   *                     createdAt:
-   *                       type: string
-   *                       format: date-time
-   *                       example: "2023-01-01T00:00:00Z"
-   *                     updatedAt:
-   *                       type: string
-   *                       format: date-time
-   *                       example: "2023-01-01T00:00:00Z"
-   *                     hashtags:
+   *                       example: "These are some great cleaning tips!"
+   *                     imageUrls:
    *                       type: array
    *                       items:
    *                         type: object
    *                         properties:
-   *                           hashtagId:
-   *                             type: integer
-   *                             example: 1
-   *                           name:
+   *                           media_url:
    *                             type: string
-   *                             example: "#food"
-   *       400:
-   *         description: "잘못된 요청 (필수 입력값 없음 또는 유효하지 않은 데이터)"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 isSuccess:
-   *                   type: boolean
-   *                   example: false
-   *                 message:
-   *                   type: string
-   *                   example: "제목 혹은 내용을 입력해야 합니다."
-   *       401:
-   *         description: "인증 실패 (로그인 필요)"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 isSuccess:
-   *                   type: boolean
-   *                   example: false
-   *                 message:
-   *                   type: string
-   *                   example: "로그인이 필요합니다."
+   *                             example: "https://s3.amazonaws.com/bucket-name/path/to/image.jpg"
+   *                           media_type:
+   *                             type: string
+   *                             example: "image/png"
    */
 
-  public async createTip(req: Request, res: Response, next: NextFunction) {
+  
+  public async createTip(
+    req: Request & { files?: (Express.Multer.File & { location?: string })[] }, // ✅ 변경된 부분
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       const { title, content, hashtags } = req.body;
       const userId = req.user?.userId;
 
-      if (userId === undefined) {
-        throw new UnauthorizedError('로그인이 필요합니다.', null);
+      if (!userId) {
+        throw new ValidationError("로그인이 필요합니다.", null);
       }
-
       if (!title || !content) {
-        throw new ValidationError('제목 혹은 내용을 입력해야 합니다.', null);
+        throw new ValidationError("제목과 내용을 입력해야 합니다.", null);
       }
 
-      if (!Array.isArray(hashtags) || hashtags.length === 0) {
-        throw new ValidationError(
-          '해시태그는 최소 하나 이상 입력해야 합니다.',
-          { hashtags }
-        );
-      }
+      // 해시태그가 문자열이면 배열로 변환
+      const hashtagArray =
+        typeof hashtags === "string"
+          ? hashtags.split(",").map((tag) => tag.trim())
+          : hashtags || [];
+
+      // 업로드된 파일 정보 가져오기
+      const imageUrls =
+        req.files?.map((file) => ({
+          media_url: (file as any).location || "", // ✅ S3 업로드된 파일 URL
+          media_type: file.mimetype,
+        })) || [];
 
       const newTip = await this.tipService.createTip({
         userId,
         title,
         content,
-        hashtags, // 사용자가 선택한 해시태그
+        hashtags: hashtagArray,
+        imageUrls,
       });
 
-      res.status(StatusCodes.CREATED).json({
-        isSuccess: true,
-        message: '팁이 생성되었습니다.',
-        result: { tip: newTip },
-      });
+      res.status(StatusCodes.CREATED).json(newTip);
     } catch (error) {
       next(error);
     }

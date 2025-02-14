@@ -14,6 +14,7 @@
   "license": "ISC",
   "description": "UMC 7기 H_MASTER 프로젝트",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.744.0",
     "@prisma/client": "^6.3.1",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.9",
@@ -43,6 +44,7 @@
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.18.1",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.12",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/swagger-ui-express": "^4.1.7",

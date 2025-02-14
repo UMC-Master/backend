@@ -3,8 +3,8 @@ import multer from "multer";
 import multerS3 from "multer-s3";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import { Request } from "express";
 import dotenv from "dotenv";
+
 
 dotenv.config();
 
@@ -26,8 +26,8 @@ export const imageUploader = multer({
     bucket: process.env.AWS_S3_BUCKET_NAME as string,
     contentType: multerS3.AUTO_CONTENT_TYPE,
     key: (req, file, callback) => {
-      const uploadDirectory = (req as Request).query.directory
-        ? `hm/${(req as Request).query.directory}`
+      const uploadDirectory = req.query.directory
+        ? `hm/${req.query.directory}`
         : "hm/uploads";
 
       const extension = path.extname(file.originalname);

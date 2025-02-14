@@ -14,36 +14,41 @@ export class TipRepository {
     });
   }
 
-  // 팁 ID로 조회
-  async getTipById(tipId: number) {
-    return await this.prisma.tip.findUnique({
+  //팁 ID 로 조회 (미디어 포함)
+  public async getTipById(tipId: number) {
+    return await prisma.tip.findUnique({
       where: { tips_id: tipId },
       include: {
-        hashtags: {
-          include: {
-            hashtag: true, // ✅ 실제 해시태그 정보 포함
-          },
-        },
+        user: true,
+        hashtags: { include: { hashtag: true } },
+        likes: true,
+        comments: true,
+        media: true, // ✅ 업로드된 미디어 포함
       },
     });
   }
 
-  // 팁 생성
-  public async createTip(data: {
-    userId: number;
-    title: string;
-    content: string;
-  }) {
+  public async createTip(data: { userId: number; title: string; content: string }) {
     return await prisma.tip.create({
       data: {
+        user_id: data.userId,
         title: data.title,
         content: data.content,
-        user_id: data.userId,
-        created_at: new Date(),
-        updated_at: new Date(),
       },
     });
   }
+
+  public async saveImages(tipId: number, images: { media_url: string; media_type: string }[]) {
+    return await prisma.tipMedia.createMany({
+      data: images.map(image => ({
+        tips_id: tipId,
+        media_url: image.media_url,
+        media_type: image.media_type,
+        uploaded_at: new Date(),
+      })),
+    });
+  }
+
   // 팁 수정
   public async updateTip(tipId: number, title: string, content: string) {
     return await prisma.tip.update({
