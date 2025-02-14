@@ -23,7 +23,7 @@ export class TipController {
     this.router.post(
       '/tips',
       authenticateJWT,
-      imageUploader.array('images', 5), // 최대 5개 이미지 업로드
+      imageUploader.array('files', 5), // 최대 5개 이미지 업로드
       this.createTip.bind(this)
     );
     this.router.put('/tips/:tipId', authenticateJWT, this.updateTip.bind(this));
@@ -113,12 +113,7 @@ export class TipController {
    *                             example: "image/png"
    */
 
-  
-  public async createTip(
-    req: Request & { files?: (Express.Multer.File & { location?: string })[] }, // ✅ 변경된 부분
-    res: Response,
-    next: NextFunction
-  ) {
+  public async createTip(req: Request & { files?: Express.Multer.File[] }, res: Response, next: NextFunction) {
     try {
       const { title, content, hashtags } = req.body;
       const userId = req.user?.userId;
@@ -130,18 +125,13 @@ export class TipController {
         throw new ValidationError("제목과 내용을 입력해야 합니다.", null);
       }
 
-      // 해시태그가 문자열이면 배열로 변환
-      const hashtagArray =
-        typeof hashtags === "string"
-          ? hashtags.split(",").map((tag) => tag.trim())
-          : hashtags || [];
+      const hashtagArray = typeof hashtags === "string" ? hashtags.split(",").map((tag) => tag.trim()) : hashtags || [];
 
-      // 업로드된 파일 정보 가져오기
-      const imageUrls =
-        req.files?.map((file) => ({
-          media_url: (file as any).location || "", // ✅ S3 업로드된 파일 URL
-          media_type: file.mimetype,
-        })) || [];
+      // ✅ S3에 업로드된 이미지 URL 리스트 가져오기
+      const imageUrls = req.files?.map((file) => ({
+        media_url: file.location, // S3 URL
+        media_type: file.mimetype,
+      })) || [];
 
       const newTip = await this.tipService.createTip({
         userId,
@@ -156,7 +146,7 @@ export class TipController {
       next(error);
     }
   }
-
+  
   /**
    * @swagger
    * /api/v1/tips/{tipId}:

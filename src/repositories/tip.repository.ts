@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient , MediaType } from '@prisma/client';
 import { prisma } from '../db.config.js';
 export class TipRepository {
   private prisma: PrismaClient;
@@ -38,15 +38,27 @@ export class TipRepository {
     });
   }
 
+  // ✅ 이미지 저장 메서드 수정
   public async saveImages(tipId: number, images: { media_url: string; media_type: string }[]) {
     return await prisma.tipMedia.createMany({
-      data: images.map(image => ({
+      data: images.map((image) => ({
         tips_id: tipId,
         media_url: image.media_url,
-        media_type: image.media_type,
+        media_type: this.getMediaType(image.media_type), // ✅ ENUM 변환 추가
         uploaded_at: new Date(),
       })),
     });
+  }
+
+  // ✅ media_type 변환 함수 추가
+  private getMediaType(mimeType: string): MediaType {
+    if (mimeType.startsWith("image/")) {
+      return MediaType.image; // ✅ Prisma ENUM 값으로 변환
+    } else if (mimeType.startsWith("video/")) {
+      return MediaType.video;
+    } else {
+      throw new Error(`Unsupported media type: ${mimeType}`);
+    }
   }
 
   // 팁 수정
