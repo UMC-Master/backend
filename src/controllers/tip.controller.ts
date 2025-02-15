@@ -26,13 +26,14 @@ export class TipController {
       imageUploader.array('files', 5), // 최대 5개 이미지 업로드
       this.createTip.bind(this)
     );
-    this.router.put('/tips/:tipId', authenticateJWT, this.updateTip.bind(this));
+    this.router.put('/tips/:tipId', authenticateJWT, this.updateTip.bind(this));//팁 수정
     this.router.delete(
       '/tips/:tipId',
       authenticateJWT,
       this.deleteTip.bind(this)
     );
     this.router.get('/tips', this.getAllTips.bind(this));
+    this.router.get('/tips/:tipId', this.getTipDetails.bind(this));
     this.router.get('/tips/sorted', this.getSortedTips.bind(this));
     this.router.get('/tips/search', this.searchTips.bind(this));
   }
@@ -147,14 +148,19 @@ export class TipController {
     }
   }
   
+ 
   /**
    * @swagger
    * /api/v1/tips/{tipId}:
    *   put:
-   *     summary: "기존 팁 수정"
-   *     description: "기존의 팁을 수정하여 시스템에 업데이트합니다."
+   *     summary: "팁 수정 (이미지 추가 가능)"
+   *     description: "기존의 팁을 수정하고, 새로운 이미지를 추가할 수 있습니다."
    *     tags:
    *       - Tips
+   *     security:
+   *       - bearerAuth: []
+   *     consumes:
+   *       - multipart/form-data
    *     parameters:
    *       - in: path
    *         name: tipId
@@ -162,18 +168,27 @@ export class TipController {
    *         description: "수정할 팁의 고유 ID"
    *         schema:
    *           type: integer
-   *           example: 1
    *     requestBody:
    *       required: true
    *       content:
-   *         application/json:
+   *         multipart/form-data:
    *           schema:
    *             type: object
    *             properties:
    *               title:
    *                 type: string
+   *                 description: "수정할 팁 제목"
+   *                 example: "Updated Food Tips"
    *               content:
    *                 type: string
+   *                 description: "수정할 팁 내용"
+   *                 example: "Make sure to try different cuisines!"
+   *               files:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                   format: binary
+   *                 description: "업로드할 이미지 파일 (최대 5개)"
    *     responses:
    *       200:
    *         description: "팁 수정 성공"
@@ -199,35 +214,51 @@ export class TipController {
    *                       example: "Updated Food Tips"
    *                     content:
    *                       type: string
-   *                       example: "Make sure to try the street food!"
-   *       400:
-   *         description: "잘못된 요청"
+   *                       example: "Make sure to try different cuisines!"
+   *                     imageUrls:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           media_url:
+   *                             type: string
+   *                             example: "https://s3.amazonaws.com/bucket-name/path/to/image.jpg"
+   *                           media_type:
+   *                             type: string
+   *                             example: "image/png"
    */
-  private async updateTip(req: Request, res: Response, next: NextFunction) {
+  private async updateTip(req: Request & { files?: Express.Multer.File[] }, res: Response, next: NextFunction) {
     try {
-      const { title, content } = req.body; // 수정할 제목과 내용
-      const tipId = parseInt(req.params.tipId, 10); // 팁 ID
+      const { title, content } = req.body;
+      const tipId = parseInt(req.params.tipId, 10);
 
       if (!title || !content) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           isSuccess: false,
-          code: 'COMMON400',
-          message: 'Title and content are required.',
+          message: "제목과 내용을 입력해야 합니다.",
         });
       }
 
-      // 팁 수정
-      const updatedTip = await this.tipService.updateTip(tipId, title, content);
+      let newImages = [];
+      if (req.files && req.files.length > 0) {
+        newImages = req.files.map((file) => ({
+          media_url: file.location, // S3 업로드된 URL
+          media_type: file.mimetype,
+        }));
+      }
+
+      const updatedTip = await this.tipService.updateTip(tipId, title, content, newImages);
+
       res.status(StatusCodes.OK).json({
         isSuccess: true,
-        code: 'COMMON200',
-        message: 'Tip updated successfully.',
-        result: { data: updatedTip }, // 수정된 팁을 반환
+        message: "팁 수정 성공",
+        result: updatedTip,
       });
     } catch (error) {
-      next(error); // 에러 처리
+      next(error);
     }
   }
+
 
   /**
    * @swagger
@@ -267,203 +298,241 @@ export class TipController {
     }
   }
 
-  /**
-   * @swagger
-   * /api/v1/tips/sorted:
-   *   get:
-   *     summary: "정렬된 꿀팁 조회"
-   *     description: "정렬된 꿀팁을 조회합니다. 정렬 기준을 설정할 수 있습니다."
-   *     tags:
-   *       - Tips
-   *     parameters:
-   *       - in: query
-   *         name: page
-   *         required: false
-   *         description: "현재 페이지 번호"
-   *         schema:
-   *           type: integer
-   *           default: 1
-   *       - in: query
-   *         name: limit
-   *         required: false
-   *         description: "한 페이지에 표시될 꿀팁의 수"
-   *         schema:
-   *           type: integer
-   *           default: 10
-   *       - in: query
-   *         name: sort
-   *         required: false
-   *         description: "정렬 기준 (latest, likes, saves)"
-   *         schema:
-   *           type: string
-   *           enum: [latest, likes, saves]
-   *           default: "latest"
-   *     responses:
-   *       200:
-   *         description: "정렬된 꿀팁 조회 성공"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 isSuccess:
-   *                   type: boolean
-   *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "정렬된 꿀팁 조회 성공"
-   *                 result:
-   *                   type: object
-   *                   properties:
-   *                     tips:
-   *                       type: array
-   *                       items:
-   *                         type: object
-   *                         properties:
-   *                           tipId:
-   *                             type: integer
-   *                             example: 1
-   *                           title:
-   *                             type: string
-   *                             example: "Amazing Food Tips"
-   *                           description:
-   *                             type: string
-   *                             example: "Don't miss the local cuisine when traveling."
-   *                           author:
-   *                             type: object
-   *                             properties:
-   *                               userId:
-   *                                 type: integer
-   *                                 example: 1
-   *                               nickname:
-   *                                 type: string
-   *                                 example: "John Doe"
-   *                               profileImageUrl:
-   *                                 type: string
-   *                                 example: "https://example.com/profile.jpg"
-   *                           createdAt:
-   *                             type: string
-   *                             example: "2023-01-01T00:00:00Z"
-   *                           updatedAt:
-   *                             type: string
-   *                             example: "2023-01-01T00:00:00Z"
-   *                         example:
-   *                           - tipId: 1
-   *                             title: "Amazing Food Tips"
-   *                             description: "Don't miss the local cuisine when traveling."
-   *                             author:
-   *                               userId: 1
-   *                               nickname: "John Doe"
-   *                               profileImageUrl: "https://example.com/profile.jpg"
-   *                             createdAt: "2023-01-01T00:00:00Z"
-   *                             updatedAt: "2023-01-01T00:00:00Z"
-   *                           - tipId: 2
-   *                             title: "Best Street Foods"
-   *                             description: "Try the best street food in town."
-   *                             author:
-   *                               userId: 2
-   *                               nickname: "Jane Smith"
-   *                               profileImageUrl: "https://example.com/jane.jpg"
-   *                             createdAt: "2023-02-01T00:00:00Z"
-   *                             updatedAt: "2023-02-01T00:00:00Z"
-   *                           - tipId: 3
-   *                             title: "Healthy Eating Tips"
-   *                             description: "Maintain a balanced diet wherever you go."
-   *                             author:
-   *                               userId: 3
-   *                               nickname: "Mark Lee"
-   *                               profileImageUrl: "https://example.com/mark.jpg"
-   *                             createdAt: "2023-03-01T00:00:00Z"
-   *                             updatedAt: "2023-03-01T00:00:00Z"
-   *                           - tipId: 4
-   *                             title: "Vegan Recipes"
-   *                             description: "Delicious vegan recipes for every occasion."
-   *                             author:
-   *                               userId: 4
-   *                               nickname: "Sarah Brown"
-   *                               profileImageUrl: "https://example.com/sarah.jpg"
-   *                             createdAt: "2023-04-01T00:00:00Z"
-   *                             updatedAt: "2023-04-01T00:00:00Z"
-   *                           - tipId: 5
-   *                             title: "Best Coffee Shops"
-   *                             description: "Find the best coffee shops around."
-   *                             author:
-   *                               userId: 5
-   *                               nickname: "David Green"
-   *                               profileImageUrl: "https://example.com/david.jpg"
-   *                             createdAt: "2023-05-01T00:00:00Z"
-   *                             updatedAt: "2023-05-01T00:00:00Z"
-   *                           - tipId: 6
-   *                             title: "Famous Dishes"
-   *                             description: "Don't miss these famous dishes in town."
-   *                             author:
-   *                               userId: 6
-   *                               nickname: "Emily White"
-   *                               profileImageUrl: "https://example.com/emily.jpg"
-   *                             createdAt: "2023-06-01T00:00:00Z"
-   *                             updatedAt: "2023-06-01T00:00:00Z"
-   *                           - tipId: 7
-   *                             title: "Local Delicacies"
-   *                             description: "Taste the authentic local delicacies."
-   *                             author:
-   *                               userId: 7
-   *                               nickname: "Peter Black"
-   *                               profileImageUrl: "https://example.com/peter.jpg"
-   *                             createdAt: "2023-07-01T00:00:00Z"
-   *                             updatedAt: "2023-07-01T00:00:00Z"
-   *                           - tipId: 8
-   *                             title: "Vegetarian Restaurants"
-   *                             description: "Top vegetarian restaurants to visit."
-   *                             author:
-   *                               userId: 8
-   *                               nickname: "Lucy Kim"
-   *                               profileImageUrl: "https://example.com/lucy.jpg"
-   *                             createdAt: "2023-08-01T00:00:00Z"
-   *                             updatedAt: "2023-08-01T00:00:00Z"
-   *                           - tipId: 9
-   *                             title: "Budget-Friendly Tips"
-   *                             description: "How to travel on a budget."
-   *                             author:
-   *                               userId: 9
-   *                               nickname: "Chris Orange"
-   *                               profileImageUrl: "https://example.com/chris.jpg"
-   *                             createdAt: "2023-09-01T00:00:00Z"
-   *                             updatedAt: "2023-09-01T00:00:00Z"
-   *                           - tipId: 10
-   *                             title: "Must-See Attractions"
-   *                             description: "The must-see attractions in your city."
-   *                             author:
-   *                               userId: 10
-   *                               nickname: "Katie Blue"
-   *                               profileImageUrl: "https://example.com/katie.jpg"
-   *                             createdAt: "2023-10-01T00:00:00Z"
-   *                             updatedAt: "2023-10-01T00:00:00Z"
-   */
-  public async getAllTips(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { page = 1, limit = 10 } = req.query;
+ /**
+ * @swagger
+ * /api/v1/tips:
+ *   get:
+ *     summary: "전체 꿀팁 조회 (페이지네이션 포함)"
+ *     description: "전체 꿀팁을 조회합니다. 페이지네이션이 적용됩니다."
+ *     tags:
+ *       - Tips
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: "현재 페이지 번호"
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: "한 페이지에 표시될 꿀팁의 수"
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: "전체 꿀팁 조회 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "전체 꿀팁 조회 성공"
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     tips:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           tipId:
+ *                             type: integer
+ *                             example: 1
+ *                           title:
+ *                             type: string
+ *                             example: "Cleaning Hacks"
+ *                           content:
+ *                             type: string
+ *                             example: "Efficient ways to clean your home."
+ *                           author:
+ *                             type: object
+ *                             properties:
+ *                               userId:
+ *                                 type: integer
+ *                                 example: 1
+ *                               nickname:
+ *                                 type: string
+ *                                 example: "John Doe"
+ *                               profileImageUrl:
+ *                                 type: string
+ *                                 example: "https://example.com/john.jpg"
+ *                           hashtags:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 hashtagId:
+ *                                   type: integer
+ *                                   example: 101
+ *                                 name:
+ *                                   type: string
+ *                                   example: "cleaning"
+ *                           imageUrls:  # ✅ 이미지 필드 추가
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 media_url:
+ *                                   type: string
+ *                                   example: "https://s3.amazonaws.com/bucket/path/image1.jpg"
+ *                                 media_type:
+ *                                   type: string
+ *                                   example: "image/png"
+ *                           createdAt:
+ *                             type: string
+ *                             example: "2023-01-01T00:00:00Z"
+ *                           updatedAt:
+ *                             type: string
+ *                             example: "2023-01-02T00:00:00Z"
+ */
 
-      const tips = await this.tipService.getAllTips({
-        page: Number(page),
-        limit: Number(limit),
-      });
+ public async getAllTips(req: Request, res: Response, next: NextFunction) {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
 
-      res.status(StatusCodes.OK).json({
-        isSuccess: true,
-        message: '전체 꿀팁 조회 성공',
-        result: { tips },
-      });
-    } catch (error) {
-      next(error);
-    }
+    const tips = await this.tipService.getAllTips(page, limit);
+    res.status(StatusCodes.OK).json({
+      isSuccess: true,
+      message: '전체 팁 조회 성공',
+      result: { tips },
+    });
+  } catch (error) {
+    next(error);
   }
+}
 
   /**
    * @swagger
+   * /api/v1/tips/{tipId}:
+   *   get:
+   *     summary: "개별 팁 조회"
+   *     description: "특정 팁의 상세 정보를 조회합니다."
+   *     tags:
+   *       - Tips
+   *     parameters:
+   *       - in: path
+   *         name: tipId
+   *         required: true
+   *         description: "조회할 팁의 고유 ID"
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: "팁 상세 조회 성공"
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 isSuccess:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "팁 상세 조회 성공"
+   *                 result:
+   *                   type: object
+   *                   properties:
+   *                     tipId:
+   *                       type: integer
+   *                       example: 1
+   *                     title:
+   *                       type: string
+   *                       example: "Best Cleaning Tips"
+   *                     content:
+   *                       type: string
+   *                       example: "These are some great cleaning tips!"
+   *                     author:
+   *                       type: object
+   *                       properties:
+   *                         userId:
+   *                           type: integer
+   *                           example: 1
+   *                         nickname:
+   *                           type: string
+   *                           example: "John Doe"
+   *                         profileImageUrl:
+   *                           type: string
+   *                           example: "https://example.com/john.jpg"
+   *                     hashtags:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           hashtagId:
+   *                             type: integer
+   *                             example: 101
+   *                           name:
+   *                             type: string
+   *                             example: "cleaning"
+   *                     imageUrls:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           media_url:
+   *                             type: string
+   *                             example: "https://s3.amazonaws.com/bucket/path/image1.jpg"
+   *                           media_type:
+   *                             type: string
+   *                             example: "image/png"
+   *                     createdAt:
+   *                       type: string
+   *                       format: date-time
+   *                       example: "2023-01-01T00:00:00Z"
+   *                     updatedAt:
+   *                       type: string
+   *                       format: date-time
+   *                       example: "2023-01-02T00:00:00Z"
+   *       404:
+   *         description: "팁을 찾을 수 없음"
+   */
+
+public async getTipDetails(req: Request, res: Response, next: NextFunction) {
+  try {
+    const tipId = parseInt(req.params.tipId, 10);
+    if (isNaN(tipId)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        isSuccess: false,
+        message: '유효하지 않은 팁 ID입니다.',
+      });
+    }
+
+    const tip = await this.tipService.getTipDetailsById(tipId);
+    if (!tip) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        isSuccess: false,
+        message: '해당 팁을 찾을 수 없습니다.',
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      isSuccess: true,
+      message: '팁 상세 조회 성공',
+      result: tip,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+
+   /**
+   * @swagger
    * /api/v1/tips/sorted:
    *   get:
-   *     summary: "정렬된 꿀팁 조회"
-   *     description: "정렬된 꿀팁을 조회합니다. 정렬 기준을 설정할 수 있습니다."
+   *     summary: "정렬된 꿀팁 조회 (페이지네이션 포함)"
+   *     description: "정렬된 꿀팁을 조회합니다. 정렬 기준과 페이지네이션을 설정할 수 있습니다."
    *     tags:
    *       - Tips
    *     parameters:
@@ -519,127 +588,61 @@ export class TipController {
    *                             example: "Amazing Food Tips"
    *                           description:
    *                             type: string
-   *                             example: "Don't miss the local cuisine when traveling."
+   *                             example: "Try different local cuisines."
    *                           author:
    *                             type: object
    *                             properties:
    *                               userId:
    *                                 type: integer
-   *                                 example: 1
+   *                                 example: 2
    *                               nickname:
    *                                 type: string
-   *                                 example: "John Doe"
+   *                                 example: "Jane Doe"
    *                               profileImageUrl:
    *                                 type: string
-   *                                 example: "https://example.com/profile.jpg"
+   *                                 example: "https://example.com/jane.jpg"
+   *                           hashtags:
+   *                             type: array
+   *                             items:
+   *                               type: object
+   *                               properties:
+   *                                 hashtagId:
+   *                                   type: integer
+   *                                   example: 102
+   *                                 name:
+   *                                   type: string
+   *                                   example: "food"
+   *                           imageUrls:
+   *                             type: array
+   *                             items:
+   *                               type: object
+   *                               properties:
+   *                                 media_url:
+   *                                   type: string
+   *                                   example: "https://s3.amazonaws.com/bucket/path/image.jpg"
+   *                                 media_type:
+   *                                   type: string
+   *                                   example: "image/png"
+   *                           likesCount:
+   *                             type: integer
+   *                             example: 150
+   *                           savesCount:
+   *                             type: integer
+   *                             example: 75
    *                           createdAt:
    *                             type: string
-   *                             example: "2023-01-01T00:00:00Z"
+   *                             example: "2023-02-01T00:00:00Z"
    *                           updatedAt:
    *                             type: string
-   *                             example: "2023-01-01T00:00:00Z"
-   *                         example:
-   *                           - tipId: 1
-   *                             title: "Amazing Food Tips"
-   *                             description: "Don't miss the local cuisine when traveling."
-   *                             author:
-   *                               userId: 1
-   *                               nickname: "John Doe"
-   *                               profileImageUrl: "https://example.com/profile.jpg"
-   *                             createdAt: "2023-01-01T00:00:00Z"
-   *                             updatedAt: "2023-01-01T00:00:00Z"
-   *                           - tipId: 2
-   *                             title: "Best Street Foods"
-   *                             description: "Try the best street food in town."
-   *                             author:
-   *                               userId: 2
-   *                               nickname: "Jane Smith"
-   *                               profileImageUrl: "https://example.com/jane.jpg"
-   *                             createdAt: "2023-02-01T00:00:00Z"
-   *                             updatedAt: "2023-02-01T00:00:00Z"
-   *                           - tipId: 3
-   *                             title: "Healthy Eating Tips"
-   *                             description: "Maintain a balanced diet wherever you go."
-   *                             author:
-   *                               userId: 3
-   *                               nickname: "Mark Lee"
-   *                               profileImageUrl: "https://example.com/mark.jpg"
-   *                             createdAt: "2023-03-01T00:00:00Z"
-   *                             updatedAt: "2023-03-01T00:00:00Z"
-   *                           - tipId: 4
-   *                             title: "Vegan Recipes"
-   *                             description: "Delicious vegan recipes for every occasion."
-   *                             author:
-   *                               userId: 4
-   *                               nickname: "Sarah Brown"
-   *                               profileImageUrl: "https://example.com/sarah.jpg"
-   *                             createdAt: "2023-04-01T00:00:00Z"
-   *                             updatedAt: "2023-04-01T00:00:00Z"
-   *                           - tipId: 5
-   *                             title: "Best Coffee Shops"
-   *                             description: "Find the best coffee shops around."
-   *                             author:
-   *                               userId: 5
-   *                               nickname: "David Green"
-   *                               profileImageUrl: "https://example.com/david.jpg"
-   *                             createdAt: "2023-05-01T00:00:00Z"
-   *                             updatedAt: "2023-05-01T00:00:00Z"
-   *                           - tipId: 6
-   *                             title: "Famous Dishes"
-   *                             description: "Don't miss these famous dishes in town."
-   *                             author:
-   *                               userId: 6
-   *                               nickname: "Emily White"
-   *                               profileImageUrl: "https://example.com/emily.jpg"
-   *                             createdAt: "2023-06-01T00:00:00Z"
-   *                             updatedAt: "2023-06-01T00:00:00Z"
-   *                           - tipId: 7
-   *                             title: "Local Delicacies"
-   *                             description: "Taste the authentic local delicacies."
-   *                             author:
-   *                               userId: 7
-   *                               nickname: "Peter Black"
-   *                               profileImageUrl: "https://example.com/peter.jpg"
-   *                             createdAt: "2023-07-01T00:00:00Z"
-   *                             updatedAt: "2023-07-01T00:00:00Z"
-   *                           - tipId: 8
-   *                             title: "Vegetarian Restaurants"
-   *                             description: "Top vegetarian restaurants to visit."
-   *                             author:
-   *                               userId: 8
-   *                               nickname: "Lucy Kim"
-   *                               profileImageUrl: "https://example.com/lucy.jpg"
-   *                             createdAt: "2023-08-01T00:00:00Z"
-   *                             updatedAt: "2023-08-01T00:00:00Z"
-   *                           - tipId: 9
-   *                             title: "Budget-Friendly Tips"
-   *                             description: "How to travel on a budget."
-   *                             author:
-   *                               userId: 9
-   *                               nickname: "Chris Orange"
-   *                               profileImageUrl: "https://example.com/chris.jpg"
-   *                             createdAt: "2023-09-01T00:00:00Z"
-   *                             updatedAt: "2023-09-01T00:00:00Z"
-   *                           - tipId: 10
-   *                             title: "Must-See Attractions"
-   *                             description: "The must-see attractions in your city."
-   *                             author:
-   *                               userId: 10
-   *                               nickname: "Katie Blue"
-   *                               profileImageUrl: "https://example.com/katie.jpg"
-   *                             createdAt: "2023-10-01T00:00:00Z"
-   *                             updatedAt: "2023-10-01T00:00:00Z"
+   *                             example: "2023-02-02T00:00:00Z"
    */
-  public async getSortedTips(req: Request, res: Response, next: NextFunction) {
+   public async getSortedTips(req: Request, res: Response, next: NextFunction) {
     try {
-      const { page = 1, limit = 10, sort = 'latest' } = req.query;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const sort = req.query.sort as string || 'latest';
 
-      const tips = await this.tipService.getSortedTips({
-        page: Number(page),
-        limit: Number(limit),
-        sort: String(sort),
-      });
-
+      const tips = await this.tipService.getSortedTips(page, limit, sort);
       res.status(StatusCodes.OK).json({
         isSuccess: true,
         message: '정렬된 꿀팁 조회 성공',
@@ -649,6 +652,7 @@ export class TipController {
       next(error);
     }
   }
+
   /**
    * @swagger
    * /api/v1/tips/search:
