@@ -537,13 +537,12 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-
   /**
    * @swagger
    * /api/v1/tips/search:
    *   get:
    *     summary: "팁 검색"
-   *     description: "제목, 내용, 해시태그에서 검색어를 포함하는 팁을 검색합니다."
+   *     description: "제목, 내용, 해시태그에서 검색어를 포함하는 팁을 검색하고, 특정 해시태그 필터를 추가할 수 있습니다."
    *     tags:
    *       - Tips
    *     parameters:
@@ -553,6 +552,14 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
    *           type: string
    *         required: true
    *         description: "검색어 (제목, 내용, 해시태그에서 검색)"
+   *         example: "감자"
+   *       - in: query
+   *         name: hashtags
+   *         schema:
+   *           type: string
+   *         required: false
+   *         description: "쉼표(,)로 구분된 특정 해시태그 필터 (해당 해시태그를 포함하는 결과만 반환)"
+   *         example: "여름,가을"
    *       - in: query
    *         name: page
    *         schema:
@@ -591,10 +598,10 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
    *                         example: 1
    *                       title:
    *                         type: string
-   *                         example: "Amazing Food Tips"
-   *                       description:
+   *                         example: "감자 키우기"
+   *                       content:
    *                         type: string
-   *                         example: "Don't miss the local cuisine when traveling."
+   *                         example: "감자는 이렇게 키워야 합니다."
    *                       author:
    *                         type: object
    *                         properties:
@@ -607,14 +614,6 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
    *                           profileImageUrl:
    *                             type: string
    *                             example: "https://example.com/profile.jpg"
-   *                       createdAt:
-   *                         type: string
-   *                         format: date-time
-   *                         example: "2023-01-01T00:00:00Z"
-   *                       updatedAt:
-   *                         type: string
-   *                         format: date-time
-   *                         example: "2023-01-01T00:00:00Z"
    *                       hashtags:
    *                         type: array
    *                         items:
@@ -625,34 +624,72 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
    *                               example: 1
    *                             name:
    *                               type: string
-   *                               example: "#food"
+   *                               example: "여름"
+   *                       imageUrls:
+   *                         type: array
+   *                         items:
+   *                           type: object
+   *                           properties:
+   *                             media_url:
+   *                               type: string
+   *                               example: "https://s3.amazonaws.com/bucket/path/image1.jpg"
+   *                             media_type:
+   *                               type: string
+   *                               example: "image/png"
+   *                       likesCount:
+   *                         type: integer
+   *                         example: 10
+   *                       savesCount:
+   *                         type: integer
+   *                         example: 5
+   *                       createdAt:
+   *                         type: string
+   *                         format: date-time
+   *                         example: "2025-02-15T12:00:00Z"
+   *                       updatedAt:
+   *                         type: string
+   *                         format: date-time
+   *                         example: "2025-02-15T12:30:00Z"
    *       400:
-   *         description: "잘못된 요청 (검색어 누락)"
+   *         description: "잘못된 요청 (검색어 누락 또는 필터 오류)"
    */
 
   public async searchTips(req: Request, res: Response, next: NextFunction) {
     try {
-      const query = req.query.query as string;
-      const hashtags = req.query.hashtags ? (req.query.hashtags as string).split(',') : [];
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-  
-      if (!query) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          isSuccess: false,
-          message: '검색어(query)는 필수입니다.',
+        const query = req.query.query as string;
+        const hashtags = (req.query.hashtags as string)?.split(",") || [];
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        // ✅ 검색어가 없으면 400 응답
+        if (!query) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                isSuccess: false,
+                message: "검색어(query)는 필수입니다.",
+            });
+        }
+
+        // ✅ 검색 실행 (검색어 + 해시태그 필터 적용)
+        const tips = await this.tipService.searchTips(query, hashtags, page, limit);
+
+        // ✅ 검색된 결과가 없으면 "없는 팁" 메시지 반환
+        if (!tips || tips.length === 0) {
+            return res.status(StatusCodes.OK).json({
+                isSuccess: false,
+                message: "없는 팁",
+                result: [],
+            });
+        }
+
+        // ✅ 검색 결과 응답
+        return res.status(StatusCodes.OK).json({
+            isSuccess: true,
+            message: "팁 검색 성공",
+            result: tips,
         });
-      }
-  
-      const tips = await this.tipService.searchTips(query, hashtags, page, limit);
-  
-      res.status(StatusCodes.OK).json({
-        isSuccess: true,
-        message: '필터 검색 성공',
-        result: tips,
-      });
     } catch (error) {
-      next(error);
+        next(error);
     }
-  }
+}
+
 }
