@@ -173,34 +173,36 @@ export class TipService {
   
 
    // 팁 검색 기능
-   public async searchTips(query: string, page: number, limit: number) {
+   public async searchTips(query: string, hashtags: string[], page: number, limit: number) {
     const skip = (page - 1) * limit;
-    const tips = await this.tipRepository.searchTips(query, skip, limit); // ✅ `this.tipRepository` 오류 방지
-
+  
+    const tips = await this.tipRepository.searchTips(query, hashtags, skip, limit);
+  
     return tips.map((tip) => ({
       tipId: tip.tips_id,
       title: tip.title,
-      description: tip.content,
+      content: tip.content,
       author: tip.user
         ? {
             userId: tip.user.user_id,
             nickname: tip.user.nickname,
             profileImageUrl: tip.user.profile_image_url,
           }
-        : {
-            userId: null,
-            nickname: "Unknown User",
-            profileImageUrl: null,
-          },
-      createdAt: tip.created_at,
-      updatedAt: tip.updated_at,
-      likesCount: tip.likes.length,
-      commentsCount: tip.comments.length,
+        : null,
       hashtags: tip.hashtags.map((h) => ({
         hashtagId: h.hashtag.hashtag_id,
         name: h.hashtag.name,
       })),
+      imageUrls: tip.media.map((media) => ({
+        media_url: media.media_url,
+        media_type: media.media_type,
+      })),
+      likesCount: tip.likes.length || 0, // ✅ 기본값 0 설정
+      savesCount: tip.saves.length || 0, // ✅ 기본값 0 설정
+      createdAt: tip.created_at,
+      updatedAt: tip.updated_at,
     }));
   }
+  
 
 }

@@ -633,21 +633,22 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
   public async searchTips(req: Request, res: Response, next: NextFunction) {
     try {
       const query = req.query.query as string;
+      const hashtags = req.query.hashtags ? (req.query.hashtags as string).split(',') : [];
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-
+  
       if (!query) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           isSuccess: false,
           message: '검색어(query)는 필수입니다.',
         });
       }
-
-      const tips = await this.tipService.searchTips(query, page, limit); // ✅ `this.tipService` 오류 방지
-
+  
+      const tips = await this.tipService.searchTips(query, hashtags, page, limit);
+  
       res.status(StatusCodes.OK).json({
         isSuccess: true,
-        message: '팁 검색 성공',
+        message: '필터 검색 성공',
         result: tips,
       });
     } catch (error) {

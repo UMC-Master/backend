@@ -171,17 +171,21 @@ export class TipRepository {
   
 
   //팁 검색 기능 (제목, 내용, 해시태그 포함)
-  public async searchTips(query: string, skip: number, take: number) {
+  public async searchTips(query: string, hashtags: string[], skip: number, take: number) {
     return await prisma.tip.findMany({
       where: {
-        OR: [
-          { title: { contains: query } },
-          { content: { contains: query } },
+        AND: [
+          {
+            OR: [
+              { title: { contains: query } },
+              { content: { contains: query } },
+            ],
+          },
           {
             hashtags: {
               some: {
                 hashtag: {
-                  name: { contains: query },
+                  name: { in: hashtags },
                 },
               },
             },
@@ -192,13 +196,13 @@ export class TipRepository {
       take,
       include: {
         hashtags: { include: { hashtag: true } },
-        user: true,
-        likes: true,
-        comments: true,
+        user: { select: { user_id: true, nickname: true, profile_image_url: true } },
         media: true,
+        likes: true,
         saves: true,
       },
     });
   }
+  
 
 }
