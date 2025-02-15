@@ -62,13 +62,13 @@ export class TipRepository {
   }
 
   // 팁 수정 (제목, 내용, 새 이미지 추가)
-  public async updateTip(tipId: number, title: string, content: string, newImages: { media_url: string; media_type: string }[]) {
+  public async updateTip(tipId: number, title: string, content: string, newImages: { media_url: string; media_type: MediaType }[]) {
     const updatedTip = await prisma.tip.update({
       where: { tips_id: tipId },
       data: { title, content, updated_at: new Date() },
     });
 
-    // 기존 이미지 삭제 (선택 사항)
+    // 기존 이미지 삭제 (필요 시)
     await prisma.tipMedia.deleteMany({ where: { tips_id: tipId } });
 
     // 새 이미지 추가
@@ -77,7 +77,7 @@ export class TipRepository {
         data: newImages.map((image) => ({
           tips_id: tipId,
           media_url: image.media_url,
-          media_type: image.media_type as MediaType,
+          media_type: image.media_type, // ✅ ENUM 값으로 저장
           uploaded_at: new Date(),
         })),
       });
@@ -85,6 +85,7 @@ export class TipRepository {
 
     return updatedTip;
   }
+
 
   // 팁 삭제
   public async deleteTip(tipId: number) {
