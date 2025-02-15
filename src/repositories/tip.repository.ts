@@ -61,12 +61,29 @@ export class TipRepository {
     }
   }
 
-  // 팁 수정
-  public async updateTip(tipId: number, title: string, content: string) {
-    return await prisma.tip.update({
+  // 팁 수정 (제목, 내용, 새 이미지 추가)
+  public async updateTip(tipId: number, title: string, content: string, newImages: { media_url: string; media_type: string }[]) {
+    const updatedTip = await prisma.tip.update({
       where: { tips_id: tipId },
       data: { title, content, updated_at: new Date() },
     });
+
+    // 기존 이미지 삭제 (선택 사항)
+    await prisma.tipMedia.deleteMany({ where: { tips_id: tipId } });
+
+    // 새 이미지 추가
+    if (newImages.length > 0) {
+      await prisma.tipMedia.createMany({
+        data: newImages.map((image) => ({
+          tips_id: tipId,
+          media_url: image.media_url,
+          media_type: image.media_type as MediaType,
+          uploaded_at: new Date(),
+        })),
+      });
+    }
+
+    return updatedTip;
   }
 
   // 팁 삭제
@@ -96,6 +113,20 @@ export class TipRepository {
     });
   }
 
+  // 전체 팁 조회 (페이지네이션 포함, 제목, 내용, 해시태그, 이미지 포함)
+  public async getAllTips(skip: number, take: number) {
+    return await prisma.tip.findMany({
+      skip,
+      take,
+      orderBy: { created_at: 'desc' },
+      include: {
+        media: true, // ✅ 업로드된 이미지 포함
+        hashtags: { include: { hashtag: true } }, // ✅ 해시태그 포함
+        user: { select: { user_id: true, nickname: true, profile_image_url: true } }, // ✅ 작성자 정보 포함
+      },
+    });
+  }
+
 
   //팁 정보 반환 
   public async getTips(skip: number, limit: number, orderBy?: object) {
@@ -110,6 +141,61 @@ export class TipRepository {
       },
     });
   }
+
+
+ // 정렬된 팁 조회 (DB 접근 전용)
+ public async getSortedTips(skip: number, take: number, sort: string) {
+  // 기본 정렬 (최신순)
+  const orderBy = { created_at: 'desc' };
+
+  if (sort === 'likes') {
+    // ✅ 좋아요 개수를 기반으로 정렬하려면 count()를 별도로 조회해야 함
+    return await prisma.tip.findMany({
+      skip,
+      take,
+      include: {
+        media: true,
+        hashtags: { include: { hashtag: true } },
+        user: { select: { user_id: true, nickname: true, profile_image_url: true } },
+        tipLikes: true, // ✅ 좋아요 개수 확인 가능
+        saves: true, // ✅ 저장 개수 확인 가능
+      },
+      orderBy: {
+        tipLikes: { _count: 'desc' }, // ❌ Prisma에서 직접 지원 안됨 -> 해결 방법 필요
+      },
+    });
+  }
+
+  if (sort === 'saves') {
+    return await prisma.tip.findMany({
+      skip,
+      take,
+      include: {
+        media: true,
+        hashtags: { include: { hashtag: true } },
+        user: { select: { user_id: true, nickname: true, profile_image_url: true } },
+        tipLikes: true,
+        saves: true,
+      },
+      orderBy: {
+        saves: { _count: 'desc' }, // ❌ Prisma에서 직접 지원 안됨 -> 해결 방법 필요
+      },
+    });
+  }
+
+  return await prisma.tip.findMany({
+    skip,
+    take,
+    orderBy,
+    include: {
+      media: true,
+      hashtags: { include: { hashtag: true } },
+      user: { select: { user_id: true, nickname: true, profile_image_url: true } },
+      tipLikes: true,
+      saves: true,
+    },
+  });
+}
 
   //팁 검색 기능 (제목, 내용, 해시태그 포함)
   public async searchTips(query: string, skip: number, take: number) {
