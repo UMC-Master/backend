@@ -173,34 +173,55 @@ export class TipService {
   
 
    // 팁 검색 기능
-   public async searchTips(query: string, page: number, limit: number) {
-    const skip = (page - 1) * limit;
-    const tips = await this.tipRepository.searchTips(query, skip, limit); // ✅ `this.tipRepository` 오류 방지
+   public async searchTips(query: string, hashtags: string[], page: number, limit: number) {
+    // ✅ 검색어 Validation (검색어가 없으면 예외 발생)
+    if (!query) {
+        throw new ValidationError("검색어(query)는 필수입니다.", null);
+    }
 
-    return tips.map((tip) => ({
-      tipId: tip.tips_id,
-      title: tip.title,
-      description: tip.content,
-      author: tip.user
-        ? {
-            userId: tip.user.user_id,
-            nickname: tip.user.nickname,
-            profileImageUrl: tip.user.profile_image_url,
-          }
-        : {
-            userId: null,
-            nickname: "Unknown User",
-            profileImageUrl: null,
-          },
-      createdAt: tip.created_at,
-      updatedAt: tip.updated_at,
-      likesCount: tip.likes.length,
-      commentsCount: tip.comments.length,
-      hashtags: tip.hashtags.map((h) => ({
-        hashtagId: h.hashtag.hashtag_id,
-        name: h.hashtag.name,
-      })),
-    }));
-  }
+    const skip = (page - 1) * limit;
+
+    // ✅ 검색 실행 (검색어 + 해시태그 필터 적용)
+    const tips = await this.tipRepository.searchTips(query, hashtags, skip, limit);
+
+    // ✅ 검색된 결과가 없으면 "없는 팁" 메시지 반환
+    if (!tips || tips.length === 0) {
+        return {
+            isSuccess: true,
+            message: "없는 팁",
+            result: [],
+        };
+    }
+
+    // ✅ 검색 결과 매핑하여 반환
+    return {
+        isSuccess: true,
+        message: "팁 검색 성공",
+        result: tips.map(tip => ({
+            tipId: tip.tips_id,
+            title: tip.title,
+            content: tip.content,
+            author: tip.user ? {
+                userId: tip.user.user_id,
+                nickname: tip.user.nickname,
+                profileImageUrl: tip.user.profile_image_url
+            } : null,
+            hashtags: tip.hashtags.map(h => ({
+                hashtagId: h.hashtag.hashtag_id,
+                name: h.hashtag.name
+            })),
+            imageUrls: tip.media.map(media => ({
+                media_url: media.media_url,
+                media_type: media.media_type
+            })),
+            likesCount: tip.likes.length || 0, // ✅ 좋아요 기본값 0
+            savesCount: tip.saves.length || 0, // ✅ 북마크 기본값 0
+            createdAt: tip.created_at,
+            updatedAt: tip.updated_at
+        })),
+    };
+}
+
+  
 
 }
