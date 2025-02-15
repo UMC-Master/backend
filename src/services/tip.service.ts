@@ -88,12 +88,15 @@ export class TipService {
   }
 
 
- // 팁 수정 (제목, 내용, 이미지 추가)
- public async updateTip(tipId: number, title: string, content: string, newImages: { media_url: string; media_type: string }[]) {
-  return await this.tipRepository.updateTip(
-    tipId, title, content, newImages
-  );
-}
+  public async updateTip(tipId: number, title: string, content: string, newImages: { media_url: string; media_type: string }[]) {
+    // ✅ media_type을 ENUM 값으로 변환
+    const newImagesWithEnum = newImages.map((img) => ({
+      media_url: img.media_url,
+      media_type: this.tipRepository.getMediaType(img.media_type), // ✅ ENUM 변환
+    }));
+
+    return await this.tipRepository.updateTip(tipId, title, content, newImagesWithEnum);
+  }
 
   // 팁 삭제
   public async deleteTip(tipId: number) {

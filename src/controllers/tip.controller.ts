@@ -26,7 +26,12 @@ export class TipController {
       imageUploader.array('files', 5), // 최대 5개 이미지 업로드
       this.createTip.bind(this)
     );
-    this.router.put('/tips/:tipId', authenticateJWT, this.updateTip.bind(this));//팁 수정
+    this.router.put(
+      '/tips/:tipId',
+      authenticateJWT,
+      imageUploader.array('files', 5), // ✅ 파일 업로드 미들웨어 (multer)
+      this.updateTip.bind(this)
+    );//팁 수정 
     this.router.delete(
       '/tips/:tipId',
       authenticateJWT,
@@ -227,7 +232,7 @@ export class TipController {
    *                             type: string
    *                             example: "image/png"
    */
-  private async updateTip(req: Request & { files?: Express.Multer.File[] }, res: Response, next: NextFunction) {
+  public async updateTip(req: Request & { files?: Express.Multer.File[] }, res: Response, next: NextFunction) {
     try {
       const { title, content } = req.body;
       const tipId = parseInt(req.params.tipId, 10);
@@ -239,11 +244,12 @@ export class TipController {
         });
       }
 
+      // ✅ 이미지 변환 처리
       let newImages = [];
       if (req.files && req.files.length > 0) {
         newImages = req.files.map((file) => ({
-          media_url: file.location, // S3 업로드된 URL
-          media_type: file.mimetype,
+          media_url: file.location,
+          media_type: file.mimetype, // MIME 타입 그대로 전달
         }));
       }
 
@@ -258,7 +264,6 @@ export class TipController {
       next(error);
     }
   }
-
 
   /**
    * @swagger
