@@ -173,36 +173,39 @@ export class TipRepository {
   //팁 검색 기능 (제목, 내용, 해시태그 포함)
   public async searchTips(query: string, hashtags: string[], skip: number, take: number) {
     return await prisma.tip.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { title: { contains: query } },
-              { content: { contains: query } },
-            ],
-          },
-          {
-            hashtags: {
-              some: {
-                hashtag: {
-                  name: { in: hashtags },
+        where: {
+            AND: [
+                {
+                    OR: [
+                        { title: { contains: query } },
+                        { content: { contains: query } },
+                        { hashtags: { some: { hashtag: { name: { contains: query } } } } },
+                    ],
                 },
-              },
-            },
-          },
-        ],
-      },
-      skip,
-      take,
-      include: {
-        hashtags: { include: { hashtag: true } },
-        user: { select: { user_id: true, nickname: true, profile_image_url: true } },
-        media: true,
-        likes: true,
-        saves: true,
-      },
+                hashtags.length > 0
+                    ? {
+                        hashtags: {
+                            some: {
+                                hashtag: {
+                                    name: { in: hashtags }, // ✅ 특정 해시태그만 필터링
+                                },
+                            },
+                        },
+                    }
+                    : {},
+            ],
+        },
+        skip,
+        take,
+        include: {
+            media: true,
+            hashtags: { include: { hashtag: true } },
+            user: { select: { user_id: true, nickname: true, profile_image_url: true } },
+            likes: true,
+            saves: true,
+        },
     });
-  }
-  
+}
 
+  
 }
