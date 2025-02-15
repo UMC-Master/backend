@@ -38,7 +38,6 @@ export class TipController {
       this.deleteTip.bind(this)
     );
     this.router.get('/tips', this.getAllTips.bind(this));
-    this.router.get('/tips/:tipId', this.getTipDetails.bind(this));
     this.router.get('/tips/sorted', this.getSortedTips.bind(this));
     this.router.get('/tips/search', this.searchTips.bind(this));
   }
@@ -135,7 +134,7 @@ export class TipController {
 
       // ✅ S3에 업로드된 이미지 URL 리스트 가져오기
       const imageUrls = req.files?.map((file) => ({
-        media_url: file.location, // S3 URL
+        media_url: (file as any).location, // S3 URL
         media_type: file.mimetype,
       })) || [];
 
@@ -248,7 +247,7 @@ export class TipController {
       let newImages = [];
       if (req.files && req.files.length > 0) {
         newImages = req.files.map((file) => ({
-          media_url: file.location,
+          media_url: (file as any).location,
           media_type: file.mimetype, // MIME 타입 그대로 전달
         }));
       }
@@ -415,248 +414,129 @@ export class TipController {
   }
 }
 
-  /**
-   * @swagger
-   * /api/v1/tips/{tipId}:
-   *   get:
-   *     summary: "개별 팁 조회"
-   *     description: "특정 팁의 상세 정보를 조회합니다."
-   *     tags:
-   *       - Tips
-   *     parameters:
-   *       - in: path
-   *         name: tipId
-   *         required: true
-   *         description: "조회할 팁의 고유 ID"
-   *         schema:
-   *           type: integer
-   *     responses:
-   *       200:
-   *         description: "팁 상세 조회 성공"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 isSuccess:
-   *                   type: boolean
-   *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "팁 상세 조회 성공"
-   *                 result:
-   *                   type: object
-   *                   properties:
-   *                     tipId:
-   *                       type: integer
-   *                       example: 1
-   *                     title:
-   *                       type: string
-   *                       example: "Best Cleaning Tips"
-   *                     content:
-   *                       type: string
-   *                       example: "These are some great cleaning tips!"
-   *                     author:
-   *                       type: object
-   *                       properties:
-   *                         userId:
-   *                           type: integer
-   *                           example: 1
-   *                         nickname:
-   *                           type: string
-   *                           example: "John Doe"
-   *                         profileImageUrl:
-   *                           type: string
-   *                           example: "https://example.com/john.jpg"
-   *                     hashtags:
-   *                       type: array
-   *                       items:
-   *                         type: object
-   *                         properties:
-   *                           hashtagId:
-   *                             type: integer
-   *                             example: 101
-   *                           name:
-   *                             type: string
-   *                             example: "cleaning"
-   *                     imageUrls:
-   *                       type: array
-   *                       items:
-   *                         type: object
-   *                         properties:
-   *                           media_url:
-   *                             type: string
-   *                             example: "https://s3.amazonaws.com/bucket/path/image1.jpg"
-   *                           media_type:
-   *                             type: string
-   *                             example: "image/png"
-   *                     createdAt:
-   *                       type: string
-   *                       format: date-time
-   *                       example: "2023-01-01T00:00:00Z"
-   *                     updatedAt:
-   *                       type: string
-   *                       format: date-time
-   *                       example: "2023-01-02T00:00:00Z"
-   *       404:
-   *         description: "팁을 찾을 수 없음"
-   */
-
-public async getTipDetails(req: Request, res: Response, next: NextFunction) {
+/**
+ * @swagger
+ * /api/v1/tips/sorted:
+ *   get:
+ *     summary: "정렬된 꿀팁 조회 (페이지네이션 포함)"
+ *     description: "정렬된 꿀팁을 조회합니다. 정렬 기준과 페이지네이션을 설정할 수 있습니다."
+ *     tags:
+ *       - Tips
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: "현재 페이지 번호"
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: "한 페이지에 표시될 꿀팁의 수"
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         description: "정렬 기준 (latest, likes, saves)"
+ *         schema:
+ *           type: string
+ *           enum: [latest, likes, saves]
+ *           default: "latest"
+ *     responses:
+ *       200:
+ *         description: "정렬된 꿀팁 조회 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "정렬된 꿀팁 조회 성공"
+ *                 result:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       tipId:
+ *                         type: integer
+ *                         example: 1
+ *                       title:
+ *                         type: string
+ *                         example: "Amazing Food Tips"
+ *                       content:
+ *                         type: string
+ *                         example: "Try different local cuisines."
+ *                       author:
+ *                         type: object
+ *                         properties:
+ *                           userId:
+ *                             type: integer
+ *                             example: 2
+ *                           nickname:
+ *                             type: string
+ *                             example: "Jane Doe"
+ *                           profileImageUrl:
+ *                             type: string
+ *                             example: "https://example.com/jane.jpg"
+ *                       hashtags:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             hashtagId:
+ *                               type: integer
+ *                               example: 102
+ *                             name:
+ *                               type: string
+ *                               example: "food"
+ *                       imageUrls:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             media_url:
+ *                               type: string
+ *                               example: "https://s3.amazonaws.com/bucket/path/image.jpg"
+ *                             media_type:
+ *                               type: string
+ *                               example: "image/png"
+ *                       likesCount:
+ *                         type: integer
+ *                         example: 150
+ *                       savesCount:
+ *                         type: integer
+ *                         example: 75
+ *                       createdAt:
+ *                         type: string
+ *                         example: "2023-02-01T00:00:00Z"
+ *                       updatedAt:
+ *                         type: string
+ *                         example: "2023-02-02T00:00:00Z"
+ */
+public async getSortedTips(req: Request, res: Response, next: NextFunction) {
   try {
-    const tipId = parseInt(req.params.tipId, 10);
-    if (isNaN(tipId)) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        isSuccess: false,
-        message: '유효하지 않은 팁 ID입니다.',
-      });
-    }
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const sort = req.query.sort as string || 'latest';
 
-    const tip = await this.tipService.getTipDetailsById(tipId);
-    if (!tip) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        isSuccess: false,
-        message: '해당 팁을 찾을 수 없습니다.',
-      });
-    }
-
+    const tips = await this.tipService.getSortedTips(page, limit, sort);
     res.status(StatusCodes.OK).json({
       isSuccess: true,
-      message: '팁 상세 조회 성공',
-      result: tip,
+      message: '정렬된 팁 조회 성공',
+      result: { tips },
     });
   } catch (error) {
     next(error);
   }
 }
 
-
-
-   /**
-   * @swagger
-   * /api/v1/tips/sorted:
-   *   get:
-   *     summary: "정렬된 꿀팁 조회 (페이지네이션 포함)"
-   *     description: "정렬된 꿀팁을 조회합니다. 정렬 기준과 페이지네이션을 설정할 수 있습니다."
-   *     tags:
-   *       - Tips
-   *     parameters:
-   *       - in: query
-   *         name: page
-   *         required: false
-   *         description: "현재 페이지 번호"
-   *         schema:
-   *           type: integer
-   *           default: 1
-   *       - in: query
-   *         name: limit
-   *         required: false
-   *         description: "한 페이지에 표시될 꿀팁의 수"
-   *         schema:
-   *           type: integer
-   *           default: 10
-   *       - in: query
-   *         name: sort
-   *         required: false
-   *         description: "정렬 기준 (latest, likes, saves)"
-   *         schema:
-   *           type: string
-   *           enum: [latest, likes, saves]
-   *           default: "latest"
-   *     responses:
-   *       200:
-   *         description: "정렬된 꿀팁 조회 성공"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 isSuccess:
-   *                   type: boolean
-   *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "정렬된 꿀팁 조회 성공"
-   *                 result:
-   *                   type: object
-   *                   properties:
-   *                     tips:
-   *                       type: array
-   *                       items:
-   *                         type: object
-   *                         properties:
-   *                           tipId:
-   *                             type: integer
-   *                             example: 1
-   *                           title:
-   *                             type: string
-   *                             example: "Amazing Food Tips"
-   *                           description:
-   *                             type: string
-   *                             example: "Try different local cuisines."
-   *                           author:
-   *                             type: object
-   *                             properties:
-   *                               userId:
-   *                                 type: integer
-   *                                 example: 2
-   *                               nickname:
-   *                                 type: string
-   *                                 example: "Jane Doe"
-   *                               profileImageUrl:
-   *                                 type: string
-   *                                 example: "https://example.com/jane.jpg"
-   *                           hashtags:
-   *                             type: array
-   *                             items:
-   *                               type: object
-   *                               properties:
-   *                                 hashtagId:
-   *                                   type: integer
-   *                                   example: 102
-   *                                 name:
-   *                                   type: string
-   *                                   example: "food"
-   *                           imageUrls:
-   *                             type: array
-   *                             items:
-   *                               type: object
-   *                               properties:
-   *                                 media_url:
-   *                                   type: string
-   *                                   example: "https://s3.amazonaws.com/bucket/path/image.jpg"
-   *                                 media_type:
-   *                                   type: string
-   *                                   example: "image/png"
-   *                           likesCount:
-   *                             type: integer
-   *                             example: 150
-   *                           savesCount:
-   *                             type: integer
-   *                             example: 75
-   *                           createdAt:
-   *                             type: string
-   *                             example: "2023-02-01T00:00:00Z"
-   *                           updatedAt:
-   *                             type: string
-   *                             example: "2023-02-02T00:00:00Z"
-   */
-   public async getSortedTips(req: Request, res: Response, next: NextFunction) {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const sort = req.query.sort as string || 'latest';
-
-      const tips = await this.tipService.getSortedTips(page, limit, sort);
-      res.status(StatusCodes.OK).json({
-        isSuccess: true,
-        message: '정렬된 꿀팁 조회 성공',
-        result: { tips },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
 
   /**
    * @swagger

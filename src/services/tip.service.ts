@@ -132,36 +132,45 @@ export class TipService {
     }));
   }
 
-  // 정렬된 꿀팁 조회
-    public async getSortedTips(page: number, limit: number, sort: string) {
-      const skip = (page - 1) * limit;
-      const tips = await this.tipRepository.getSortedTips(skip, limit, sort);
+   // ✅ 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
+   public async getSortedTips(page: number, limit: number, sort: string) {
+    const skip = (page - 1) * limit;
+    const tips = await this.tipRepository.getSortedTips(skip, limit);
   
-      return tips.map((tip) => ({
-        tipId: tip.tips_id,
-        title: tip.title,
-        content: tip.content,
-        author: tip.user
-          ? {
-              userId: tip.user.user_id,
-              nickname: tip.user.nickname,
-              profileImageUrl: tip.user.profile_image_url,
-            }
-          : null,
-        hashtags: tip.hashtags.map((h) => ({
-          hashtagId: h.hashtag.hashtag_id,
-          name: h.hashtag.name,
-        })),
-        imageUrls: tip.media.map((media) => ({
-          media_url: media.media_url,
-          media_type: media.media_type,
-        })),
-        likesCount: tip.tipLikes.length, // ✅ 좋아요 개수 추가
-        savesCount: tip.saves.length, // ✅ 저장 개수 추가
-        createdAt: tip.created_at,
-        updatedAt: tip.updated_at,
-      }));
+    // 정렬 적용 (좋아요순, 북마크순)
+    if (sort === 'likes') {
+      tips.sort((a, b) => (b._count.likes || 0) - (a._count.likes || 0)); // 좋아요 개수 내림차순
+    } else if (sort === 'saves') {
+      tips.sort((a, b) => (b._count.saves || 0) - (a._count.saves || 0)); // 북마크 개수 내림차순
     }
+  
+    return tips.map((tip) => ({
+      tipId: tip.tips_id,
+      title: tip.title,
+      content: tip.content,
+      author: tip.user
+        ? {
+            userId: tip.user.user_id,
+            nickname: tip.user.nickname,
+            profileImageUrl: tip.user.profile_image_url,
+          }
+        : null,
+      hashtags: tip.hashtags.map((h) => ({
+        hashtagId: h.hashtag.hashtag_id,
+        name: h.hashtag.name,
+      })),
+      imageUrls: tip.media.map((media) => ({
+        media_url: media.media_url,
+        media_type: media.media_type,
+      })),
+      likesCount: tip._count.likes || 0, // ✅ 기본값 0 설정
+      savesCount: tip._count.saves || 0, // ✅ 기본값 0 설정
+      createdAt: tip.created_at,
+      updatedAt: tip.updated_at,
+    }));
+  }
+  
+  
 
    // 팁 검색 기능
    public async searchTips(query: string, page: number, limit: number) {
@@ -192,36 +201,6 @@ export class TipService {
         name: h.hashtag.name,
       })),
     }));
-  }
-
-  public async getTipDetailsById(tipId: number) {
-    const tip = await this.tipRepository.getTipById(tipId);
-    if (!tip) {
-      return null;
-    }
-
-    return {
-      tipId: tip.tips_id,
-      title: tip.title,
-      content: tip.content,
-      author: tip.user
-        ? {
-            userId: tip.user.user_id,
-            nickname: tip.user.nickname,
-            profileImageUrl: tip.user.profile_image_url,
-          }
-        : null,
-      hashtags: tip.hashtags.map(h => ({
-        hashtagId: h.hashtag.hashtag_id,
-        name: h.hashtag.name,
-      })),
-      imageUrls: tip.media.map(media => ({
-        media_url: media.media_url,
-        media_type: media.media_type,
-      })),
-      createdAt: tip.created_at,
-      updatedAt: tip.updated_at,
-    };
   }
 
 }

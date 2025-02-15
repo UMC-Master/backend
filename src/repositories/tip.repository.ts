@@ -144,59 +144,31 @@ export class TipRepository {
   }
 
 
- // 정렬된 팁 조회 (DB 접근 전용)
- public async getSortedTips(skip: number, take: number, sort: string) {
-  // 기본 정렬 (최신순)
-  const orderBy = { created_at: 'desc' };
-
-  if (sort === 'likes') {
-    // ✅ 좋아요 개수를 기반으로 정렬하려면 count()를 별도로 조회해야 함
+   // ✅ 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
+   public async getSortedTips(skip: number, take: number) {
     return await prisma.tip.findMany({
       skip,
       take,
+      orderBy: {
+        created_at: 'desc', // 기본 정렬 (최신순)
+      },
       include: {
         media: true,
         hashtags: { include: { hashtag: true } },
         user: { select: { user_id: true, nickname: true, profile_image_url: true } },
-        tipLikes: true, // ✅ 좋아요 개수 확인 가능
-        saves: true, // ✅ 저장 개수 확인 가능
-      },
-      orderBy: {
-        tipLikes: { _count: 'desc' }, // ❌ Prisma에서 직접 지원 안됨 -> 해결 방법 필요
-      },
-    });
-  }
-
-  if (sort === 'saves') {
-    return await prisma.tip.findMany({
-      skip,
-      take,
-      include: {
-        media: true,
-        hashtags: { include: { hashtag: true } },
-        user: { select: { user_id: true, nickname: true, profile_image_url: true } },
-        tipLikes: true,
-        saves: true,
-      },
-      orderBy: {
-        saves: { _count: 'desc' }, // ❌ Prisma에서 직접 지원 안됨 -> 해결 방법 필요
+        _count: {
+          select: {
+            likes: true, // 좋아요 개수
+            saves: true, // 북마크 개수
+          },
+        },
       },
     });
   }
-
-  return await prisma.tip.findMany({
-    skip,
-    take,
-    orderBy,
-    include: {
-      media: true,
-      hashtags: { include: { hashtag: true } },
-      user: { select: { user_id: true, nickname: true, profile_image_url: true } },
-      tipLikes: true,
-      saves: true,
-    },
-  });
-}
+  
+  
+  
+  
 
   //팁 검색 기능 (제목, 내용, 해시태그 포함)
   public async searchTips(query: string, skip: number, take: number) {
@@ -229,33 +201,4 @@ export class TipRepository {
     });
   }
 
-  public async getTipDetailsById(tipId: number) {
-    const tip = await this.tipRepository.getTipById(tipId);
-    if (!tip) {
-      return null;
-    }
-
-    return {
-      tipId: tip.tips_id,
-      title: tip.title,
-      content: tip.content,
-      author: tip.user
-        ? {
-            userId: tip.user.user_id,
-            nickname: tip.user.nickname,
-            profileImageUrl: tip.user.profile_image_url,
-          }
-        : null,
-      hashtags: tip.hashtags.map(h => ({
-        hashtagId: h.hashtag.hashtag_id,
-        name: h.hashtag.name,
-      })),
-      imageUrls: tip.media.map(media => ({
-        media_url: media.media_url,
-        media_type: media.media_type,
-      })),
-      createdAt: tip.created_at,
-      updatedAt: tip.updated_at,
-    };
-  }
 }
