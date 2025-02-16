@@ -23,6 +23,7 @@ import { LocationController } from './controllers/location.controller.js';
 import { ChatbotController } from './controllers/chatbot.controller.js';
 import { OrganizationController } from './controllers/organization.controller.js';
 import { AuthController } from './controllers/auth.controller.js';
+import { HashtagController } from './controllers/hashtag.controller.js';
 
 dotenv.config();
 
@@ -86,6 +87,7 @@ const setupControllers = (app: express.Express) => {
     new ChatbotController(),
     new OrganizationController(),
     new AuthController(),
+    new HashtagController(),
   ];
 
   controllers.forEach((controller) => {
