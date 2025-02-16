@@ -5,6 +5,7 @@ import {
   OrganizationResponseDto,
 } from '../dtos/organization.dto.js';
 import { StatusCodes } from 'http-status-codes';
+import { imageUploader } from '../file.uploader.js';
 
 export class OrganizationController {
   private organizationService: OrganizationService;
@@ -27,7 +28,7 @@ export class OrganizationController {
      *     requestBody:
      *       required: true
      *       content:
-     *         application/json:
+     *         multipart/form-data:
      *           schema:
      *             type: object
      *             properties:
@@ -37,9 +38,15 @@ export class OrganizationController {
      *               location_id:
      *                 type: integer
      *                 description: "지역 ID"
+     *               image:
+     *                 type: array
+     *                 items:
+     *                   type: string
+     *                   format: binary
+     *                 description: "이미지 업로드"
      *     responses:
      *       200:
-     *         description: "기관 생성성 성공"
+     *         description: "기관 생성 성공"
      *         content:
      *           application/json:
      *             schema:
@@ -65,7 +72,7 @@ export class OrganizationController {
      *                       description: "기관의 고유 ID"
      *                     name:
      *                       type: string
-     *                       example: "영등포구청청"
+     *                       example: "영등포구청"
      *                       description: "기관 이름"
      *                     location:
      *                       type: object
@@ -87,6 +94,7 @@ export class OrganizationController {
      */
     this.router.post(
       '/organizations',
+      imageUploader.array('image', 1),
       this.createOrganization.bind(this)
     );
 
@@ -147,19 +155,18 @@ export class OrganizationController {
      *       500:
      *         description: "서버 내부 오류"
      */
-    this.router.get(
-      '/organizations',
-      this.getAllOrganization.bind(this)
-    );
+    this.router.get('/organizations', this.getAllOrganization.bind(this));
   }
 
   private async createOrganization(req: Request, res: Response) {
     const organization: string = req.body.organization_name;
     const location_id: number = +req.body.location_id;
+    const image = req.files.map((file) => file.location)[0];
 
     const savedOrganization = await this.organizationService.createOrganization(
       organization,
-      location_id
+      location_id,
+      image
     );
 
     const output: OrganizationResponseDto = {

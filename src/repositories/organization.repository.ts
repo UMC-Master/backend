@@ -23,11 +23,16 @@ export class OrganizationRepository {
     });
   }
 
-  async createOrganization(name: string, location_id: number) {
+  async createOrganization(
+    name: string,
+    location_id: number,
+    image_url: string
+  ) {
     return await this.prisma.organization.create({
       data: {
         location_id: location_id,
         name: name,
+        photo_url: image_url,
       },
       include: {
         location: true,

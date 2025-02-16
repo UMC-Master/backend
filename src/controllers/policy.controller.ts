@@ -670,6 +670,7 @@ export class PolicyController {
       organization: {
         id: policy.organization.organization_id,
         name: policy.organization.name,
+        image: policy.organization.photo_url,
       },
       location: {
         id: policy.location.location_id,
@@ -709,6 +710,7 @@ export class PolicyController {
       organization: {
         id: policy.organization.organization_id,
         name: policy.organization.name,
+        image: policy.organization.photo_url,
       },
       location: {
         id: policy.location.location_id,
