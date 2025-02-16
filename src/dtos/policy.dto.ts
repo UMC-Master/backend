@@ -41,6 +41,7 @@ export interface policyResponseDto {
   organization: {
     id: number;
     name: string;
+    image: string;
   };
   location: {
     id: number;

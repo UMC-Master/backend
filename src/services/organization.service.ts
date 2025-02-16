@@ -17,7 +17,8 @@ export class OrganizationService {
 
   public async createOrganization(
     organization_name: string,
-    location_id: number
+    location_id: number,
+    imageUrl: string
   ) {
     // validation: 행정 구역 유무 확인 | 중복 확인
     const location = await this.locationRepository.getById(+location_id);
@@ -36,7 +37,8 @@ export class OrganizationService {
     const createdOrganization =
       await this.organizationRepository.createOrganization(
         organization_name,
-        location_id
+        location_id,
+        imageUrl
       );
 
     return createdOrganization;
