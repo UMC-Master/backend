@@ -5,7 +5,6 @@ import {
   ResourceNotFoundError,
   ValidationError,
   DatabaseError,
-  TipNotFoundError
 } from '../errors/errors.js'; // 에러 클래스 import
 
 export class CommunityService {
@@ -149,5 +148,26 @@ export class CommunityService {
     if (isNaN(userId) || isNaN(communityId)) {
       throw new ValidationError('ID는 숫자 형식이어야 합니다.', { userId, communityId });
     }
+  }
+
+  // 사용자의 저장된 꿀팁 목록 조회 
+   public async getSavedTips(userId: number) {
+    const savedTips = await this.communityRepository.getSavedTips(userId);
+
+    return savedTips.map((save) => ({
+      tipId: save.tips.tips_id,
+      title: save.tips.title,
+      content: save.tips.content,
+      author: {
+        userId: save.tips.user.user_id,
+        nickname: save.tips.user.nickname,
+        profileImageUrl: save.tips.user.profile_image_url,
+      },
+      imageUrls: save.tips.media.map((media) => ({
+        media_url: media.media_url,
+        media_type: media.media_type,
+      })),
+      createdAt: save.tips.created_at,
+    }));
   }
 }
