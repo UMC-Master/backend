@@ -187,7 +187,7 @@ export class TipRepository {
       if (!tipId || isNaN(tipId)) {
         throw new Error("Invalid tipId: " + tipId);
       }
-      
+
     return await prisma.tip.findUnique({
       where: {
         tips_id: tipId
@@ -225,42 +225,44 @@ export class TipRepository {
     });
   }
 
-  //팁 검색 기능 (제목, 내용, 해시태그 포함)
-  public async searchTips(query: string, hashtags: string[], skip: number, take: number) {
-    return await prisma.tip.findMany({
-        where: {
-            AND: [
-                {
-                    OR: [
-                        { title: { contains: query } },
-                        { content: { contains: query } },
-                        { hashtags: { some: { hashtag: { name: { contains: query } } } } },
-                    ],
-                },
-                hashtags.length > 0
-                    ? {
-                        hashtags: {
-                            some: {
-                                hashtag: {
-                                    name: { in: hashtags }, // ✅ 특정 해시태그만 필터링
-                                },
-                            },
-                        },
-                    }
-                    : {},
-            ],
-        },
-        skip,
-        take,
-        include: {
-            media: true,
-            hashtags: { include: { hashtag: true } },
-            user: { select: { user_id: true, nickname: true, profile_image_url: true } },
-            likes: true,
-            saves: true,
-        },
-    });
+//팁 검색 기능 (제목, 내용, 해시태그 포함)
+public async searchTips(query: string | null, hashtags: string[], skip: number, take: number) {
+  return await prisma.tip.findMany({
+      where: {
+          AND: [
+              // ✅ 제목/내용 검색 (`query`가 있을 경우만 추가)
+              ...(query ? [{
+                  OR: [
+                      { title: { contains: query, mode: "insensitive" } },  
+                      { content: { contains: query, mode: "insensitive" } }, 
+                      { hashtags: { some: { hashtag: { name: { contains: query, mode: "insensitive" } } } } }
+                  ]
+              }] : []),
+
+              // ✅ 해시태그 검색 (`hashtags`가 있을 경우만 추가)
+              ...(hashtags.length > 0 ? [{
+                  hashtags: {
+                      some: {
+                          hashtag: {
+                              name: { in: hashtags }, 
+                          },
+                      },
+                  },
+              }] : []),
+          ],
+      },
+      skip,
+      take,
+      include: {
+          media: true,
+          hashtags: { include: { hashtag: true } },
+          user: { select: { user_id: true, nickname: true, profile_image_url: true } },
+          likes: true,
+          saves: true,
+      },
+  });
 }
+
 
  // 새로운 상세 조회 기능 추가
 public async findTipDetails(tipId: number) {
