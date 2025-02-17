@@ -37,9 +37,9 @@ export class TipController {
       authenticateJWT,
       this.deleteTip.bind(this)
     );
-    this.router.get('/tips/:tipId',authenticateJWT, this.getTipDetail.bind(this)); // 🔥 팁 상세 조회 추가
-    this.router.get('/tips',authenticateJWT, this.getAllTips.bind(this));
     this.router.get('/tips/sorted', this.getSortedTips.bind(this));
+    this.router.get('/tips/:tipId', authenticateJWT, this.getTipInfo.bind(this));
+    this.router.get('/tips',authenticateJWT, this.getAllTips.bind(this));
     this.router.get('/tips/search', this.searchTips.bind(this));
   }
 
@@ -417,6 +417,144 @@ export class TipController {
 
 /**
  * @swagger
+ * /api/v1/tips/{tipId}:
+ *   get:
+ *     summary: "팁 상세 조회"
+ *     description: "특정 팁의 상세 정보를 조회합니다."
+ *     tags:
+ *       - Tips
+ *     parameters:
+ *       - in: path
+ *         name: tipId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: "조회할 팁의 ID"
+ *     responses:
+ *       200:
+ *         description: "팁 조회 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "팁 조회 성공"
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     tips_id:
+ *                       type: integer
+ *                       example: 1
+ *                     title:
+ *                       type: string
+ *                       example: "Best Cleaning Tips"
+ *                     content:
+ *                       type: string
+ *                       example: "Here are some great cleaning tips!"
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-02-17T12:00:00Z"
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         user_id:
+ *                           type: integer
+ *                           example: 5
+ *                         nickname:
+ *                           type: string
+ *                           example: "John Doe"
+ *                         profile_image_url:
+ *                           type: string
+ *                           example: "https://example.com/profile.jpg"
+ *                     hashtags:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                         example: "cleaning"
+ *                     media:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           media_url:
+ *                             type: string
+ *                             example: "https://s3.amazonaws.com/bucket/image.jpg"
+ *                           media_type:
+ *                             type: string
+ *                             example: "image/png"
+ *                     _count:
+ *                       type: object
+ *                       properties:
+ *                         likes:
+ *                           type: integer
+ *                           example: 15
+ *                         saves:
+ *                           type: integer
+ *                           example: 7
+ *       404:
+ *         description: "팁을 찾을 수 없음"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Tip not found"
+ *       500:
+ *         description: "서버 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
+
+
+public async getTipInfo(req: Request, res: Response, next: NextFunction) {
+  try {
+
+
+    console.log("요청된 tipId:", req.params.tipId); // 🔍 로그 추가
+
+    // ✅ `req.params.tipId`가 숫자인지 확인하고 변환
+    const tipId = Number(req.params.tipId);
+
+    if (!tipId || isNaN(tipId)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            message: "Invalid tipId provided",
+        });
+    }
+
+    const tipData = await this.tipService.getTipInfo(tipId);
+
+    if (!tipData) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: 'Tip not found',
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      isSuccess: true,
+      message: '팁 조회 성공',
+      result: tipData,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * @swagger
  * /api/v1/tips/sorted:
  *   get:
  *     summary: "정렬된 꿀팁 조회 (페이지네이션 포함)"
@@ -660,87 +798,5 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
 }
 
 
-  /**
-   * @swagger
-   * /api/v1/tips/{tipId}:
-   *   get:
-   *     summary: "팁 상세 조회"
-   *     description: "특정 팁의 상세 정보를 조회합니다."
-   *     tags:
-   *       - Tips
-   *     parameters:
-   *       - in: path
-   *         name: tipId
-   *         required: true
-   *         description: "조회할 팁의 ID"
-   *         schema:
-   *           type: integer
-   *     responses:
-   *       200:
-   *         description: "팁 상세 조회 성공"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 isSuccess:
-   *                   type: boolean
-   *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "팁 상세 조회 성공"
-   *                 result:
-   *                   type: object
-   *                   properties:
-   *                     tipId:
-   *                       type: integer
-   *                     title:
-   *                       type: string
-   *                     content:
-   *                       type: string
-   *                     author:
-   *                       type: object
-   *                     hashtags:
-   *                       type: array
-   *                     imageUrls:
-   *                       type: array
-   *                     likesCount:
-   *                       type: integer
-   *                     savesCount:
-   *                       type: integer
-   *                     createdAt:
-   *                       type: string
-   *                     updatedAt:
-   *                       type: string
-   *       404:
-   *         description: "팁을 찾을 수 없음"
-   */
-  public async getTipDetail(req: Request, res: Response, next: NextFunction) {
-    try {
-      const tipId = parseInt(req.params.tipId, 10);
-      if (isNaN(tipId)) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          isSuccess: false,
-          message: '유효하지 않은 팁 ID입니다.',
-        });
-      }
-
-      const tip = await this.tipService.getTipDetail(tipId);
-      if (!tip) {
-        return res.status(StatusCodes.NOT_FOUND).json({
-          isSuccess: false,
-          message: '해당 팁을 찾을 수 없습니다.',
-        });
-      }
-
-      res.status(StatusCodes.OK).json({
-        isSuccess: true,
-        message: '팁 상세 조회 성공',
-        result: tip,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
+  
 }
