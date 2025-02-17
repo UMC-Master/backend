@@ -37,10 +37,10 @@ export class TipController {
       authenticateJWT,
       this.deleteTip.bind(this)
     );
+    this.router.get('/tips/search', this.searchTips.bind(this));
     this.router.get('/tips/sorted', this.getSortedTips.bind(this));
     this.router.get('/tips/:tipId', authenticateJWT, this.getTipInfo.bind(this));
     this.router.get('/tips',authenticateJWT, this.getAllTips.bind(this));
-    this.router.get('/tips/search', this.searchTips.bind(this));
   }
 
   /**
@@ -676,7 +676,7 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-  /**
+/**
  * @swagger
  * /api/v1/tips/search:
  *   get:
@@ -689,7 +689,8 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
  *         name: query
  *         schema:
  *           type: string
- *         required: true
+ *           nullable: true  # ✅ query는 선택적 (필수 아님)
+ *         required: false  # ✅ 필수 아님
  *         description: "검색어 (제목, 내용, 해시태그에서 검색)"
  *       - in: query
  *         name: hashtags

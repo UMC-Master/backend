@@ -177,27 +177,20 @@ export class TipService {
   }
 
    // 팁 검색 기능
-   public async searchTips(query: string, hashtags: string[], page: number, limit: number) {
-    // ✅ 검색어 Validation (검색어가 없으면 예외 발생)
-    if (!query) {
-        throw new ValidationError("검색어(query)는 필수입니다.", null);
-    }
-
+   public async searchTips(query?: string, hashtags: string[] = [], page: number, limit: number) {
     const skip = (page - 1) * limit;
 
-    // ✅ 검색 실행 (검색어 + 해시태그 필터 적용)
-    const tips = await this.tipRepository.searchTips(query, hashtags, skip, limit);
+    // ✅ query가 빈 문자열이거나 공백만 있을 경우 null로 처리
+    const sanitizedQuery = query && query.trim().length > 0 ? query.trim() : null;
 
-    // ✅ 검색된 결과가 없으면 "없는 팁" 메시지 반환
-    if (!tips || tips.length === 0) {
-        return {
-            isSuccess: true,
-            message: "없는 팁",
-            result: [],
-        };
+    // ✅ 검색 조건이 없으면 전체 조회
+    if (!sanitizedQuery && hashtags.length === 0) {
+        return await this.getAllTips(page, limit);
     }
 
-    // ✅ 검색 결과 매핑하여 반환
+    // ✅ 검색 실행
+    const tips = await this.tipRepository.searchTips(sanitizedQuery, hashtags, skip, limit);
+
     return {
         isSuccess: true,
         message: "팁 검색 성공",
@@ -218,12 +211,14 @@ export class TipService {
                 media_url: media.media_url,
                 media_type: media.media_type
             })),
-            likesCount: tip.likes.length || 0, // ✅ 좋아요 기본값 0
-            savesCount: tip.saves.length || 0, // ✅ 북마크 기본값 0
+            likesCount: tip.likes.length || 0,
+            savesCount: tip.saves.length || 0,
             createdAt: tip.created_at,
             updatedAt: tip.updated_at
         })),
     };
 }
+
+
 
 }
