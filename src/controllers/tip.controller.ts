@@ -782,22 +782,20 @@ public async getSortedTips(req: Request, res: Response, next: NextFunction) {
  */
 
 
-  public async searchTips(req: Request, res: Response, next: NextFunction) {
-    try {
-        const query = req.query.query as string;
-        const hashtags = req.query.hashtags ? (req.query.hashtags as string).split(",") : [];
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
+public async searchTips(req: Request, res: Response, next: NextFunction) {
+  try {
+    const query = req.query.query as string | null;
+    const hashtags = req.query.hashtags ? (req.query.hashtags as string).split(",") : [];
 
-        // ✅ 검색 실행
-        const result = await this.tipService.searchTips(query, hashtags, page, limit);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
 
-        return res.status(StatusCodes.OK).json(result);
-    } catch (error) {
-        next(error);
-    }
+    const result = await this.tipService.searchTips(query, hashtags, page, limit);
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    next(error);
+  }
 }
-
 
   
 }
