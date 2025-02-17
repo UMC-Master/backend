@@ -222,6 +222,37 @@ export class TipService {
     };
 }
 
-  
+ //팁 상세 조회 
+ public async getTipDetail(tipId: number) {
+  const tip = await this.tipRepository.getTipById(tipId);
+  if (!tip) {
+    return null;
+  }
+
+  return {
+    tipId: tip.tips_id,
+    title: tip.title,
+    content: tip.content,
+    author: tip.user
+      ? {
+          userId: tip.user.user_id,
+          nickname: tip.user.nickname,
+          profileImageUrl: tip.user.profile_image_url,
+        }
+      : null,
+    hashtags: tip.hashtags.map((h) => ({
+      hashtagId: h.hashtag.hashtag_id,
+      name: h.hashtag.name,
+    })),
+    imageUrls: tip.media.map((media) => ({
+      media_url: media.media_url,
+      media_type: media.media_type,
+    })),
+    likesCount: tip.likes.length || 0,
+    savesCount: tip.saves.length || 0,
+    createdAt: tip.created_at,
+    updatedAt: tip.updated_at,
+  };
+}
 
 }

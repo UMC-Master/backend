@@ -19,15 +19,21 @@ export class TipRepository {
     return await prisma.tip.findUnique({
       where: { tips_id: tipId },
       include: {
-        user: true,
+        user: {
+          select: {
+            user_id: true,
+            nickname: true,
+            profile_image_url: true,
+          },
+        },
         hashtags: { include: { hashtag: true } },
+        media: true,
         likes: true,
-        comments: true,
-        media: true, // ✅ 업로드된 미디어 포함
+        saves: true,
       },
     });
   }
-
+  
   public async createTip(data: { userId: number; title: string; content: string }) {
     return await prisma.tip.create({
       data: {
@@ -165,8 +171,6 @@ export class TipRepository {
       },
     });
   }
-  
-  
   
   
 
