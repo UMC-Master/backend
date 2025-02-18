@@ -56,6 +56,27 @@ export class UserRepository {
     });
   }
 
+  // 🔹 사용자 및 관심사 태그 조회
+  async findUserByIdWithHashtags(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { user_id: userId },
+      include: {
+        hashtags: {
+          include: {
+            hashtag: true, // ✅ 관심사 태그 조회
+          },
+        },
+      },
+    });
+
+    if (!user) return null;
+
+    return {
+      ...user,
+      hashtags: user.hashtags.map((uh) => uh.hashtag.name), // 해시태그 이름만 반환
+    };
+  }
+
   // 사용자 이메일로 조회
   async findUserByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({
