@@ -52,6 +52,13 @@ export class PolicyRepository {
         magazine_id: true,
         title: true,
         magazine_images: true,
+        created_at: true,
+        _count: {
+          select: {
+            magazine_likes: true, // 좋아요 개수 계산
+            magazine_bookmarks: true, // 북마크 개수 계산
+          },
+        },
       },
       where: {
         location,

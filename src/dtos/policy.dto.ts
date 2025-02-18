@@ -3,6 +3,9 @@ export interface PolicyListDto {
     id: number;
     title: string;
     imageUrl: string;
+    likeCount: number;
+    bookmarkCount: number;
+    createAt: string | Date;
   }[];
 }
 
