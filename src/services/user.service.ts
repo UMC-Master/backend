@@ -165,15 +165,18 @@ export class UserService {
     return { accessToken, refreshToken };
   }
 
-  // 프로필 조회
+  // 🔹 프로필 조회
   async getProfile(userId: number) {
-    const profile = await this.userRepository.findUserById(userId);
+    const profile = await this.userRepository.findUserByIdWithHashtags(userId);
     if (!profile) {
-      throw new ValidationError('사용자를 찾을 수 없습니다.', null);
+      throw new ValidationError('사용자를 찾을 수 없습니다.', { userId });
     }
 
-    const { password, ...safeProfile } = profile;
-    return safeProfile;
+    const { password, hashtags, ...safeProfile } = profile;
+    return {
+      ...safeProfile,
+      hashtags, // 해시태그 리스트 포함
+    };
   }
 
   // 프로필 업데이트

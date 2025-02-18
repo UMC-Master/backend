@@ -1,22 +1,12 @@
-import axios from 'axios';
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken'; // JWT 토큰 발급
 import { UserService } from '../services/user.service';
 import { authenticateJWT } from '../middlewares/authenticateJWT';
 import {
   EmailSignupDto,
   EmailLoginDto,
-  KakaoLoginDto,
   ProfileUpdateDto,
 } from '../dtos/user.dto';
-import {
-  ValidationError,
-  UnauthorizedError,
-  ResourceNotFoundError,
-} from '../errors/errors.js';
-
-const KAKAO_USER_INFO_URL = 'https://kapi.kakao.com/v2/user/me';
-const JWT_SECRET = process.env.JWT_SECRET;
+import { ValidationError, UnauthorizedError } from '../errors/errors.js';
 
 export class UserController {
   private userService: UserService;
@@ -273,17 +263,23 @@ export class UserController {
    *       401:
    *         description: 인증 실패
    */
+  // 🔹 프로필 조회
   public async getProfile(req: Request, res: Response): Promise<void> {
     const userId = req.user?.userId;
     if (!userId) throw new UnauthorizedError('로그인이 필요합니다.', null);
+
     const profile = await this.userService.getProfile(userId);
-    if (!profile)
-      throw new ResourceNotFoundError('사용자 프로필을 찾을 수 없습니다.', {
+    if (!profile) {
+      throw new ValidationError('사용자 프로필을 찾을 수 없습니다.', {
         userId,
       });
-    res
-      .status(200)
-      .json({ isSuccess: true, message: '프로필 조회 성공', result: profile });
+    }
+
+    res.status(200).json({
+      isSuccess: true,
+      message: '프로필 조회 성공',
+      result: profile,
+    });
   }
 
   /**
