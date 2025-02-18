@@ -179,9 +179,57 @@ export class UserService {
     };
   }
 
-  // 프로필 업데이트
+  // 🔹 프로필 업데이트 (닉네임, 도시, 구, 관심사 해시태그 포함)
   async updateProfile(userId: number, data: ProfileUpdateDto) {
-    return this.userRepository.updateUser(userId, data);
+    const { nickname, city, district, hashtags } = data;
+
+    // 기존 프로필 가져오기
+    const existingUser =
+      await this.userRepository.findUserByIdWithHashtags(userId);
+    if (!existingUser) {
+      throw new ValidationError('사용자를 찾을 수 없습니다.', { userId });
+    }
+
+    // 업데이트 가능한 필드만 업데이트
+    const updateData: Omit<ProfileUpdateDto, 'hashtags'> = {}; // 🔹 hashtags 제외
+    if (nickname) updateData.nickname = nickname;
+    if (city) updateData.city = city;
+    if (district) updateData.district = district;
+
+    // 프로필 정보 업데이트
+    const updatedUser = await this.userRepository.updateUser(
+      userId,
+      updateData
+    );
+
+    // 🔹 해시태그 업데이트 (해시태그가 제공된 경우에만 처리)
+    let updatedHashtags = existingUser.hashtags;
+    if (hashtags && hashtags.length > 0) {
+      // 해시태그 name → ID 변환
+      const hashtagEntities =
+        await this.hashtagService.findHashtagsByName(hashtags);
+
+      if (hashtagEntities.length !== hashtags.length) {
+        throw new ValidationError(
+          '유효하지 않은 해시태그가 포함되어 있습니다.',
+          {
+            invalidHashtags: hashtags,
+          }
+        );
+      }
+
+      // 해시태그 ID 리스트
+      const hashtagIds = hashtagEntities.map((tag) => tag.hashtag_id);
+
+      // 기존 해시태그 삭제 후 새로운 해시태그 추가
+      await this.userRepository.updateUserHashtags(userId, hashtagIds);
+      updatedHashtags = hashtags;
+    }
+
+    return {
+      ...updatedUser,
+      hashtags: updatedHashtags, // 최신 해시태그 반영
+    };
   }
 
   // ✅ 카카오 로그인 처리
