@@ -311,6 +311,12 @@ export class UserController {
    *                 type: string
    *                 example: "newDistrict"
    *                 description: 새로운 구 정보
+   *               hashtags:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                 example: ["여행", "운동"]
+   *                 description: 새로운 관심사 해시태그 목록
    *     responses:
    *       200:
    *         description: 프로필 수정 성공
@@ -320,12 +326,11 @@ export class UserController {
   public async updateProfile(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId;
-
       if (userId === undefined) {
         throw new UnauthorizedError('로그인이 필요합니다.', null);
       }
 
-      const data: ProfileUpdateDto = req.body;
+      const data = req.body;
       const updatedProfile = await this.userService.updateProfile(userId, data);
 
       res.status(200).json({

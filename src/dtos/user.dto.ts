@@ -34,6 +34,7 @@ export interface ProfileUpdateDto {
   city?: string; // 도시 변경
   district?: string; // 구 변경
   profileImageUrl?: string; // 프로필 이미지 URL 변경
+  hashtags: string[];
 }
 
 export interface TokenRefreshDto {

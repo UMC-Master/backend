@@ -97,6 +97,22 @@ export class UserRepository {
     });
   }
 
+  // 🔹 기존 사용자 해시태그 삭제 후 새로운 해시태그 추가
+  async updateUserHashtags(userId: number, hashtagIds: number[]) {
+    await this.prisma.userHashtag.deleteMany({
+      where: { user_id: userId },
+    });
+
+    const newHashtags = hashtagIds.map((hashtagId) => ({
+      user_id: userId,
+      hashtag_id: hashtagId,
+    }));
+
+    await this.prisma.userHashtag.createMany({
+      data: newHashtags,
+    });
+  }
+
   // 사용자 업데이트
   async updateUser(
     userId: number,
