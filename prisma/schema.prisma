@@ -385,4 +385,5 @@ enum user_login_type {
 enum UserRole {
   ADMIN
   USER
+  INFLUENCER
 }

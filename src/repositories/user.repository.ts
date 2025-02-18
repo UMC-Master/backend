@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, User } from '@prisma/client';
+import { PrismaClient, Prisma, User, UserRole } from '@prisma/client';
 import { DuplicateUserEmailError } from '../errors/errors';
 interface UserData {
   email?: string;
@@ -15,6 +15,13 @@ export class UserRepository {
 
   constructor() {
     this.prisma = new PrismaClient();
+  }
+
+  async setInfluencer(userId: number) {
+    await this.prisma.user.update({
+      where: { user_id: userId },
+      data: { role: UserRole.INFLUENCER },
+    });
   }
 
   // ✅ 이메일 인증 토큰 저장

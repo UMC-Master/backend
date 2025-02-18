@@ -88,6 +88,7 @@ const setupControllers = (app: express.Express) => {
     new OrganizationController(),
     new AuthController(),
     new HashtagController(),
+    new UserManageController(),
   ];
 
   controllers.forEach((controller) => {

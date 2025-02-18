@@ -6,6 +6,7 @@ import { ValidationError, UnauthorizedError } from '../errors/errors'; // 필요
 import { HashtagService } from '../services/hashtag.service.js';
 import bcrypt from 'bcrypt';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { UserNotFoundError } from '../errors/user.error.js';
 
 export class UserService {
   public userRepository: UserRepository;
@@ -476,5 +477,12 @@ export class UserService {
     console.log(
       `Password reset email sent to ${email} with token: ${resetToken}`
     );
+  }
+
+  public async setInfluencer(userId: number) {
+    if (!await this.userRepository.findUserById(userId)) {
+      throw new UserNotFoundError(userId);
+    }
+    await this.userRepository.setInfluencer(userId);
   }
 }
