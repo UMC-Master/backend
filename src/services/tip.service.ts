@@ -191,58 +191,40 @@ export class TipService {
   }
 
   // 팁 검색 기능
-  public async searchTips(
-    query: string | null,
-    hashtags: string[],
-    page: number,
-    limit: number
-  ) {
+  public async searchTips(query: string | null, hashtags: string[], page: number, limit: number, sort: string) {
     const skip = (page - 1) * limit;
 
     // ✅ 둘 다 입력되지 않으면 예외 처리
     if (!query && hashtags.length === 0) {
-      throw new ValidationError(
-        '검색어 또는 해시태그 중 하나는 반드시 입력해야 합니다.',
-        null
-      );
+      throw new ValidationError("검색어 또는 해시태그 중 하나는 반드시 입력해야 합니다.", null);
     }
 
     // ✅ 검색어가 있을 경우, 공백으로만 이루어진 값은 예외 처리
-    if (query && query.trim() === '') {
-      throw new ValidationError('검색어에는 공백만 포함될 수 없습니다.', null);
+    if (query && query.trim() === "") {
+      throw new ValidationError("검색어에는 공백만 포함될 수 없습니다.", null);
     }
 
-    // ✅ 검색어가 없을 경우, 제목/내용 검색을 하지 않고 해시태그만 검색
-    const searchQuery = query ? query.trim() : null;
-
     // ✅ Repository에서 검색 실행
-    const tips = await this.tipRepository.searchTips(
-      searchQuery,
-      hashtags,
-      skip,
-      limit
-    );
+    const tips = await this.tipRepository.searchTips(query, hashtags, skip, limit, sort);
 
     // ✅ 검색 결과 반환
     return {
       isSuccess: true,
-      message: tips.length ? '팁 검색 성공' : '검색 결과가 없습니다.',
-      result: tips.map((tip) => ({
+      message: tips.length ? "팁 검색 성공" : "검색 결과가 없습니다.",
+      result: tips.map(tip => ({
         tipId: tip.tips_id,
         title: tip.title,
         content: tip.content,
-        author: tip.user
-          ? {
-              userId: tip.user.user_id,
-              nickname: tip.user.nickname,
-              profileImageUrl: tip.user.profile_image_url,
-            }
-          : null,
-        hashtags: tip.hashtags.map((h) => ({
+        author: tip.user ? {
+          userId: tip.user.user_id,
+          nickname: tip.user.nickname,
+          profileImageUrl: tip.user.profile_image_url,
+        } : null,
+        hashtags: tip.hashtags.map(h => ({
           hashtagId: h.hashtag.hashtag_id,
           name: h.hashtag.name,
         })),
-        imageUrls: tip.media.map((media) => ({
+        imageUrls: tip.media.map(media => ({
           media_url: media.media_url,
           media_type: media.media_type,
         })),
