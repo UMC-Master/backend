@@ -698,127 +698,146 @@ export class TipController {
     }
   }
 
-  /**
-   * @swagger
-   * /api/v1/tips/search:
-   *   get:
-   *     summary: "팁 검색 (제목, 내용, 해시태그 필터링 가능)"
-   *     description: "입력한 검색어와 해시태그를 기준으로 팁을 검색합니다."
-   *     tags:
-   *       - Tips
-   *     parameters:
-   *       - in: query
-   *         name: query
-   *         schema:
-   *           type: string
-   *           nullable: true  # ✅ query는 선택적 (필수 아님)
-   *         required: false  # ✅ 필수 아님
-   *         description: "검색어 (제목, 내용, 해시태그에서 검색)"
-   *       - in: query
-   *         name: hashtags
-   *         schema:
-   *           type: string
-   *         required: false
-   *         description: "필터링할 해시태그 (쉼표로 구분, 예: 봄,여름)"
-   *       - in: query
-   *         name: page
-   *         schema:
-   *           type: integer
-   *           default: 1
-   *         required: false
-   *         description: "페이지 번호"
-   *       - in: query
-   *         name: limit
-   *         schema:
-   *           type: integer
-   *           default: 10
-   *         required: false
-   *         description: "한 페이지에 표시할 팁 개수"
-   *     responses:
-   *       200:
-   *         description: "팁 검색 결과 반환"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 isSuccess:
-   *                   type: boolean
-   *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "팁 검색 성공"
-   *                 result:
-   *                   type: array
-   *                   items:
-   *                     type: object
-   *                     properties:
-   *                       tipId:
-   *                         type: integer
-   *                         example: 1
-   *                       title:
-   *                         type: string
-   *                         example: "Amazing Food Tips"
-   *                       content:
-   *                         type: string
-   *                         example: "Try different local cuisines!"
-   *                       author:
-   *                         type: object
-   *                         properties:
-   *                           userId:
-   *                             type: integer
-   *                             example: 1
-   *                           nickname:
-   *                             type: string
-   *                             example: "John Doe"
-   *                           profileImageUrl:
-   *                             type: string
-   *                             example: "https://example.com/john.jpg"
-   *                       hashtags:
-   *                         type: array
-   *                         items:
-   *                           type: object
-   *                           properties:
-   *                             hashtagId:
-   *                               type: integer
-   *                               example: 101
-   *                             name:
-   *                               type: string
-   *                               example: "food"
-   *                       likesCount:
-   *                         type: integer
-   *                         example: 10
-   *                       savesCount:
-   *                         type: integer
-   *                         example: 5
-   *                       createdAt:
-   *                         type: string
-   *                         format: date-time
-   *                         example: "2025-02-15T00:00:00Z"
-   *                       updatedAt:
-   *                         type: string
-   *                         format: date-time
-   *                         example: "2025-02-15T00:00:00Z"
-   *       400:
-   *         description: "잘못된 요청 (검색어 누락)"
-   */
+/**
+ * @swagger
+ * /api/v1/tips/search:
+ *   get:
+ *     summary: "팁 검색 (제목, 내용, 해시태그 필터링 가능)"
+ *     description: "입력한 검색어와 해시태그를 기준으로 팁을 검색합니다."
+ *     tags:
+ *       - Tips
+ *     parameters:
+ *       - in: query
+ *         name: query
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: "검색어 (제목, 내용에서 검색)"
+ *       - in: query
+ *         name: hashtags
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: "필터링할 해시태그 (쉼표로 구분, 예: 봄,여름)"
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         required: false
+ *         description: "페이지 번호"
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         required: false
+ *         description: "한 페이지에 표시할 팁 개수"
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [latest, likes, saves]
+ *           default: "latest"
+ *         required: false
+ *         description: "정렬 기준 (latest: 최신순, likes: 좋아요순, saves: 저장순)"
+ *     responses:
+ *       200:
+ *         description: "팁 검색 결과 반환"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "팁 검색 성공"
+ *                 result:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       tipId:
+ *                         type: integer
+ *                         example: 1
+ *                       title:
+ *                         type: string
+ *                         example: "Amazing Food Tips"
+ *                       content:
+ *                         type: string
+ *                         example: "Try different local cuisines!"
+ *                       author:
+ *                         type: object
+ *                         properties:
+ *                           userId:
+ *                             type: integer
+ *                             example: 1
+ *                           nickname:
+ *                             type: string
+ *                             example: "John Doe"
+ *                           profileImageUrl:
+ *                             type: string
+ *                             example: "https://example.com/john.jpg"
+ *                       hashtags:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             hashtagId:
+ *                               type: integer
+ *                               example: 101
+ *                             name:
+ *                               type: string
+ *                               example: "food"
+ *                       imageUrls:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             media_url:
+ *                               type: string
+ *                               example: "https://s3.amazonaws.com/bucket/path/image.jpg"
+ *                             media_type:
+ *                               type: string
+ *                               example: "image/png"
+ *                       likesCount:
+ *                         type: integer
+ *                         example: 10
+ *                       savesCount:
+ *                         type: integer
+ *                         example: 5
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-02-15T00:00:00Z"
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-02-15T00:00:00Z"
+ *       400:
+ *         description: "잘못된 요청 (검색어와 해시태그가 모두 누락됨)"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "검색어 또는 해시태그 중 하나는 반드시 입력해야 합니다."
+ */
 
   public async searchTips(req: Request, res: Response, next: NextFunction) {
     try {
       const query = req.query.query as string | null;
-      const hashtags = req.query.hashtags
-        ? (req.query.hashtags as string).split(',')
-        : [];
-
+      const hashtags = req.query.hashtags ? (req.query.hashtags as string).split(",") : [];
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const sort = req.query.sort as string || "latest"; // ✅ 정렬 옵션 추가
 
-      const result = await this.tipService.searchTips(
-        query,
-        hashtags,
-        page,
-        limit
-      );
+      const result = await this.tipService.searchTips(query, hashtags, page, limit, sort);
       return res.status(StatusCodes.OK).json(result);
     } catch (error) {
       next(error);

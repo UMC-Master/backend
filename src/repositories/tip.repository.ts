@@ -235,23 +235,18 @@ export class TipRepository {
   }
 
   //팁 검색 기능 (제목, 내용, 해시태그 포함)
-  public async searchTips(
-    query: string,
-    hashtags: string[],
-    skip: number,
-    take: number
-  ) {
+  public async searchTips(query: string | null, hashtags: string[], skip: number, take: number, sort: string) {
     return await prisma.tip.findMany({
       where: {
         AND: [
           query
             ? {
                 OR: [
-                  { title: { contains: query } },
-                  { content: { contains: query } },
+                  { title: { contains: query, mode: "insensitive" } }, // 대소문자 구분 없이 검색
+                  { content: { contains: query, mode: "insensitive" } },
                 ],
               }
-            : {},
+            : {}, // 검색어가 없으면 제목/내용 검색 무시
           hashtags.length > 0
             ? {
                 hashtags: {
@@ -262,23 +257,33 @@ export class TipRepository {
                   },
                 },
               }
-            : {},
+            : {}, // 해시태그가 없으면 해시태그 필터 무시
         ],
       },
       skip,
       take,
+      orderBy: this.getSortOption(sort), // ✅ 정렬 옵션 적용
       include: {
         media: true,
         hashtags: { include: { hashtag: true } },
-        user: {
-          select: { user_id: true, nickname: true, profile_image_url: true },
-        },
+        user: { select: { user_id: true, nickname: true, profile_image_url: true } },
         likes: true,
         saves: true,
       },
     });
   }
 
+  // ✅ 정렬 기준을 설정하는 함수
+  private getSortOption(sort: string) {
+    switch (sort) {
+      case "likes":
+        return { likes: { _count: "desc" } }; // 좋아요 개수 내림차순
+      case "saves":
+        return { saves: { _count: "desc" } }; // 저장 개수 내림차순
+      default:
+        return { created_at: "desc" }; // 최신순 (기본값)
+    }
+  }
   // 새로운 상세 조회 기능 추가
   public async findTipDetails(tipId: number) {
     return await prisma.tip.findUnique({
