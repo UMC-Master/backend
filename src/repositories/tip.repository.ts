@@ -258,11 +258,11 @@ export class TipRepository {
           query
             ? {
                 OR: [
-                  { title: { contains: query, mode: "insensitive" } }, // 대소문자 구분 없이 검색
-                  { content: { contains: query, mode: "insensitive" } },
+                  { title: { contains: query } }, // ✅ `mode: "insensitive"` 제거
+                  { content: { contains: query } }
                 ],
               }
-            : {}, // 검색어가 없으면 제목/내용 검색 무시
+            : {}, // ✅ 검색어가 없으면 무시
           hashtags.length > 0
             ? {
                 hashtags: {
@@ -273,7 +273,7 @@ export class TipRepository {
                   },
                 },
               }
-            : {}, // 해시태그가 없으면 해시태그 필터 무시
+            : {}, // ✅ 해시태그가 없으면 무시
         ],
       },
       skip,
