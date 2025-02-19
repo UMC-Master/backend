@@ -140,12 +140,10 @@ export class CommunityRepository {
     });
   }
 
-   // ✅ 전체 댓글 조회 (페이지네이션 적용)
-   public async getAllComments(skip: number, take: number) {
+   // ✅ 전체 댓글 조회 
+  public async getAllComments() {
     return await prisma.comment.findMany({
-      skip,
-      take,
-      orderBy: { created_at: 'desc' }, // 최신 댓글 순으로 정렬
+      orderBy: { created_at: 'desc' }, // 최신 댓글 우선
       include: {
         user: {
           select: {
@@ -156,7 +154,6 @@ export class CommunityRepository {
         },
         tips: {
           select: {
-            tips_id: true,
             title: true,
           },
         },
