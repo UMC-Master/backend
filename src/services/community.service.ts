@@ -172,15 +172,11 @@ export class CommunityService {
   }
 
   // ✅ 전체 댓글 조회 (페이지네이션 적용)
-  public async getAllComments(page: number, limit: number) {
-
-    if (page < 1 || limit < 1) {
-      throw new ValidationError('페이지 번호와 개수는 1 이상이어야 합니다.',null);
-    }
-    const skip = (page - 1) * limit;
-    return await this.communityRepository.getAllComments(skip, limit);
+  public async getAllComments() {
+    return await this.communityRepository.getAllComments();
   }
 
+  
   // ✅ 특정 댓글 상세 조회
   public async getCommentById(commentId: number) {
     if (!commentId || isNaN(commentId)) {

@@ -476,42 +476,80 @@ private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
-   * @swagger
-   * /api/v1/comments:
-   *   get:
-   *     summary: "전체 댓글 조회"
-   *     description: "인증된 사용자가 모든 댓글을 조회합니다."
-   *     tags:
-   *       - Communities
-   *     security:
-   *       - bearerAuth: []
-   *     parameters:
-   *       - in: query
-   *         name: page
-   *         required: false
-   *         schema:
-   *           type: integer
-   *           default: 1
-   *         description: "페이지 번호"
-   *       - in: query
-   *         name: limit
-   *         required: false
-   *         schema:
-   *           type: integer
-   *           default: 10
-   *         description: "한 페이지당 댓글 개수"
-   *     responses:
-   *       200:
-   *         description: "전체 댓글 조회 성공"
-   *       401:
-   *         description: "인증 실패"
-   */
+ * @swagger
+ * /api/v1/comments:
+ *   get:
+ *     summary: "전체 댓글 조회 (무한 스크롤 지원)"
+ *     description: "모든 댓글을 최신순으로 조회합니다."
+ *     tags:
+ *       - Communities
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: "전체 댓글 조회 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "전체 댓글 조회 성공"
+ *                 result:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       commentId:
+ *                         type: integer
+ *                         example: 123
+ *                       content:
+ *                         type: string
+ *                         example: "이 꿀팁 정말 유용하네요!"
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-02-19T12:00:00Z"
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           userId:
+ *                             type: integer
+ *                             example: 10
+ *                           nickname:
+ *                             type: string
+ *                             example: "john_doe"
+ *                           profileImageUrl:
+ *                             type: string
+ *                             example: "https://example.com/profile.jpg"
+ *                       tip:
+ *                         type: object
+ *                         properties:
+ *                           tipId:
+ *                             type: integer
+ *                             example: 1
+ *                           title:
+ *                             type: string
+ *                             example: "청소 꿀팁 대공개"
+ *       401:
+ *         description: "인증 실패"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized"
+ */
+
 public async getAllComments(req: Request, res: Response, next: NextFunction) {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-
-    const comments = await this.communityService.getAllComments(page, limit);
+    const comments = await this.communityService.getAllComments();
     res.status(StatusCodes.OK).json({
       isSuccess: true,
       message: '전체 댓글 조회 성공',
