@@ -233,6 +233,22 @@ export class TipRepository {
       },
     });
   }
+   
+  // ✅ 좋아요 여부 확인
+  public async isTipLikedByUser(tipId: number, userId: number) {
+    const like = await prisma.tipLike.findFirst({
+      where: { tips_id: tipId, user_id: userId },
+    });
+    return like !== null;
+  }
+
+  // ✅ 북마크 여부 확인
+  public async isTipSavedByUser(tipId: number, userId: number) {
+    const save = await prisma.tipSave.findFirst({
+      where: { tips_id: tipId, user_id: userId },
+    });
+    return save !== null;
+  }
 
   //팁 검색 기능 (제목, 내용, 해시태그 포함)
   public async searchTips(query: string | null, hashtags: string[], skip: number, take: number, sort: string) {

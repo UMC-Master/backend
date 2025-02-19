@@ -440,14 +440,16 @@ export class TipController {
     }
   }
 
-  /**
+   /**
    * @swagger
    * /api/v1/tips/{tipId}:
    *   get:
-   *     summary: "팁 상세 조회"
-   *     description: "특정 팁의 상세 정보를 조회합니다."
+   *     summary: "팁 상세 조회 (좋아요 & 북마크 여부 포함)"
+   *     description: "특정 팁의 상세 정보를 조회하며, 로그인한 사용자의 좋아요 및 북마크 여부를 포함합니다."
    *     tags:
    *       - Tips
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: tipId
@@ -472,7 +474,7 @@ export class TipController {
    *                 result:
    *                   type: object
    *                   properties:
-   *                     tips_id:
+   *                     tipId:
    *                       type: integer
    *                       example: 1
    *                     title:
@@ -481,20 +483,20 @@ export class TipController {
    *                     content:
    *                       type: string
    *                       example: "Here are some great cleaning tips!"
-   *                     created_at:
+   *                     createdAt:
    *                       type: string
    *                       format: date-time
    *                       example: "2024-02-17T12:00:00Z"
    *                     user:
    *                       type: object
    *                       properties:
-   *                         user_id:
+   *                         userId:
    *                           type: integer
    *                           example: 5
    *                         nickname:
    *                           type: string
    *                           example: "John Doe"
-   *                         profile_image_url:
+   *                         profileImageUrl:
    *                           type: string
    *                           example: "https://example.com/profile.jpg"
    *                     hashtags:
@@ -507,49 +509,30 @@ export class TipController {
    *                       items:
    *                         type: object
    *                         properties:
-   *                           media_url:
+   *                           mediaUrl:
    *                             type: string
    *                             example: "https://s3.amazonaws.com/bucket/image.jpg"
-   *                           media_type:
+   *                           mediaType:
    *                             type: string
    *                             example: "image/png"
-   *                     _count:
-   *                       type: object
-   *                       properties:
-   *                         likes:
-   *                           type: integer
-   *                           example: 15
-   *                         saves:
-   *                           type: integer
-   *                           example: 7
-   *       404:
-   *         description: "팁을 찾을 수 없음"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 message:
-   *                   type: string
-   *                   example: "Tip not found"
-   *       500:
-   *         description: "서버 오류"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 message:
-   *                   type: string
-   *                   example: "Internal Server Error"
+   *                     isLiked:
+   *                       type: boolean
+   *                       example: true
+   *                     isBookmarked:
+   *                       type: boolean
+   *                       example: false
+   *                     likesCount:
+   *                       type: integer
+   *                       example: 15
+   *                     savesCount:
+   *                       type: integer
+   *                       example: 7
    */
 
   public async getTipInfo(req: Request, res: Response, next: NextFunction) {
     try {
-      console.log('요청된 tipId:', req.params.tipId); // 🔍 로그 추가
-
-      // ✅ `req.params.tipId`가 숫자인지 확인하고 변환
       const tipId = Number(req.params.tipId);
+      const userId = req.user?.userId; // 로그인한 사용자의 ID
 
       if (!tipId || isNaN(tipId)) {
         return res.status(StatusCodes.BAD_REQUEST).json({
@@ -557,7 +540,7 @@ export class TipController {
         });
       }
 
-      const tipData = await this.tipService.getTipInfo(tipId);
+      const tipData = await this.tipService.getTipInfo(tipId, userId);
 
       if (!tipData) {
         return res.status(StatusCodes.NOT_FOUND).json({
