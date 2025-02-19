@@ -50,6 +50,15 @@ export class CommunityController {
         this.getSavedTips.bind(this)
       );
     //유저별 꿀팁 북마크 조회 
+    this.router.get('/comments', 
+      authenticateJWT,
+      this.getAllComments.bind(this)
+    ); // 전체 댓글 조회
+
+    this.router.get('/comments/:commentId',
+      authenticateJWT,
+      this.getCommentById.bind(this)
+    ); // 특정 댓글 상세 조회
     
   }
 
@@ -465,6 +474,101 @@ private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
     next(error);
   }
 }
+
+/**
+   * @swagger
+   * /api/v1/comments:
+   *   get:
+   *     summary: "전체 댓글 조회"
+   *     description: "인증된 사용자가 모든 댓글을 조회합니다."
+   *     tags:
+   *       - Communities
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         required: false
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *         description: "페이지 번호"
+   *       - in: query
+   *         name: limit
+   *         required: false
+   *         schema:
+   *           type: integer
+   *           default: 10
+   *         description: "한 페이지당 댓글 개수"
+   *     responses:
+   *       200:
+   *         description: "전체 댓글 조회 성공"
+   *       401:
+   *         description: "인증 실패"
+   */
+public async getAllComments(req: Request, res: Response, next: NextFunction) {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const comments = await this.communityService.getAllComments(page, limit);
+    res.status(StatusCodes.OK).json({
+      isSuccess: true,
+      message: '전체 댓글 조회 성공',
+      result: comments,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+  /**
+   * @swagger
+   * /api/v1/comments/{commentId}:
+   *   get:
+   *     summary: "댓글 상세 조회"
+   *     description: "인증된 사용자가 특정 댓글의 상세 정보를 조회합니다."
+   *     tags:
+   *       - Communities
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: commentId
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: "조회할 댓글의 ID"
+   *     responses:
+   *       200:
+   *         description: "댓글 조회 성공"
+   *       401:
+   *         description: "인증 실패"
+   *       404:
+   *         description: "댓글을 찾을 수 없음"
+   */
+  public async getCommentById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const commentId = parseInt(req.params.commentId, 10);
+      if (!commentId) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ message: '유효한 댓글 ID가 필요합니다.' });
+      }
+
+      const comment = await this.communityService.getCommentById(commentId);
+      if (!comment) {
+        return res.status(StatusCodes.NOT_FOUND).json({ message: '댓글을 찾을 수 없습니다.' });
+      }
+
+      res.status(StatusCodes.OK).json({
+        isSuccess: true,
+        message: '댓글 조회 성공',
+        result: comment,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
 
 }
 
