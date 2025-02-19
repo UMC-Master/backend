@@ -186,8 +186,34 @@ export class TipService {
   }
 
   // 팁 상세 조회 서비스
-  public async getTipInfo(tipId: number) {
-    return await this.tipRepository.getTipInfo(tipId);
+  public async getTipInfo(tipId: number, userId: number | null) {
+    const tip = await this.tipRepository.getTipById(tipId);
+    if (!tip) return null;
+
+    // ✅ 현재 로그인한 사용자의 좋아요 및 북마크 여부 확인
+    const isLiked = userId ? await this.tipRepository.isTipLikedByUser(tipId, userId) : false;
+    const isBookmarked = userId ? await this.tipRepository.isTipSavedByUser(tipId, userId) : false;
+
+    return {
+      tipId: tip.tips_id,
+      title: tip.title,
+      content: tip.content,
+      createdAt: tip.created_at,
+      user: {
+        userId: tip.user.user_id,
+        nickname: tip.user.nickname,
+        profileImageUrl: tip.user.profile_image_url,
+      },
+      hashtags: tip.hashtags.map((h) => h.hashtag.name),
+      media: tip.media.map((m) => ({
+        mediaUrl: m.media_url,
+        mediaType: m.media_type,
+      })),
+      isLiked,
+      isBookmarked,
+      likesCount: tip.likes.length,
+      savesCount: tip.saves.length,
+    };
   }
 
   // 팁 검색 기능
