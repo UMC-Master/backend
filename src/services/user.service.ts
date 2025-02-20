@@ -353,12 +353,24 @@ export class UserService {
       kakaoUserInfo.id
     );
 
+    // ✅ 기존 providerId가 없는 경우, email로 유저를 조회하여 연결
+    if (!user && kakaoUserInfo.email) {
+      user = await this.userRepository.findUserByEmail(kakaoUserInfo.email);
+      if (user) {
+        console.log('🔹 기존 이메일 계정과 카카오 계정 연결');
+        await this.userRepository.updateUser(user.user_id, {
+          provider: 'kakao',
+          providerId: kakaoUserInfo.id,
+        });
+      }
+    }
+
     if (!user) {
-      // 신규 회원가입 처리
+      // ✅ 신규 회원가입 처리
       user = await this.userRepository.createUser({
         provider: 'kakao',
         providerId: kakaoUserInfo.id,
-        email: kakaoUserInfo.email || `${kakaoUserInfo.id}@kakao.com`, // ✅ 이메일이 없으면 가짜 이메일 사용
+        email: kakaoUserInfo.email || `${kakaoUserInfo.id}@kakao.com`,
         nickname: kakaoUserInfo.nickname,
         profileImage: kakaoUserInfo.profileImage ?? '',
         status: 'ACTIVE',
