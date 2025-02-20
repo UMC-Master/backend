@@ -382,77 +382,87 @@ private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
 }
 
 
- /**
-   * @swagger
-   * /api/v1/users/saved-tips:
-   *   get:
-   *     summary: "사용자의 저장된 꿀팁 목록 조회"
-   *     description: "현재 로그인한 사용자가 저장한 꿀팁 목록을 반환합니다."
-   *     tags:
-   *       - Communities
-   *     security:
-   *       - bearerAuth: []
-   *     responses:
-   *       200:
-   *         description: "저장된 꿀팁 목록 조회 성공"
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 isSuccess:
-   *                   type: boolean
-   *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "저장된 꿀팁 목록 조회 성공"
-   *                 result:
-   *                   type: array
-   *                   items:
-   *                     type: object
-   *                     properties:
-   *                       tipId:
-   *                         type: integer
-   *                         example: 1
-   *                       title:
-   *                         type: string
-   *                         example: "청소 꿀팁"
-   *                       content:
-   *                         type: string
-   *                         example: "바닥 청소할 때 꿀팁 공유!"
-   *                       author:
-   *                         type: object
-   *                         properties:
-   *                           userId:
-   *                             type: integer
-   *                             example: 5
-   *                           nickname:
-   *                             type: string
-   *                             example: "JohnDoe"
-   *                           profileImageUrl:
-   *                             type: string
-   *                             example: "https://example.com/profile.jpg"
-   *                       imageUrls:
-   *                         type: array
-   *                         items:
-   *                           type: object
-   *                           properties:
-   *                             media_url:
-   *                               type: string
-   *                               example: "https://s3.amazonaws.com/bucket/image.jpg"
-   *                             media_type:
-   *                               type: string
-   *                               example: "image/png"
-   *                       createdAt:
-   *                         type: string
-   *                         format: date-time
-   *                         example: "2024-02-17T12:00:00Z"
-   *       401:
-   *         description: "인증되지 않은 요청"
-   *       500:
-   *         description: "서버 오류"
-   */
- public async getSavedTips(req: Request, res: Response, next: NextFunction) {
+/**
+ * @swagger
+ * /api/v1/users/saved-tips:
+ *   get:
+ *     summary: "사용자의 저장된 꿀팁 목록 조회"
+ *     description: "현재 로그인한 사용자가 저장한 꿀팁 목록을 반환합니다."
+ *     tags:
+ *       - Communities
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: "저장된 꿀팁 목록 조회 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "저장된 꿀팁 목록 조회 성공"
+ *                 result:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       tipId:
+ *                         type: integer
+ *                         example: 1
+ *                       title:
+ *                         type: string
+ *                         example: "청소 꿀팁"
+ *                       content:
+ *                         type: string
+ *                         example: "바닥 청소할 때 꿀팁 공유!"
+ *                       author:
+ *                         type: object
+ *                         properties:
+ *                           userId:
+ *                             type: integer
+ *                             example: 5
+ *                           nickname:
+ *                             type: string
+ *                             example: "JohnDoe"
+ *                           profileImageUrl:
+ *                             type: string
+ *                             example: "https://example.com/profile.jpg"
+ *                       imageUrls:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             media_url:
+ *                               type: string
+ *                               example: "https://s3.amazonaws.com/bucket/image.jpg"
+ *                             media_type:
+ *                               type: string
+ *                               example: "image/png"
+ *                       likeCount:
+ *                         type: integer
+ *                         example: 15
+ *                         description: "좋아요 수"
+ *                       saveCount:
+ *                         type: integer
+ *                         example: 10
+ *                         description: "북마크(저장) 수"
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-02-17T12:00:00Z"
+ *       401:
+ *         description: "인증되지 않은 요청"
+ *       500:
+ *         description: "서버 오류"
+ */
+
+
+public async getSavedTips(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user?.userId; // ✅ 토큰에서 가져옴
 
@@ -474,6 +484,7 @@ private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
     next(error);
   }
 }
+
 
 /**
  * @swagger

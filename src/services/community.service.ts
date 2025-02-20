@@ -150,26 +150,30 @@ export class CommunityService {
     }
   }
 
-  // 사용자의 저장된 꿀팁 목록 조회 
-   public async getSavedTips(userId: number) {
-    const savedTips = await this.communityRepository.getSavedTips(userId);
+// 사용자의 저장된 꿀팁 목록 조회
+// 사용자의 저장된 꿀팁 목록 조회
+public async getSavedTips(userId: number) {
+  const savedTips = await this.communityRepository.getSavedTips(userId);
 
-    return savedTips.map((save) => ({
-      tipId: save.tips.tips_id,
-      title: save.tips.title,
-      content: save.tips.content,
-      author: {
-        userId: save.tips.user.user_id,
-        nickname: save.tips.user.nickname,
-        profileImageUrl: save.tips.user.profile_image_url,
-      },
-      imageUrls: save.tips.media.map((media) => ({
-        media_url: media.media_url,
-        media_type: media.media_type,
-      })),
-      createdAt: save.tips.created_at,
-    }));
-  }
+  return savedTips.map((save) => ({
+    tipId: save.tips.tips_id,
+    title: save.tips.title,
+    content: save.tips.content,
+    author: {
+      userId: save.tips.user.user_id,
+      nickname: save.tips.user.nickname,
+      profileImageUrl: save.tips.user.profile_image_url,
+    },
+    imageUrls: save.tips.media.map((media) => ({
+      media_url: media.media_url,
+      media_type: media.media_type,
+    })),
+    likeCount: save.tips.likes ? save.tips.likes.length : 0, // ✅ 좋아요 수 계산
+    saveCount: save.tips.saves ? save.tips.saves.length : 0, // ✅ 북마크(저장) 수 계산
+    createdAt: save.tips.created_at,
+  }));
+}
+
 
   // ✅ 전체 댓글 조회 (페이지네이션 적용)
   public async getAllComments() {
