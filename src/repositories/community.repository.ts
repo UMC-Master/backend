@@ -111,34 +111,45 @@ export class CommunityRepository {
 
 
   // 사용자의 저장된 꿀팁 목록 조회
-  public async getSavedTips(userId: number) {
-    return await prisma.tipSave.findMany({
-      where: { user_id: userId },
-      include: {
-        tips: {
-          select: {
-            tips_id: true,
-            title: true,
-            content: true,
-            created_at: true,
-            user: {
-              select: {
-                user_id: true,
-                nickname: true,
-                profile_image_url: true,
-              },
-            },
-            media: {
-              select: {
-                media_url: true,
-                media_type: true,
-              },
+public async getSavedTips(userId: number) {
+  return await prisma.tipSave.findMany({
+    where: { user_id: userId },
+    include: {
+      tips: {
+        select: {
+          tips_id: true,
+          title: true,
+          content: true,
+          created_at: true,
+          user: {
+            select: {
+              user_id: true,
+              nickname: true,
+              profile_image_url: true,
             },
           },
+          media: {
+            select: {
+              media_url: true,
+              media_type: true,
+            },
+          },
+          likes: {
+            select: {
+              like_id: true, 
+            },
+          },
+          saves: { 
+            select: {
+              save_id: true,
+            },
+          }
         },
       },
-    });
-  }
+    },
+  });
+}
+
 
    // ✅ 전체 댓글 조회 
   public async getAllComments() {
