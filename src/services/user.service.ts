@@ -326,7 +326,7 @@ export class UserService {
 
       return {
         id: data.id.toString(), // ✅ 유저 고유 ID (providerId)
-        email: data.kakao_account?.email || `${data.id}@kakao.com`, // ✅ 이메일이 없으면 가짜 이메일 생성
+        email: data.kakao_account?.email || null, // ✅ 이메일 없으면 null
         nickname: data.kakao_account?.profile.nickname || '사용자',
         profileImage: data.kakao_account?.profile.profile_image_url || null,
       };

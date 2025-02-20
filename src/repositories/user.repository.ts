@@ -134,7 +134,7 @@ export class UserRepository {
     try {
       return await this.prisma.user.create({
         data: {
-          email: userData.email,
+          email: userData.email, // ✅ 가짜 이메일 저장 가능하도록 처리
           password: userData.password,
           nickname: userData.nickname,
           provider: userData.provider,
