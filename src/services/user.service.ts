@@ -275,7 +275,7 @@ export class UserService {
             params: {
               grant_type: 'authorization_code',
               client_id: process.env.KAKAO_CLIENT_ID,
-              redirect_uri: 'https://www.hmaster.shop/oauth/kakao/callback',
+              redirect_uri: process.env.KAKAO_REDIRECT_URI, // ✅ 환경 변수 사용하도록 변경
               code,
             },
             headers: {
@@ -326,7 +326,7 @@ export class UserService {
 
       return {
         id: data.id.toString(), // ✅ 유저 고유 ID (providerId)
-        email: data.kakao_account?.email || null, // ✅ 이메일 없으면 null
+        email: data.kakao_account?.email || `${data.id}@kakao.com`, // ✅ 이메일이 없으면 가짜 이메일 생성
         nickname: data.kakao_account?.profile.nickname || '사용자',
         profileImage: data.kakao_account?.profile.profile_image_url || null,
       };
@@ -508,7 +508,7 @@ export class UserService {
   }
 
   public async setInfluencer(userId: number) {
-    if (!await this.userRepository.findUserById(userId)) {
+    if (!(await this.userRepository.findUserById(userId))) {
       throw new UserNotFoundError(userId);
     }
     await this.userRepository.setInfluencer(userId);

@@ -15,17 +15,16 @@ model User {
   city                  String?
   district              String?
   profile_image_url     String?
-  provider              String    @default("local")
-  providerId            String?   @unique // 소셜 로그인 사용자 ID
+  provider              String             @default("local")
+  providerId            String?            @unique
   created_at            DateTime           @default(now())
   updated_at            DateTime           @updatedAt
   location_id           Int?
   last_login            DateTime?
   status                String
   role                  UserRole           @default(USER)
-  chat_sessions         ChatSession[] 
   chat_histories        ChatHistory[]
-  hashtags              UserHashtag[]
+  chat_sessions         ChatSession[]
   comments              Comment[]
   logs                  Log[]
   magazine_bookmarks    MagazineBookmark[]
@@ -38,6 +37,7 @@ model User {
   tipLikes              TipLike[]
   tip_saves             TipSave[]
   location              Location?          @relation(fields: [location_id], references: [location_id])
+  hashtags              UserHashtag[]
   user_statistics       UserStatistic?
 
   @@index([location_id], map: "user_location_id_fkey")
@@ -46,17 +46,16 @@ model User {
 
 model UserVerification {
   id         Int      @id @default(autoincrement())
-  email      String   @unique // 인증할 이메일
-  token      String   @unique // 인증을 위한 JWT 토큰
-  expires_at DateTime // 토큰 만료 시간
+  email      String   @unique
+  token      String   @unique
+  expires_at DateTime
   created_at DateTime @default(now())
 
-  @@map("user_verification") // 실제 DB 테이블 이름을 user_verification으로 설정
+  @@map("user_verification")
 }
 
-
 model Location {
-  location_id   Int         @id @default(autoincrement())
+  location_id   Int            @id @default(autoincrement())
   name          String?
   parent_id     Int?
   created_at    DateTime?
@@ -201,13 +200,13 @@ model Quiz {
 }
 
 model QuizAnswer {
-  answer_id        Int      @id @default(autoincrement())
-  user_id          Int
-  quiz_id          Int
-  is_correct       Boolean
-  submitted_at     DateTime @default(now())
-  quiz             Quiz     @relation(fields: [quiz_id], references: [quiz_id])
-  user             User     @relation(fields: [user_id], references: [user_id])
+  answer_id    Int      @id @default(autoincrement())
+  user_id      Int
+  quiz_id      Int
+  is_correct   Boolean
+  submitted_at DateTime @default(now())
+  quiz         Quiz     @relation(fields: [quiz_id], references: [quiz_id])
+  user         User     @relation(fields: [user_id], references: [user_id])
 
   @@index([quiz_id], map: "quiz_answer_quiz_id_fkey")
   @@index([user_id], map: "quiz_answer_user_id_fkey")
@@ -221,7 +220,7 @@ model Hashtag {
   hashtag_type    HashtagType       @relation(fields: [hashtag_type_id], references: [hashtag_type_id])
   magazines       MagazineHashtag[]
   tips            TipHashtag[]
-  users           UserHashtag[]     
+  users           UserHashtag[]
 
   @@index([hashtag_type_id], map: "hashtag_hashtag_type_id_fkey")
   @@map("hashtag")
@@ -231,8 +230,8 @@ model UserHashtag {
   user_hashtag_id Int     @id @default(autoincrement())
   user_id         Int
   hashtag_id      Int
-  user            User    @relation(fields: [user_id], references: [user_id])
   hashtag         Hashtag @relation(fields: [hashtag_id], references: [hashtag_id])
+  user            User    @relation(fields: [user_id], references: [user_id])
 
   @@index([hashtag_id], map: "user_hashtag_hashtag_id_fkey")
   @@index([user_id], map: "user_hashtag_user_id_fkey")
@@ -281,7 +280,7 @@ model Magazine {
 }
 
 model MagazineHashtag {
-  magazine_hashtag_id Int    @id @default(autoincrement())
+  magazine_hashtag_id Int       @id @default(autoincrement())
   hashtag_id          Int?
   magazine_id         Int?
   hashtag             Hashtag?  @relation(fields: [hashtag_id], references: [hashtag_id])
@@ -364,28 +363,26 @@ model UserActivityType {
 }
 
 model ChatSession {
-  session_id   Int           @id @default(autoincrement()) 
-  user_id      Int?          
-  created_at   DateTime      @default(now()) 
-  title        String?       // 채팅 세션 이름 (예: "청년 정책 상담")
-  
-  user         User?         @relation(fields: [user_id], references: [user_id])
+  session_id     Int           @id @default(autoincrement())
+  user_id        Int?
+  created_at     DateTime      @default(now())
+  title          String?
   chat_histories ChatHistory[]
-  
+  user           User?         @relation(fields: [user_id], references: [user_id])
+
   @@index([user_id], map: "chat_session_user_id_fkey")
   @@map("chat_session")
 }
 
 model ChatHistory {
-  chat_id   Int      @id @default(autoincrement())
-  session_id  Int          // ✅ 각 채팅이 특정 세션에 속하도록 설정
-  user_id   Int?     // 로그인된 사용자 ID (비회원이면 null)
-  question  String
-  answer    String @db.Text
-  created_at DateTime @default(now())
-
-  session   ChatSession  @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
-  user      User?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade) // ✅ 관계 수정
+  chat_id    Int         @id @default(autoincrement())
+  user_id    Int?
+  question   String
+  answer     String      @db.Text
+  created_at DateTime    @default(now())
+  session_id Int
+  session    ChatSession @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+  user       User?       @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
   @@index([session_id], map: "chat_history_session_id_fkey")
   @@index([user_id], map: "chat_history_user_id_fkey")
@@ -405,11 +402,6 @@ enum NotificationType {
 }
 
 enum SocialProvider {
-  KAKAO
-}
-
-enum user_login_type {
-  EMAIL
   KAKAO
 }
 
