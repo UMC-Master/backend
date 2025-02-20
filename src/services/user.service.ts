@@ -275,7 +275,7 @@ export class UserService {
             params: {
               grant_type: 'authorization_code',
               client_id: process.env.KAKAO_CLIENT_ID,
-              redirect_uri: process.env.KAKAO_REDIRECT_URI, // ✅ 환경 변수 사용하도록 변경
+              redirect_uri: 'https://www.hmaster.shop/oauth/kakao/callback',
               code,
             },
             headers: {
