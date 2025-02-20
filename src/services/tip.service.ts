@@ -1,5 +1,5 @@
 import { TipRepository } from '../repositories/tip.repository.js';
-import {UserRepository} from '../repositories/user.repository.js';
+import { UserRepository } from '../repositories/user.repository.js';
 import { toTipDto } from '../dtos/tip.dto.js';
 import { HashtagRepository } from '../repositories/hashtag.repository.js';
 import { ValidationError } from '../errors/errors.js';
@@ -13,7 +13,7 @@ export class TipService {
   constructor() {
     this.tipRepository = new TipRepository();
     this.hashtagRepository = new HashtagRepository();
-    this.userRepository = new UserRepository(); 
+    this.userRepository = new UserRepository();
   }
 
   // 팁 생성 (미디어 추가 포함)
@@ -27,22 +27,40 @@ export class TipService {
     // ✅ 유저 정보 가져오기 (인플루언서 여부 확인)
     const user = await this.userRepository.findUserById(data.userId);
     if (!user) {
-      throw new ValidationError('유효하지 않은 사용자입니다.',null);
+      throw new ValidationError('유효하지 않은 사용자입니다.', null);
     }
     const isInfluencer = user.role === 'INFLUENCER'; // ✅ 인플루언서 여부 판단
-  
+
     // ✅ 기존 팁 생성 로직 유지
     const newTip = await this.tipRepository.createTip({
       userId: data.userId,
       title: data.title,
       content: data.content,
     });
-  
+
+    const hashtagIds = await Promise.all(
+      data.hashtags.map(async (hashtag) => {
+        const existingHashtag = await this.hashtagRepository.getByName(
+          hashtag.trim()
+        );
+
+        if (!existingHashtag) {
+          throw new HashtagNotFoundError({ hashtag });
+        }
+        return existingHashtag.hashtag_id;
+      })
+    );
+
+    await this.tipRepository.associateHashtagsWithTip(
+      newTip.tips_id,
+      Array.from(new Set(hashtagIds))
+    );
+
     // ✅ 해시태그 연결, 미디어 저장 로직 유지
     if (data.imageUrls.length > 0) {
       await this.tipRepository.saveImages(newTip.tips_id, data.imageUrls);
     }
-  
+
     return {
       isSuccess: true,
       message: '팁이 생성되었습니다.',
@@ -56,8 +74,6 @@ export class TipService {
       },
     };
   }
-  
-  
 
   // 팁 아이디로 팁 조회 (해시태그 변환 추가)
   public async getTipById(tipId: number) {
@@ -172,8 +188,12 @@ export class TipService {
     if (!tip) return null;
 
     // ✅ 현재 로그인한 사용자의 좋아요 및 북마크 여부 확인
-    const isLiked = userId ? await this.tipRepository.isTipLikedByUser(tipId, userId) : false;
-    const isBookmarked = userId ? await this.tipRepository.isTipSavedByUser(tipId, userId) : false;
+    const isLiked = userId
+      ? await this.tipRepository.isTipLikedByUser(tipId, userId)
+      : false;
+    const isBookmarked = userId
+      ? await this.tipRepository.isTipSavedByUser(tipId, userId)
+      : false;
 
     return {
       tipId: tip.tips_id,
@@ -199,41 +219,58 @@ export class TipService {
   }
 
   // 팁 검색 기능
-  public async searchTips(query: string | null, hashtags: string[], page: number, limit: number, sort: string) {
+  public async searchTips(
+    query: string | null,
+    hashtags: string[],
+    page: number,
+    limit: number,
+    sort: string
+  ) {
     const skip = (page - 1) * limit;
 
     // ✅ 둘 다 입력되지 않으면 예외 처리
     if (!query && hashtags.length === 0) {
-      throw new ValidationError("검색어 또는 해시태그 중 하나는 반드시 입력해야 합니다.", null);
+      throw new ValidationError(
+        '검색어 또는 해시태그 중 하나는 반드시 입력해야 합니다.',
+        null
+      );
     }
 
     // ✅ 검색어가 있을 경우, 공백으로만 이루어진 값은 예외 처리
-    if (query && query.trim() === "") {
-      throw new ValidationError("검색어에는 공백만 포함될 수 없습니다.", null);
+    if (query && query.trim() === '') {
+      throw new ValidationError('검색어에는 공백만 포함될 수 없습니다.', null);
     }
 
     // ✅ Repository에서 검색 실행
-    const tips = await this.tipRepository.searchTips(query, hashtags, skip, limit, sort);
+    const tips = await this.tipRepository.searchTips(
+      query,
+      hashtags,
+      skip,
+      limit,
+      sort
+    );
 
     // ✅ 검색 결과 반환
     return {
       isSuccess: true,
-      message: tips.length ? "팁 검색 성공" : "검색 결과가 없습니다.",
-      result: tips.map(tip => ({
+      message: tips.length ? '팁 검색 성공' : '검색 결과가 없습니다.',
+      result: tips.map((tip) => ({
         tipId: tip.tips_id,
         title: tip.title,
         content: tip.content,
-        author: tip.user ? {
-          userId: tip.user.user_id,
-          nickname: tip.user.nickname,
-          profileImageUrl: tip.user.profile_image_url,
-          isInfluencer: tip.user.role === 'INFLUENCER',
-        } : null,
-        hashtags: tip.hashtags.map(h => ({
+        author: tip.user
+          ? {
+              userId: tip.user.user_id,
+              nickname: tip.user.nickname,
+              profileImageUrl: tip.user.profile_image_url,
+              isInfluencer: tip.user.role === 'INFLUENCER',
+            }
+          : null,
+        hashtags: tip.hashtags.map((h) => ({
           hashtagId: h.hashtag.hashtag_id,
           name: h.hashtag.name,
         })),
-        imageUrls: tip.media.map(media => ({
+        imageUrls: tip.media.map((media) => ({
           media_url: media.media_url,
           media_type: media.media_type,
         })),
