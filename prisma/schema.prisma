@@ -23,6 +23,8 @@ model User {
   last_login            DateTime?
   status                String
   role                  UserRole           @default(USER)
+  chat_sessions         ChatSession[] 
+  chat_histories        ChatHistory[]
   hashtags              UserHashtag[]
   comments              Comment[]
   logs                  Log[]
@@ -359,6 +361,35 @@ model UserActivityType {
   logs                  Log[]
 
   @@map("user_activity_type")
+}
+
+model ChatSession {
+  session_id   Int           @id @default(autoincrement()) 
+  user_id      Int?          
+  created_at   DateTime      @default(now()) 
+  title        String?       // 채팅 세션 이름 (예: "청년 정책 상담")
+  
+  user         User?         @relation(fields: [user_id], references: [user_id])
+  chat_histories ChatHistory[]
+  
+  @@index([user_id], map: "chat_session_user_id_fkey")
+  @@map("chat_session")
+}
+
+model ChatHistory {
+  chat_id   Int      @id @default(autoincrement())
+  session_id  Int          // ✅ 각 채팅이 특정 세션에 속하도록 설정
+  user_id   Int?     // 로그인된 사용자 ID (비회원이면 null)
+  question  String
+  answer    String @db.Text
+  created_at DateTime @default(now())
+
+  session   ChatSession  @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+  user      User?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade) // ✅ 관계 수정
+
+  @@index([session_id], map: "chat_history_session_id_fkey")
+  @@index([user_id], map: "chat_history_user_id_fkey")
+  @@map("chat_history")
 }
 
 enum MediaType {
