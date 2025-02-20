@@ -170,4 +170,19 @@ export class CommunityService {
       createdAt: save.tips.created_at,
     }));
   }
+
+  // ✅ 전체 댓글 조회 (페이지네이션 적용)
+  public async getAllComments() {
+    return await this.communityRepository.getAllComments();
+  }
+
+  
+  // ✅ 특정 댓글 상세 조회
+  public async getCommentById(commentId: number) {
+    if (!commentId || isNaN(commentId)) {
+      throw new ValidationError('유효한 댓글 ID가 필요합니다.',null);
+    }
+
+    return await this.communityRepository.getCommentById(commentId);
+  }
 }

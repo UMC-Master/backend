@@ -28,29 +28,6 @@ export class CommunityRepository {
     });
   }
 
-// 댓글 ID로 댓글 조회
-public async getCommentById(commentId: number) {
-  return await prisma.comment.findUnique({
-    where: { comment_id: commentId },
-    include: {
-      user: {
-        select: {
-          user_id: true,
-          nickname: true,
-          profile_image_url: true,
-        },
-      }, // 댓글 작성자 정보 포함 (필요시)
-      tips: {
-        select: {
-          tips_id: true,
-          title: true,
-        },
-      }, // 관련된 팁 정보 포함 (필요시)
-    },
-  });
-
-}
-
 
   // 댓글 작성
   public async commentOnTip(userId: number, tipId: number, comment: string) {
@@ -157,6 +134,49 @@ public async getCommentById(commentId: number) {
                 media_type: true,
               },
             },
+          },
+        },
+      },
+    });
+  }
+
+   // ✅ 전체 댓글 조회 
+  public async getAllComments() {
+    return await prisma.comment.findMany({
+      orderBy: { created_at: 'desc' }, // 최신 댓글 우선
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            nickname: true,
+            profile_image_url: true,
+          },
+        },
+        tips: {
+          select: {
+            title: true,
+          },
+        },
+      },
+    });
+  }
+
+  // ✅ 특정 댓글 상세 조회
+  public async getCommentById(commentId: number) {
+    return await prisma.comment.findUnique({
+      where: { comment_id: commentId },
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            nickname: true,
+            profile_image_url: true,
+          },
+        },
+        tips: {
+          select: {
+            tips_id: true,
+            title: true,
           },
         },
       },
