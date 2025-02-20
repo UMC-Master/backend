@@ -24,13 +24,6 @@ export class UserRepository {
     });
   }
 
-  async setInfluencer(userId: number) {
-    await this.prisma.user.update({
-      where: { user_id: userId },
-      data: { role: UserRole.INFLUENCER },
-    });
-  }
-
   // ✅ 이메일 인증번호 저장 (.env에서 만료 시간 가져오기)
   async saveEmailVerificationCode(email: string, code: string) {
     const expirationMinutes = parseInt(
