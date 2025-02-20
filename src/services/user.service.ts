@@ -17,37 +17,12 @@ export class UserService {
     this.hashtagService = new HashtagService();
   }
 
-  async sendVerificationEmail(email: string) {
-    try {
-      if (!process.env.JWT_EMAIL_SECRET || !process.env.BASE_URL) {
-        throw new Error('환경변수가 설정되지 않았습니다.');
-      }
-      // JWT를 사용하여 이메일 인증 토큰 생성
-      const token = jwt.sign({ email }, process.env.JWT_EMAIL_SECRET!, {
-        expiresIn: '1h',
-      });
-
-      // 이메일 인증 URL
-      const verificationUrl = `${process.env.BASE_URL}/api/v1/auth/verify-email?token=${token}`;
-
-      // 이메일 전송
-      await this.sendEmail(
-        email,
-        '이메일 인증',
-        `인증 링크: ${verificationUrl}`
-      );
-
-      // ✅ 기존 이메일 인증 기록 삭제 후 저장
-      await this.userRepository.deleteEmailVerificationToken(email);
-      await this.userRepository.saveEmailVerificationToken(email, token);
-
-      return { message: '이메일 인증 링크가 전송되었습니다.' };
-    } catch (error) {
-      console.error('❌ 이메일 인증 이메일 전송 실패:', error);
-      throw new Error('이메일 인증 이메일을 전송하는 중 오류가 발생했습니다.');
-    }
+  // ✅ 랜덤 6자리 숫자 생성 함수
+  private generateVerificationCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString(); // 100000 ~ 999999
   }
 
+  // ✅ 이메일 전송 메서드 추가
   private async sendEmail(to: string, subject: string, text: string) {
     try {
       if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -73,6 +48,59 @@ export class UserService {
     } catch (error) {
       console.error('❌ 이메일 전송 실패:', error);
       throw new Error('이메일 전송 중 오류가 발생했습니다.');
+    }
+  }
+
+  // ✅ 인증번호 이메일 전송 로직 변경
+  async sendVerificationEmail(email: string) {
+    try {
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        throw new Error('SMTP 이메일 설정이 환경변수에 등록되지 않았습니다.');
+      }
+
+      // ✅ 인증번호 생성
+      const code = this.generateVerificationCode();
+
+      // ✅ 기존 인증번호 삭제 후 새로운 코드 저장
+      await this.userRepository.deleteEmailVerificationCode(email);
+      await this.userRepository.saveEmailVerificationCode(email, code);
+
+      // ✅ 이메일 전송
+      await this.sendEmail(
+        email,
+        '이메일 인증번호',
+        `인증번호: ${code} (3분 내 입력)`
+      );
+
+      return { message: '이메일 인증번호가 전송되었습니다.' };
+    } catch (error) {
+      console.error('❌ 이메일 인증번호 전송 실패:', error);
+      throw new Error('이메일 인증번호 전송 중 오류가 발생했습니다.');
+    }
+  }
+
+  // ✅ 인증번호 검증 로직 추가
+  async verifyEmailCode(email: string, code: string) {
+    try {
+      const verification = await this.userRepository.findEmailVerificationCode(
+        email,
+        code
+      );
+
+      if (!verification) {
+        return {
+          success: false,
+          message: '유효하지 않거나 만료된 인증번호입니다.',
+        };
+      }
+
+      // ✅ 인증 완료 후 인증번호 삭제
+      await this.userRepository.deleteEmailVerificationCode(email);
+
+      return { success: true, message: '이메일 인증이 완료되었습니다.' };
+    } catch (error) {
+      console.error('❌ 이메일 인증 실패:', error);
+      return { success: false, message: '이메일 인증 중 오류가 발생했습니다.' };
     }
   }
 

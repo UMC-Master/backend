@@ -24,33 +24,31 @@ export class UserRepository {
     });
   }
 
-  // ✅ 이메일 인증 토큰 저장
-  async saveEmailVerificationToken(email: string, token: string) {
+  // ✅ 이메일 인증번호 저장 (.env에서 만료 시간 가져오기)
+  async saveEmailVerificationCode(email: string, code: string) {
+    const expirationMinutes = parseInt(
+      process.env.EMAIL_VERIFICATION_EXPIRATION || '3',
+      10
+    );
+
     return await this.prisma.userVerification.create({
       data: {
         email,
-        token,
-        expires_at: new Date(Date.now() + 60 * 60 * 1000), // 1시간 후 만료
+        token: code, // 기존 토큰을 인증번호(6자리 숫자)로 변경
+        expires_at: new Date(Date.now() + expirationMinutes * 60 * 1000), // .env에서 만료 시간 가져옴
       },
     });
   }
 
-  // ✅ 이메일 인증 토큰 조회
-  async findEmailVerificationToken(token: string) {
-    return await this.prisma.userVerification.findUnique({
-      where: { token },
+  // ✅ 이메일 인증번호 조회
+  async findEmailVerificationCode(email: string, code: string) {
+    return await this.prisma.userVerification.findFirst({
+      where: { email, token: code },
     });
   }
 
-  // ✅ 이메일 인증 토큰 삭제
-  async deleteEmailVerificationToken(email: string) {
-    if (!this.prisma) {
-      console.error('❌ PrismaClient가 초기화되지 않았습니다.');
-      throw new Error('PrismaClient 초기화 오류');
-    }
-
-    console.log('🗑️ 이메일 인증 토큰 삭제 요청:', email);
-
+  // ✅ 이메일 인증번호 삭제
+  async deleteEmailVerificationCode(email: string) {
     return await this.prisma.userVerification.deleteMany({
       where: { email },
     });
