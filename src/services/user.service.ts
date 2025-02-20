@@ -268,6 +268,11 @@ export class UserService {
       if (!kakaoAccessToken && code) {
         console.log('🔹 Received Authorization Code:', code); // 디버깅
 
+        const redirectUri =
+          process.env.NODE_ENV === 'development'
+            ? process.env.KAKAO_REDIRECT_URI_DEV
+            : process.env.KAKAO_REDIRECT_URI;
+
         const tokenResponse = await axios.post(
           'https://kauth.kakao.com/oauth/token',
           null,
@@ -275,7 +280,7 @@ export class UserService {
             params: {
               grant_type: 'authorization_code',
               client_id: process.env.KAKAO_CLIENT_ID,
-              redirect_uri: 'https://www.hmaster.shop/oauth/kakao/callback',
+              redirect_uri: redirectUri,
               code,
             },
             headers: {
