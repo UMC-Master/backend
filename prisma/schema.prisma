@@ -14,7 +14,7 @@ model User {
   nickname              String?            @unique
   city                  String?
   district              String?
-  profile_image_url     String?
+  profile_image_url     String?            @db.Text
   provider              String             @default("local")
   providerId            String?            @unique
   created_at            DateTime           @default(now())
@@ -92,7 +92,7 @@ model Tip {
 model TipMedia {
   media_id    Int       @id @default(autoincrement())
   tips_id     Int
-  media_url   String
+  media_url   String    @db.Text
   media_type  MediaType
   uploaded_at DateTime
   tips        Tip       @relation(fields: [tips_id], references: [tips_id])
@@ -265,7 +265,7 @@ model Magazine {
   description        String             @db.Text 
   created_at         DateTime?
   updated_at         DateTime?
-  policy_url         String?
+  policy_url         String?            @db.Text
   location_id        Int?
   location           Location?          @relation(fields: [location_id], references: [location_id])
   organization       Organization?      @relation(fields: [organization_id], references: [organization_id])
@@ -293,7 +293,7 @@ model MagazineHashtag {
 
 model MagazineImage {
   magazine_photo_id Int      @id @default(autoincrement())
-  image_url         String
+  image_url         String   @db.Text
   magazine_id       Int
   magazine          Magazine @relation(fields: [magazine_id], references: [magazine_id])
 
@@ -328,8 +328,8 @@ model MagazineBookmark {
 model Organization {
   organization_id Int        @id @default(autoincrement())
   name            String
-  photo_url       String?
-  homepage_url    String?
+  photo_url       String?    @db.Text
+  homepage_url    String?    @db.Text
   created_at      DateTime?
   updated_at      DateTime?
   location_id     Int?
