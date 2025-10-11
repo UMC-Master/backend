@@ -464,7 +464,7 @@ private async toggleBookmark(req: Request, res: Response, next: NextFunction) {
 
 public async getSavedTips(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId; // ✅ 토큰에서 가져옴
+    const userId = req.user?.userId; // 토큰에서 가져옴
 
     if (!userId) {
       return res.status(StatusCodes.UNAUTHORIZED).json({

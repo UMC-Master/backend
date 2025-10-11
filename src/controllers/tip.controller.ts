@@ -17,7 +17,7 @@ export class TipController {
   }
 
   private initializeRoutes() {
-    console.log('✅ TipController 라우트 등록됨');
+    console.log(' TipController 라우트 등록됨');
 
     // 팁 생성, 수정, 삭제 라우트 정의
     this.router.post(
@@ -29,7 +29,7 @@ export class TipController {
     this.router.put(
       '/tips/:tipId',
       authenticateJWT,
-      imageUploader.array('files', 5), // ✅ 파일 업로드 미들웨어 (multer)
+      imageUploader.array('files', 5), // 파일 업로드 미들웨어 (multer)
       this.updateTip.bind(this)
     ); //팁 수정
     this.router.delete(
@@ -149,7 +149,7 @@ export class TipController {
           ? hashtags.split(',').map((tag) => tag.trim())
           : hashtags || [];
 
-      // ✅ S3에 업로드된 이미지 URL 리스트 가져오기
+      // S3에 업로드된 이미지 URL 리스트 가져오기
       const imageUrls =
         req.files?.map((file) => ({
           media_url: (file as any).location, // S3 URL
@@ -264,7 +264,7 @@ export class TipController {
         });
       }
 
-      // ✅ 이미지 변환 처리
+      // 이미지 변환 처리
       let newImages = [];
       if (req.files && req.files.length > 0) {
         newImages = req.files.map((file) => ({
@@ -405,7 +405,7 @@ export class TipController {
    *                                 name:
    *                                   type: string
    *                                   example: "cleaning"
-   *                           imageUrls:  # ✅ 이미지 필드 추가
+   *                           imageUrls:  # 이미지 필드 추가
    *                             type: array
    *                             items:
    *                               type: object
@@ -818,7 +818,7 @@ export class TipController {
       const hashtags = req.query.hashtags ? (req.query.hashtags as string).split(",") : [];
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-      const sort = req.query.sort as string || "latest"; // ✅ 정렬 옵션 추가
+      const sort = req.query.sort as string || "latest"; // 정렬 옵션 추가
 
       const result = await this.tipService.searchTips(query, hashtags, page, limit, sort);
       return res.status(StatusCodes.OK).json(result);

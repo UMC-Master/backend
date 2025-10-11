@@ -168,20 +168,20 @@ public async getSavedTips(userId: number) {
       media_url: media.media_url,
       media_type: media.media_type,
     })),
-    likeCount: save.tips.likes ? save.tips.likes.length : 0, // ✅ 좋아요 수 계산
-    saveCount: save.tips.saves ? save.tips.saves.length : 0, // ✅ 북마크(저장) 수 계산
+    likeCount: save.tips.likes ? save.tips.likes.length : 0, // 좋아요 수 계산
+    saveCount: save.tips.saves ? save.tips.saves.length : 0, // 북마크(저장) 수 계산
     createdAt: save.tips.created_at,
   }));
 }
 
 
-  // ✅ 전체 댓글 조회 (페이지네이션 적용)
+  // 전체 댓글 조회 (페이지네이션 적용)
   public async getAllComments() {
     return await this.communityRepository.getAllComments();
   }
 
   
-  // ✅ 특정 댓글 상세 조회
+  // 특정 댓글 상세 조회
   public async getCommentById(commentId: number) {
     if (!commentId || isNaN(commentId)) {
       throw new ValidationError('유효한 댓글 ID가 필요합니다.',null);

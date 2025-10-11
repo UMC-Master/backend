@@ -24,14 +24,14 @@ export class TipService {
     hashtags: string[];
     imageUrls: { media_url: string; media_type: string }[];
   }) {
-    // ✅ 유저 정보 가져오기 (인플루언서 여부 확인)
+    //  유저 정보 가져오기 (인플루언서 여부 확인)
     const user = await this.userRepository.findUserById(data.userId);
     if (!user) {
       throw new ValidationError('유효하지 않은 사용자입니다.', null);
     }
-    const isInfluencer = user.role === 'INFLUENCER'; // ✅ 인플루언서 여부 판단
+    const isInfluencer = user.role === 'INFLUENCER'; // 인플루언서 여부 판단
 
-    // ✅ 기존 팁 생성 로직 유지
+    // 기존 팁 생성 로직 유지
     const newTip = await this.tipRepository.createTip({
       userId: data.userId,
       title: data.title,
@@ -56,7 +56,7 @@ export class TipService {
       Array.from(new Set(hashtagIds))
     );
 
-    // ✅ 해시태그 연결, 미디어 저장 로직 유지
+    // 해시태그 연결, 미디어 저장 로직 유지
     if (data.imageUrls.length > 0) {
       await this.tipRepository.saveImages(newTip.tips_id, data.imageUrls);
     }
@@ -67,7 +67,7 @@ export class TipService {
       result: {
         tip: {
           ...newTip,
-          isInfluencer, // ✅ 응답에 인플루언서 여부 포함
+          isInfluencer, // 응답에 인플루언서 여부 포함
           hashtags: data.hashtags,
           images: data.imageUrls,
         },
@@ -94,10 +94,10 @@ export class TipService {
     content: string,
     newImages: { media_url: string; media_type: string }[]
   ) {
-    // ✅ media_type을 ENUM 값으로 변환
+    // media_type을 ENUM 값으로 변환
     const newImagesWithEnum = newImages.map((img) => ({
       media_url: img.media_url,
-      media_type: this.tipRepository.getMediaType(img.media_type), // ✅ ENUM 변환
+      media_type: this.tipRepository.getMediaType(img.media_type), // ENUM 변환
     }));
 
     return await this.tipRepository.updateTip(
@@ -143,7 +143,7 @@ export class TipService {
     }));
   }
 
-  // ✅ 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
+  // 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
   public async getSortedTips(page: number, limit: number, sort: string) {
     const skip = (page - 1) * limit;
     const tips = await this.tipRepository.getSortedTips(skip, limit);
@@ -175,8 +175,8 @@ export class TipService {
         media_url: media.media_url,
         media_type: media.media_type,
       })),
-      likesCount: tip._count.likes || 0, // ✅ 기본값 0 설정
-      savesCount: tip._count.saves || 0, // ✅ 기본값 0 설정
+      likesCount: tip._count.likes || 0, // 기본값 0 설정
+      savesCount: tip._count.saves || 0, // 기본값 0 설정
       createdAt: tip.created_at,
       updatedAt: tip.updated_at,
     }));
@@ -187,7 +187,7 @@ export class TipService {
     const tip = await this.tipRepository.getTipById(tipId);
     if (!tip) return null;
 
-    // ✅ 현재 로그인한 사용자의 좋아요 및 북마크 여부 확인
+    // 현재 로그인한 사용자의 좋아요 및 북마크 여부 확인
     const isLiked = userId
       ? await this.tipRepository.isTipLikedByUser(tipId, userId)
       : false;
@@ -228,7 +228,7 @@ export class TipService {
   ) {
     const skip = (page - 1) * limit;
 
-    // ✅ 둘 다 입력되지 않으면 예외 처리
+    // 둘 다 입력되지 않으면 예외 처리
     if (!query && hashtags.length === 0) {
       throw new ValidationError(
         '검색어 또는 해시태그 중 하나는 반드시 입력해야 합니다.',
@@ -236,12 +236,12 @@ export class TipService {
       );
     }
 
-    // ✅ 검색어가 있을 경우, 공백으로만 이루어진 값은 예외 처리
+    // 검색어가 있을 경우, 공백으로만 이루어진 값은 예외 처리
     if (query && query.trim() === '') {
       throw new ValidationError('검색어에는 공백만 포함될 수 없습니다.', null);
     }
 
-    // ✅ Repository에서 검색 실행
+    // Repository에서 검색 실행
     const tips = await this.tipRepository.searchTips(
       query,
       hashtags,
@@ -250,7 +250,7 @@ export class TipService {
       sort
     );
 
-    // ✅ 검색 결과 반환
+    // 검색 결과 반환
     return {
       isSuccess: true,
       message: tips.length ? '팁 검색 성공' : '검색 결과가 없습니다.',
@@ -282,7 +282,7 @@ export class TipService {
     };
   }
 
-  // ✅ 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
+  // 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
   public async getSortedInfluencerTips(
     page: number,
     limit: number,
@@ -318,8 +318,8 @@ export class TipService {
         media_url: media.media_url,
         media_type: media.media_type,
       })),
-      likesCount: tip._count.likes || 0, // ✅ 기본값 0 설정
-      savesCount: tip._count.saves || 0, // ✅ 기본값 0 설정
+      likesCount: tip._count.likes || 0, // 기본값 0 설정
+      savesCount: tip._count.saves || 0, // 기본값 0 설정
       createdAt: tip.created_at,
       updatedAt: tip.updated_at,
     }));
