@@ -25,8 +25,8 @@ export const imageUploader = multer({
       callback(null, `${uploadDirectory}/${uuid}_${file.originalname}`);
     },
   }),
-  // 파일 용량 제한 (최대 5MB)
-  limits: { fileSize: 5 * 1024 * 1024 },
+  // 파일 용량 제한 (최대 20MB)
+  limits: { fileSize: 20 * 1024 * 1024 },
   // 파일 필터 (이미지 확장자만 허용)
   fileFilter: (_, file, callback) => {
     const allowedExtensions = ["image/png", "image/jpg", "image/jpeg", "image/gif"];
