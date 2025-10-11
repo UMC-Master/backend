@@ -151,7 +151,7 @@ public async getSavedTips(userId: number) {
 }
 
 
-   // ✅ 전체 댓글 조회 
+   //전체 댓글 조회 
   public async getAllComments() {
     return await prisma.comment.findMany({
       orderBy: { created_at: 'desc' }, // 최신 댓글 우선
@@ -172,7 +172,7 @@ public async getSavedTips(userId: number) {
     });
   }
 
-  // ✅ 특정 댓글 상세 조회
+  // 특정 댓글 상세 조회
   public async getCommentById(commentId: number) {
     return await prisma.comment.findUnique({
       where: { comment_id: commentId },

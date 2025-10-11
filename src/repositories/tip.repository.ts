@@ -4,7 +4,7 @@ export class TipRepository {
   private prisma: PrismaClient;
 
   constructor() {
-    this.prisma = new PrismaClient(); // ✅ Prisma 인스턴스 생성
+    this.prisma = new PrismaClient(); // Prisma 인스턴스 생성
   }
 
   // 팁 제목으로 조회
@@ -48,7 +48,7 @@ export class TipRepository {
     });
   }
 
-  // ✅ 이미지 저장 메서드 수정
+  // 이미지 저장 메서드 수정
   public async saveImages(
     tipId: number,
     images: { media_url: string; media_type: string }[]
@@ -57,16 +57,16 @@ export class TipRepository {
       data: images.map((image) => ({
         tips_id: tipId,
         media_url: image.media_url,
-        media_type: this.getMediaType(image.media_type), // ✅ ENUM 변환 추가
+        media_type: this.getMediaType(image.media_type), // ENUM 변환 추가
         uploaded_at: new Date(),
       })),
     });
   }
 
-  // ✅ media_type 변환 함수 추가
+  // media_type 변환 함수 추가
   private getMediaType(mimeType: string): MediaType {
     if (mimeType.startsWith('image/')) {
-      return MediaType.image; // ✅ Prisma ENUM 값으로 변환
+      return MediaType.image; // Prisma ENUM 값으로 변환
     } else if (mimeType.startsWith('video/')) {
       return MediaType.video;
     } else {
@@ -95,7 +95,7 @@ export class TipRepository {
         data: newImages.map((image) => ({
           tips_id: tipId,
           media_url: image.media_url,
-          media_type: image.media_type, // ✅ ENUM 값으로 저장
+          media_type: image.media_type, // ENUM 값으로 저장
           uploaded_at: new Date(),
         })),
       });
@@ -114,7 +114,7 @@ export class TipRepository {
   //해시태그 연결
   public async associateHashtagsWithTip(tips_id: number, hashtagIds: number[]) {
     if (!hashtagIds || hashtagIds.length === 0) {
-      console.log('❌ 저장할 해시태그가 없습니다.');
+      console.log('저장할 해시태그가 없습니다.');
       return;
     }
 
@@ -123,7 +123,7 @@ export class TipRepository {
       hashtag_id,
     }));
 
-    console.log('✅ 해시태그 저장 데이터:', data);
+    console.log('해시태그 저장 데이터:', data);
 
     await prisma.tipHashtag.createMany({
       data,
@@ -138,16 +138,16 @@ export class TipRepository {
       take,
       orderBy: { created_at: 'desc' },
       include: {
-        media: true, // ✅ 업로드된 이미지 포함
-        hashtags: { include: { hashtag: true } }, // ✅ 해시태그 포함
+        media: true, // 업로드된 이미지 포함
+        hashtags: { include: { hashtag: true } }, // 해시태그 포함
         user: {
           select: { user_id: true, nickname: true, profile_image_url: true },
-        }, // ✅ 작성자 정보 포함
+        }, // 작성자 정보 포함
       },
     });
   }
 
-  // ✅ 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
+  // 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
   public async getSortedTips(skip: number, take: number) {
     return await prisma.tip.findMany({
       skip,
@@ -162,25 +162,25 @@ export class TipRepository {
         created_at: true,
         media: {
           select: {
-            media_url: true, // ✅ 미디어 URL만 가져옴
-            media_type: true, // ✅ 미디어 타입만 가져옴
+            media_url: true, // 미디어 URL만 가져옴
+            media_type: true, // 미디어 타입만 가져옴
           },
         },
         hashtags: {
           select: {
-            hashtag: true, // ✅ 해시태그 값만 가져옴
+            hashtag: true, // 해시태그 값만 가져옴
           },
         },
         user: {
           select: {
-            nickname: true, // ✅ 사용자 닉네임만 가져옴
-            profile_image_url: true, // ✅ 프로필 이미지 URL만 가져옴
+            nickname: true, // 사용자 닉네임만 가져옴
+            profile_image_url: true, // 프로필 이미지 URL만 가져옴
           },
         },
         _count: {
           select: {
-            likes: true, // ✅ 좋아요 개수
-            saves: true, // ✅ 북마크 개수
+            likes: true, // 좋아요 개수
+            saves: true, // 북마크 개수
           },
         },
       },
@@ -189,10 +189,10 @@ export class TipRepository {
 
   // 팁 상세 조회 기능
   public async getTipInfo(tipId: number) {
-    // ✅ `tipId`가 올바르게 전달되는지 확인
+    // `tipId`가 올바르게 전달되는지 확인
     console.log('getTipInfo() 호출됨, tipId:', tipId);
 
-    // ✅ `tipId`가 숫자인지 검증 후 실행
+    // `tipId`가 숫자인지 검증 후 실행
     if (!tipId || isNaN(tipId)) {
       throw new Error('Invalid tipId: ' + tipId);
     }
@@ -234,7 +234,7 @@ export class TipRepository {
     });
   }
    
-  // ✅ 좋아요 여부 확인
+  // 좋아요 여부 확인
   public async isTipLikedByUser(tipId: number, userId: number) {
     const like = await prisma.tipLike.findFirst({
       where: { tips_id: tipId, user_id: userId },
@@ -242,7 +242,7 @@ export class TipRepository {
     return like !== null;
   }
 
-  // ✅ 북마크 여부 확인
+  // 북마크 여부 확인
   public async isTipSavedByUser(tipId: number, userId: number) {
     const save = await prisma.tipSave.findFirst({
       where: { tips_id: tipId, user_id: userId },
@@ -258,11 +258,11 @@ export class TipRepository {
           query
             ? {
                 OR: [
-                  { title: { contains: query } }, // ✅ `mode: "insensitive"` 제거
+                  { title: { contains: query } }, // `mode: "insensitive"` 제거
                   { content: { contains: query } }
                 ],
               }
-            : {}, // ✅ 검색어가 없으면 무시
+            : {}, //검색어가 없으면 무시
           hashtags.length > 0
             ? {
                 hashtags: {
@@ -273,12 +273,12 @@ export class TipRepository {
                   },
                 },
               }
-            : {}, // ✅ 해시태그가 없으면 무시
+            : {}, // 해시태그가 없으면 무시
         ],
       },
       skip,
       take,
-      orderBy: this.getSortOption(sort), // ✅ 정렬 옵션 적용
+      orderBy: this.getSortOption(sort), // 정렬 옵션 적용
       include: {
         media: true,
         hashtags: { include: { hashtag: true } },
@@ -289,7 +289,7 @@ export class TipRepository {
     });
   }
 
-  // ✅ 정렬 기준을 설정하는 함수
+  // 정렬 기준을 설정하는 함수
   private getSortOption(sort: string) {
     switch (sort) {
       case "likes":
@@ -326,7 +326,7 @@ export class TipRepository {
     });
   }
 
-  // ✅ 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
+  // 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
   public async getSortedInfluencerTips(skip: number, take: number) {
     return await prisma.tip.findMany({
       where: {
@@ -344,25 +344,25 @@ export class TipRepository {
         created_at: true,
         media: {
           select: {
-            media_url: true, // ✅ 미디어 URL만 가져옴
-            media_type: true, // ✅ 미디어 타입만 가져옴
+            media_url: true, //  미디어 URL만 가져옴
+            media_type: true, // 미디어 타입만 가져옴
           },
         },
         hashtags: {
           select: {
-            hashtag: true, // ✅ 해시태그 값만 가져옴
+            hashtag: true, // 해시태그 값만 가져옴
           },
         },
         user: {
           select: {
-            nickname: true, // ✅ 사용자 닉네임만 가져옴
-            profile_image_url: true, // ✅ 프로필 이미지 URL만 가져옴
+            nickname: true, // 사용자 닉네임만 가져옴
+            profile_image_url: true, // 프로필 이미지 URL만 가져옴
           },
         },
         _count: {
           select: {
-            likes: true, // ✅ 좋아요 개수
-            saves: true, // ✅ 북마크 개수
+            likes: true, // 좋아요 개수
+            saves: true, // 북마크 개수
           },
         },
       },

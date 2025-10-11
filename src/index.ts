@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
-import { fileURLToPath } from 'url'; // ✅ 추가
+import { fileURLToPath } from 'url'; // 추가
 
 // ES Module 환경에서 `__dirname` 대체 방법
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +30,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ✅ 수정된 정적 파일 경로
+// 수정된 정적 파일 경로
 const staticFilePath = path.join(__dirname, '../public');
 console.log(`📂 정적 파일 제공 경로: ${staticFilePath}`);
 
@@ -60,7 +60,7 @@ const setupResponseHelpers = (
 // 미들웨어 설정
 const setupMiddlewares = (app: express.Express) => {
   app.use(cors());
-  app.use('/static', express.static(staticFilePath)); // ✅ 절대 경로 사용
+  app.use('/static', express.static(staticFilePath)); // 절대 경로 사용
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
   app.use(setupResponseHelpers);
@@ -96,13 +96,13 @@ const setupControllers = (app: express.Express) => {
       console.error(`❌ ${controller.constructor.name} 라우터가 없음`);
     } else {
       console.log(
-        `✅ ${controller.constructor.name} 라우터 등록됨: ${controller.router.stack.map((r) => r.route?.path || '미들웨어')}`
+        `${controller.constructor.name} 라우터 등록됨: ${controller.router.stack.map((r) => r.route?.path || '미들웨어')}`
       );
-      app.use('/api/v1', controller.router); // ✅ 각 컨트롤러의 router를 app에 등록
+      app.use('/api/v1', controller.router); // 각 컨트롤러의 router를 app에 등록
     }
   });
 
-  // ✅ AuthController를 별도로 등록 (올바른 엔드포인트 설정)
+  // AuthController를 별도로 등록 (올바른 엔드포인트 설정)
   const authController = new AuthController();
   app.use('/api/v1/auth', authController.router);
 };
