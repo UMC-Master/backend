@@ -228,13 +228,13 @@ export class TipService {
   ) {
     const skip = (page - 1) * limit;
 
-    // 둘 다 입력되지 않으면 예외 처리
-    if (!query && hashtags.length === 0) {
-      throw new ValidationError(
-        '검색어 또는 해시태그 중 하나는 반드시 입력해야 합니다.',
-        null
-      );
-    }
+    // // 둘 다 입력되지 않으면 예외 처리
+    // if (!query && hashtags.length === 0) {
+    //   throw new ValidationError(
+    //     '검색어 또는 해시태그 중 하나는 반드시 입력해야 합니다.',
+    //     null
+    //   );
+    // }
 
     // 검색어가 있을 경우, 공백으로만 이루어진 값은 예외 처리
     if (query && query.trim() === '') {
