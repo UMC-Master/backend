@@ -19,7 +19,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure SSH
+        shell: bash
         run: |
+          set -ex
           mkdir -p ~/.ssh
           echo "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
