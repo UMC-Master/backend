@@ -405,6 +405,16 @@ model Challenge {
   @@map("challenge")
 }
 
+model ChallengeHashtag {
+  challenge_hashtag_id Int       @id @default(autoincrement())
+  challenge_id         Int
+  hashtag_id           Int
+
+  @@index([challenge_id], map: "challenge_hashtag_challenge_id_fkey")
+  @@index([hashtag_id], map: "challenge_hashtag_hashtag_id_fkey")
+  @@map("challenge_hashtag")
+}
+
 model ChallengeAttempt {
   attempt_id   Int                  @id @default(autoincrement())
   challenge_id Int

@@ -24,6 +24,7 @@ import { ChatbotController } from './controllers/chatbot.controller.js';
 import { OrganizationController } from './controllers/organization.controller.js';
 import { AuthController } from './controllers/auth.controller.js';
 import { HashtagController } from './controllers/hashtag.controller.js';
+import { ChallengeController } from './controllers/challenge.controller.js';
 
 dotenv.config();
 
@@ -88,6 +89,7 @@ const setupControllers = (app: express.Express) => {
     new OrganizationController(),
     new AuthController(),
     new HashtagController(),
+    new ChallengeController(),
     new UserManageController(),
   ];
 
