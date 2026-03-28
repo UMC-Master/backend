@@ -2,8 +2,6 @@ import { prisma } from '../db.config.js';
 
 export class CommunityRepository {
 
-
-
   // 팁 ID로 조회
   async getTipById(tipId: number) {
     return await prisma.tip.findUnique({
@@ -49,15 +47,16 @@ export class CommunityRepository {
     });
   }
 
-
+  // 좋아요 추가 
   async addLike(userId: number, tipId: number) {
     return await prisma.tipLike.create({
       data: { user_id: userId, tips_id: tipId },
     });
   }
 
+  // 좋아요 삭제 
   async removeLike(userId: number, tipId: number) {
-    // 먼저 like_id 조회
+
     const like = await prisma.tipLike.findFirst({
       where: { user_id: userId, tips_id: tipId },
     });
@@ -72,7 +71,6 @@ export class CommunityRepository {
       where: { like_id: like.like_id },
     });
   }
-
 
   // 사용자가 특정 팁을 북마크했는지 확인
   async getBookmarkByUserAndTip(userId: number, tipId: number) {
@@ -128,7 +126,7 @@ export class CommunityRepository {
               select: {
                 save_id: true,
               },
-            }
+            } 
           },
         },
       },

@@ -16,8 +16,6 @@ export class CommunityService {
     this.communityRepository = new CommunityRepository();
   }
 
-
-
   async toggleLike(userId: number, tipId: number) {
     // 기존 좋아요 여부 확인
     const existingLike = await this.communityRepository.getTipLike(userId, tipId);
