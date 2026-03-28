@@ -425,13 +425,13 @@ model ChallengeVerification {
   @@map("challenge_verification")
 }
 
-model ChallengeAttemptImage {
-  image_id   Int                  @id @default(autoincrement())
-  attempt_id Int
-  image_url  String               @db.Text
+model ChallengeVerificationImage {
+  image_id        Int                  @id @default(autoincrement())
+  verification_id Int
+  image_url       String               @db.Text
 
-  @@index([attempt_id], map: "challenge_attempt_image_attempt_id_fkey")
-  @@map("challenge_attempt_image")
+  @@index([verification_id], map: "challenge_verification_image_verification_id_fkey")
+  @@map("challenge_verification_image")
 }
 
 enum MediaType {

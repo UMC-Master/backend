@@ -377,12 +377,12 @@ CREATE TABLE `challenge_verification` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `challenge_attempt_image` (
+CREATE TABLE `challenge_verification_image` (
     `image_id` INTEGER NOT NULL AUTO_INCREMENT,
-    `attempt_id` INTEGER NOT NULL,
+    `verification_id` INTEGER NOT NULL,
     `image_url` TEXT NOT NULL,
 
-    INDEX `challenge_attempt_image_attempt_id_fkey`(`attempt_id`),
+    INDEX `challenge_verification_image_verification_id_fkey`(`verification_id`),
     PRIMARY KEY (`image_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
