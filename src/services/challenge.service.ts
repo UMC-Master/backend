@@ -4,7 +4,10 @@ import { ChallengeVerificationRepository } from '../repositories/challengeVerifi
 import { ChallengeVerificationImageRepository } from '../repositories/challengeVerificationImage.repository.js';
 import { ChallengeHashtagRepository } from '../repositories/challengeHashtag.repository.js';
 import { HashtagRepository } from '../repositories/hashtag.repository.js';
-import { ChallengeNotFoundError } from '../errors/challenge.error.js';
+import {
+  ChallengeAlreadyStartedError,
+  ChallengeNotFoundError,
+} from '../errors/challenge.error.js';
 import { ChallengeDto } from '../dtos/challenge.dto.js';
 
 export class ChallengeService {
@@ -55,7 +58,9 @@ export class ChallengeService {
       (challengeHashtag) => challengeHashtag.hashtag_id
     );
     const hashtags =
-      hashtagIds.length > 0 ? await this.hashtagRepository.getByIds(hashtagIds) : [];
+      hashtagIds.length > 0
+        ? await this.hashtagRepository.getByIds(hashtagIds)
+        : [];
 
     return this.toChallengeDto(
       challenge,
@@ -77,7 +82,9 @@ export class ChallengeService {
       (challengeHashtag) => challengeHashtag.hashtag_id
     );
     const hashtags =
-      hashtagIds.length > 0 ? await this.hashtagRepository.getByIds(hashtagIds) : [];
+      hashtagIds.length > 0
+        ? await this.hashtagRepository.getByIds(hashtagIds)
+        : [];
 
     return this.toChallengeDto(
       challenge,
@@ -85,16 +92,32 @@ export class ChallengeService {
     );
   }
 
-  async startChallenge(data: {
-    challenge_id: number;
-    user_id: number;
-    status: string;
-  }) {
+  async startChallenge(data: { challenge_id: number; user_id: number }) {
+    const challenge = await this.challengeRepository.findById(data.challenge_id);
+    if (!challenge) {
+      throw new ChallengeNotFoundError({ challenge_id: data.challenge_id });
+    }
+
+    const existingAttempt =
+      await this.challengeAttemptRepository.findByChallengeAndUser(
+        data.challenge_id,
+        data.user_id
+      );
+
+    if (existingAttempt) {
+      throw new ChallengeAlreadyStartedError({
+        challenge_id: data.challenge_id,
+        user_id: data.user_id,
+        attempt_id: existingAttempt.attempt_id,
+      });
+    }
+
     const attemptData = {
       challenge_id: data.challenge_id,
       user_id: data.user_id,
-      status: data.status,
+      status: 'START',
     };
+
     return await this.challengeAttemptRepository.create(attemptData);
   }
 

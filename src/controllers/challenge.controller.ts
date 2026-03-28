@@ -31,46 +31,46 @@ export class ChallengeController {
      *             schema:
      *               type: object
      *               properties:
-    *                 isSuccess:
-    *                   type: boolean
-    *                   example: true
-    *                 code:
-    *                   type: string
-    *                   example: "COMMON200"
-    *                 message:
-    *                   type: string
-    *                   example: "성공입니다."
-    *                 result:
-    *                   type: object
-    *                   properties:
-    *                     challengeId:
-    *                       type: integer
-    *                     imageUrl:
-    *                       type: string
-    *                     title:
-    *                       type: string
-    *                     startDate:
-    *                       type: string
-    *                       format: date-time
-    *                     endDate:
-    *                       type: string
-    *                       format: date-time
-    *                     descriptionTitle:
-    *                       type: string
-    *                     descriptionContent:
-    *                       type: string
-    *                     verificationMethod:
-    *                       type: string
-    *                     likesCount:
-    *                       type: integer
-    *                     bookmarksCount:
-    *                       type: integer
-    *                     sharesCount:
-    *                       type: integer
-    *                     hashtags:
-    *                       type: array
-    *                       items:
-    *                         type: string
+     *                 isSuccess:
+     *                   type: boolean
+     *                   example: true
+     *                 code:
+     *                   type: string
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   example: "성공입니다."
+     *                 result:
+     *                   type: object
+     *                   properties:
+     *                     challengeId:
+     *                       type: integer
+     *                     imageUrl:
+     *                       type: string
+     *                     title:
+     *                       type: string
+     *                     startDate:
+     *                       type: string
+     *                       format: date-time
+     *                     endDate:
+     *                       type: string
+     *                       format: date-time
+     *                     descriptionTitle:
+     *                       type: string
+     *                     descriptionContent:
+     *                       type: string
+     *                     verificationMethod:
+     *                       type: string
+     *                     likesCount:
+     *                       type: integer
+     *                     bookmarksCount:
+     *                       type: integer
+     *                     sharesCount:
+     *                       type: integer
+     *                     hashtags:
+     *                       type: array
+     *                       items:
+     *                         type: string
      */
     this.router.get('/challenges', this.getOngoingChallenge.bind(this));
 
@@ -79,7 +79,7 @@ export class ChallengeController {
      * /api/v1/challenges/{id}/start:
      *   post:
      *     summary: "챌린지 시작"
-     *     description: "챌린지 시작 - 챌린지 시도 테이블에 인스턴스 생성"
+      *     description: "로그인한 사용자가 챌린지를 시작합니다. challenge_attempt 테이블에 status=START로 생성됩니다."
      *     tags:
      *       - Challenge
      *     security:
@@ -90,15 +90,40 @@ export class ChallengeController {
      *         required: true
      *         schema:
      *           type: integer
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
      *     responses:
      *       201:
      *         description: "챌린지 시작 성공"
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   example: true
+     *                 code:
+     *                   type: string
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   example: "성공입니다."
+     *                 result:
+     *                   type: object
+    *                   properties:
+    *                     attempt_id:
+    *                       type: integer
+    *                       example: 12
+    *                     challenge_id:
+    *                       type: integer
+    *                       example: 1
+    *                     user_id:
+    *                       type: integer
+    *                       example: 25
+    *                     status:
+    *                       type: string
+    *                       example: "START"
+    *       400:
+    *         description: "이미 시작한 챌린지"
     *         content:
     *           application/json:
     *             schema:
@@ -106,16 +131,27 @@ export class ChallengeController {
     *               properties:
     *                 isSuccess:
     *                   type: boolean
-    *                   example: true
+    *                   example: false
     *                 code:
     *                   type: string
-    *                   example: "COMMON200"
+    *                   example: "CH002"
     *                 message:
     *                   type: string
-    *                   example: "성공입니다."
-    *                 result:
+    *                   example: "이미 시작한 챌린지입니다."
+    *                 data:
     *                   type: object
-    *                   description: "챌린지 시작 결과"
+    *                   properties:
+    *                     challenge_id:
+    *                       type: integer
+    *                       example: 1
+    *                     user_id:
+    *                       type: integer
+    *                       example: 25
+    *                     attempt_id:
+    *                       type: integer
+    *                       example: 12
+    *       401:
+    *         description: "인증 실패"
      */
     this.router.post(
       '/challenges/:id/start',
@@ -148,23 +184,23 @@ export class ChallengeController {
      *     responses:
      *       201:
      *         description: "챌린지 인증 성공"
-    *         content:
-    *           application/json:
-    *             schema:
-    *               type: object
-    *               properties:
-    *                 isSuccess:
-    *                   type: boolean
-    *                   example: true
-    *                 code:
-    *                   type: string
-    *                   example: "COMMON200"
-    *                 message:
-    *                   type: string
-    *                   example: "성공입니다."
-    *                 result:
-    *                   type: object
-    *                   description: "챌린지 인증 결과"
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   example: true
+     *                 code:
+     *                   type: string
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   example: "성공입니다."
+     *                 result:
+     *                   type: object
+     *                   description: "챌린지 인증 결과"
      */
     this.router.post(
       '/challenges/:id/verify',
@@ -197,23 +233,23 @@ export class ChallengeController {
      *     responses:
      *       200:
      *         description: "챌린지 중단 성공"
-    *         content:
-    *           application/json:
-    *             schema:
-    *               type: object
-    *               properties:
-    *                 isSuccess:
-    *                   type: boolean
-    *                   example: true
-    *                 code:
-    *                   type: string
-    *                   example: "COMMON200"
-    *                 message:
-    *                   type: string
-    *                   example: "성공입니다."
-    *                 result:
-    *                   type: object
-    *                   description: "챌린지 중단 결과"
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   example: true
+     *                 code:
+     *                   type: string
+     *                   example: "COMMON200"
+     *                 message:
+     *                   type: string
+     *                   example: "성공입니다."
+     *                 result:
+     *                   type: object
+     *                   description: "챌린지 중단 결과"
      */
     this.router.patch(
       '/challenges/:id/stop',
@@ -241,8 +277,6 @@ export class ChallengeController {
     const attemptData = {
       challenge_id,
       user_id,
-      status: 'started',
-      ...req.body,
     };
 
     const result = await this.challengeService.startChallenge(attemptData);
