@@ -25,6 +25,9 @@ export class ChallengeAttemptRepository {
         challenge_id,
         user_id,
       },
+      orderBy: {
+        attempt_id: 'desc',
+      },
     });
   }
 

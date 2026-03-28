@@ -222,7 +222,7 @@ export class ChallengeController {
      * /api/v1/challenges/{id}/stop:
      *   patch:
      *     summary: "챌린지 중단"
-     *     description: "챌린지 중단 - 챌린지 시도 테이블 상태를 CANCELED로 변경"
+     *     description: "챌린지 시도 중단 - challenge_attempt 상태를 CANCELED로 변경"
      *     tags:
      *       - Challenge
      *     security:
@@ -230,9 +230,11 @@ export class ChallengeController {
      *     parameters:
      *       - in: path
      *         name: id
+     *         description: "챌린지 시도 ID (attempt_id)"
      *         required: true
      *         schema:
      *           type: integer
+     *           example: 12
      *     responses:
      *       200:
      *         description: "챌린지 중단 성공"
@@ -252,7 +254,59 @@ export class ChallengeController {
      *                   example: "성공입니다."
      *                 result:
      *                   type: object
-     *                   description: "챌린지 중단 결과"
+     *                   properties:
+     *                     attempt_id:
+     *                       type: integer
+     *                       example: 12
+     *                     challenge_id:
+     *                       type: integer
+     *                       example: 1
+     *                     user_id:
+     *                       type: integer
+     *                       example: 25
+     *                     status:
+     *                       type: string
+     *                       example: "CANCELED"
+     *       400:
+     *         description: "유효하지 않은 요청 (없는 시도 또는 본인 시도가 아님)"
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   example: false
+     *                 code:
+     *                   type: string
+     *                   example: "CH003"
+     *                 message:
+     *                   type: string
+     *                   example: "없는 챌린지 시도입니다."
+     *                 data:
+     *                   type: object
+     *                   properties:
+     *                     attempt_id:
+     *                       type: integer
+     *                       example: 12
+     *       401:
+     *         description: "인증 실패"
+     *       500:
+     *         description: "서버 에러"
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   example: false
+     *                 code:
+     *                   type: string
+     *                   example: "COMMON500"
+     *                 message:
+     *                   type: string
+     *                   example: "서버 에러가 발생했습니다."
      */
     this.router.patch(
       '/challenges/:id/stop',
@@ -306,9 +360,11 @@ export class ChallengeController {
 
   private async stopChallenge(req: Request, res: Response) {
     const attempt_id = parseInt(req.params.id);
+    const user_id = req.user.userId;
 
     const stopData = {
       attempt_id,
+      user_id,
     };
 
     const result = await this.challengeService.stopChallenge(stopData);

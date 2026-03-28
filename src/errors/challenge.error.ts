@@ -23,3 +23,9 @@ export class ChallengeAttemptNotStartError extends CommonError {
     super('CH004', '챌린지 시도 상태가 START가 아닙니다.', data);
   }
 }
+
+export class ChallengeAttemptForbiddenError extends CommonError {
+  constructor(data: unknown) {
+    super('CH005', '본인의 챌린지 시도가 아닙니다.', data);
+  }
+}

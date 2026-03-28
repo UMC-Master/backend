@@ -6,6 +6,7 @@ import { ChallengeHashtagRepository } from '../repositories/challengeHashtag.rep
 import { HashtagRepository } from '../repositories/hashtag.repository.js';
 import {
   ChallengeAlreadyStartedError,
+  ChallengeAttemptForbiddenError,
   ChallengeAttemptNotFoundError,
   ChallengeAttemptNotStartError,
   ChallengeNotFoundError,
@@ -108,7 +109,7 @@ export class ChallengeService {
         data.user_id
       );
 
-    if (existingAttempt) {
+    if (existingAttempt && existingAttempt.status !== 'CANCELED') {
       throw new ChallengeAlreadyStartedError({
         challenge_id: data.challenge_id,
         user_id: data.user_id,
@@ -165,7 +166,24 @@ export class ChallengeService {
     return verification;
   }
 
-  async stopChallenge(data: { attempt_id: number }) {
+  async stopChallenge(data: { attempt_id: number; user_id: number }) {
+    const attempt = await this.challengeAttemptRepository.findById(
+      data.attempt_id
+    );
+
+    if (!attempt) {
+      throw new ChallengeAttemptNotFoundError({
+        attempt_id: data.attempt_id,
+      });
+    }
+
+    if (attempt.user_id !== data.user_id) {
+      throw new ChallengeAttemptForbiddenError({
+        attempt_id: data.attempt_id,
+        user_id: data.user_id,
+      });
+    }
+
     return await this.challengeAttemptRepository.update(data.attempt_id, {
       status: 'CANCELED',
     });
