@@ -3,15 +3,9 @@ import { prisma } from '../db.config.js';
 export class CommunityRepository {
 
 
-  // 팁 제목으로 조회
-  public async getTipByTitle(title: string) {
-    return await prisma.tip.findFirst({
-      where: { title }
-    });
-  }
 
   // 팁 ID로 조회
-  public async getTipById(tipId: number) {
+  async getTipById(tipId: number) {
     return await prisma.tip.findUnique({
       where: { tips_id: tipId },
       include: { likes: true, comments: true, media: true }  // 좋아요, 댓글, 미디어 포함
@@ -19,7 +13,7 @@ export class CommunityRepository {
   }
 
   // 사용자가 해당 팁을 좋아요 했는지 확인
-  public async getTipLike(userId: number, tipId: number) {
+  async getTipLike(userId: number, tipId: number) {
     return await prisma.tipLike.findFirst({
       where: {
         user_id: userId,
@@ -28,9 +22,8 @@ export class CommunityRepository {
     });
   }
 
-
   // 댓글 작성
-  public async commentOnTip(userId: number, tipId: number, comment: string) {
+  async commentOnTip(userId: number, tipId: number, comment: string) {
     return await prisma.comment.create({
       data: {
         user_id: userId,
@@ -42,26 +35,20 @@ export class CommunityRepository {
   }
 
   // 댓글 삭제
-  public async deleteComment(commentId: number) {
+  async deleteComment(commentId: number) {
     return await prisma.comment.delete({
       where: { comment_id: commentId },
     });
-    }
-
-
-    // 댓글 수정
-  public async updateComment(commentId: number, newContent: string) {
-  return await prisma.comment.update({
-    where: { comment_id: commentId },
-    data: { comment: newContent },
-  });
   }
-  
-  async findLikeByUserAndTip(userId: number, tipId: number) {
-    return await prisma.tipLike.findFirst({
-      where: { user_id: userId, tips_id: tipId },
+
+  // 댓글 수정
+  async updateComment(commentId: number, newContent: string) {
+    return await prisma.comment.update({
+      where: { comment_id: commentId },
+      data: { comment: newContent },
     });
   }
+
 
   async addLike(userId: number, tipId: number) {
     return await prisma.tipLike.create({
@@ -74,21 +61,21 @@ export class CommunityRepository {
     const like = await prisma.tipLike.findFirst({
       where: { user_id: userId, tips_id: tipId },
     });
-  
+
     // 만약 좋아요가 없는 경우 예외 처리
     if (!like || !like.like_id) {
       throw new Error("좋아요 기록이 없습니다.");
     }
-  
+
     // 찾은 like_id를 사용하여 삭제
     return await prisma.tipLike.delete({
-      where: { like_id: like.like_id }, //  
+      where: { like_id: like.like_id },
     });
   }
-  
+
 
   // 사용자가 특정 팁을 북마크했는지 확인
-  async findBookmarkByUserAndTip(userId: number, tipId: number) {
+  async getBookmarkByUserAndTip(userId: number, tipId: number) {
     return await prisma.tipSave.findFirst({
       where: { user_id: userId, tips_id: tipId },
     });
@@ -104,55 +91,53 @@ export class CommunityRepository {
   // 북마크 삭제
   async removeBookmark(saveId: number) {
     return await prisma.tipSave.delete({
-      where: { save_id: saveId }, // 
+      where: { save_id: saveId },
+    });
+  }
+
+  // 사용자의 저장된 꿀팁 목록 조회
+  async getSavedTips(userId: number) {
+    return await prisma.tipSave.findMany({
+      where: { user_id: userId },
+      include: {
+        tips: {
+          select: {
+            tips_id: true,
+            title: true,
+            content: true,
+            created_at: true,
+            user: {
+              select: {
+                user_id: true,
+                nickname: true,
+                profile_image_url: true,
+              },
+            },
+            media: {
+              select: {
+                media_url: true,
+                media_type: true,
+              },
+            },
+            likes: {
+              select: {
+                like_id: true,
+              },
+            },
+            saves: {
+              select: {
+                save_id: true,
+              },
+            }
+          },
+        },
+      },
     });
   }
 
 
-
-  // 사용자의 저장된 꿀팁 목록 조회
-public async getSavedTips(userId: number) {
-  return await prisma.tipSave.findMany({
-    where: { user_id: userId },
-    include: {
-      tips: {
-        select: {
-          tips_id: true,
-          title: true,
-          content: true,
-          created_at: true,
-          user: {
-            select: {
-              user_id: true,
-              nickname: true,
-              profile_image_url: true,
-            },
-          },
-          media: {
-            select: {
-              media_url: true,
-              media_type: true,
-            },
-          },
-          likes: {
-            select: {
-              like_id: true, 
-            },
-          },
-          saves: { 
-            select: {
-              save_id: true,
-            },
-          }
-        },
-      },
-    },
-  });
-}
-
-
-   //전체 댓글 조회 
-  public async getAllComments() {
+  //전체 댓글 조회 
+  async getAllComments() {
     return await prisma.comment.findMany({
       orderBy: { created_at: 'desc' }, // 최신 댓글 우선
       include: {
@@ -173,7 +158,7 @@ public async getSavedTips(userId: number) {
   }
 
   // 특정 댓글 상세 조회
-  public async getCommentById(commentId: number) {
+  async getCommentById(commentId: number) {
     return await prisma.comment.findUnique({
       where: { comment_id: commentId },
       include: {
@@ -193,5 +178,5 @@ public async getSavedTips(userId: number) {
       },
     });
   }
-    
+
 }
