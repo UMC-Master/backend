@@ -6,7 +6,7 @@ CREATE TABLE `user` (
     `nickname` VARCHAR(191) NULL,
     `city` VARCHAR(191) NULL,
     `district` VARCHAR(191) NULL,
-    `profile_image_url` VARCHAR(191) NULL,
+    `profile_image_url` TEXT NULL,
     `provider` VARCHAR(191) NOT NULL DEFAULT 'local',
     `providerId` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -14,7 +14,7 @@ CREATE TABLE `user` (
     `location_id` INTEGER NULL,
     `last_login` DATETIME(3) NULL,
     `status` VARCHAR(191) NOT NULL,
-    `role` ENUM('ADMIN', 'USER') NOT NULL DEFAULT 'USER',
+    `role` ENUM('ADMIN', 'USER', 'INFLUENCER') NOT NULL DEFAULT 'USER',
 
     UNIQUE INDEX `user_email_key`(`email`),
     UNIQUE INDEX `user_nickname_key`(`nickname`),
@@ -53,7 +53,7 @@ CREATE TABLE `tip` (
     `tips_id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `content` VARCHAR(191) NOT NULL,
+    `content` TEXT NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
@@ -65,7 +65,7 @@ CREATE TABLE `tip` (
 CREATE TABLE `tip_media` (
     `media_id` INTEGER NOT NULL AUTO_INCREMENT,
     `tips_id` INTEGER NOT NULL,
-    `media_url` VARCHAR(191) NOT NULL,
+    `media_url` TEXT NOT NULL,
     `media_type` ENUM('image', 'video') NOT NULL,
     `uploaded_at` DATETIME(3) NOT NULL,
 
@@ -223,10 +223,10 @@ CREATE TABLE `magazine` (
     `magazine_id` INTEGER NOT NULL AUTO_INCREMENT,
     `organization_id` INTEGER NULL,
     `title` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(191) NOT NULL,
+    `description` TEXT NOT NULL,
     `created_at` DATETIME(3) NULL,
     `updated_at` DATETIME(3) NULL,
-    `policy_url` VARCHAR(191) NULL,
+    `policy_url` TEXT NULL,
     `location_id` INTEGER NULL,
 
     INDEX `magazine_location_id_fkey`(`location_id`),
@@ -248,7 +248,7 @@ CREATE TABLE `magazine_hashtag` (
 -- CreateTable
 CREATE TABLE `magazine_image` (
     `magazine_photo_id` INTEGER NOT NULL AUTO_INCREMENT,
-    `image_url` VARCHAR(191) NOT NULL,
+    `image_url` TEXT NOT NULL,
     `magazine_id` INTEGER NOT NULL,
 
     INDEX `magazine_image_magazine_id_fkey`(`magazine_id`),
@@ -281,8 +281,8 @@ CREATE TABLE `magazine_bookmark` (
 CREATE TABLE `organization` (
     `organization_id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
-    `photo_url` VARCHAR(191) NULL,
-    `homepage_url` VARCHAR(191) NULL,
+    `photo_url` TEXT NULL,
+    `homepage_url` TEXT NULL,
     `created_at` DATETIME(3) NULL,
     `updated_at` DATETIME(3) NULL,
     `location_id` INTEGER NULL,
@@ -310,6 +310,80 @@ CREATE TABLE `user_activity_type` (
     `name` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`user_activity_type_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `chat_session` (
+    `session_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id` INTEGER NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `title` VARCHAR(191) NULL,
+
+    INDEX `chat_session_user_id_fkey`(`user_id`),
+    PRIMARY KEY (`session_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `chat_history` (
+    `chat_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id` INTEGER NULL,
+    `question` VARCHAR(191) NOT NULL,
+    `answer` TEXT NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `session_id` INTEGER NOT NULL,
+
+    INDEX `chat_history_session_id_fkey`(`session_id`),
+    INDEX `chat_history_user_id_fkey`(`user_id`),
+    PRIMARY KEY (`chat_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `challenge` (
+    `challenge_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `image_url` TEXT NOT NULL,
+    `title` VARCHAR(191) NOT NULL,
+    `start_date` DATETIME(3) NOT NULL,
+    `end_date` DATETIME(3) NOT NULL,
+    `description_title` VARCHAR(191) NOT NULL,
+    `description_content` TEXT NOT NULL,
+    `verification_method` VARCHAR(191) NOT NULL,
+    `likes_count` INTEGER NOT NULL DEFAULT 0,
+    `bookmarks_count` INTEGER NOT NULL DEFAULT 0,
+    `shares_count` INTEGER NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (`challenge_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `challenge_attempt` (
+    `attempt_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `challenge_id` INTEGER NOT NULL,
+    `user_id` INTEGER NOT NULL,
+    `status` VARCHAR(191) NOT NULL,
+
+    INDEX `challenge_attempt_challenge_id_fkey`(`challenge_id`),
+    INDEX `challenge_attempt_user_id_fkey`(`user_id`),
+    PRIMARY KEY (`attempt_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `challenge_verification` (
+    `verification_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `attempt_id` INTEGER NOT NULL,
+    `status` VARCHAR(191) NOT NULL,
+
+    INDEX `challenge_verification_attempt_id_fkey`(`attempt_id`),
+    PRIMARY KEY (`verification_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `challenge_attempt_image` (
+    `image_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `attempt_id` INTEGER NOT NULL,
+    `image_url` TEXT NOT NULL,
+
+    INDEX `challenge_attempt_image_attempt_id_fkey`(`attempt_id`),
+    PRIMARY KEY (`image_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
@@ -370,10 +444,10 @@ ALTER TABLE `quiz_answer` ADD CONSTRAINT `quiz_answer_user_id_fkey` FOREIGN KEY 
 ALTER TABLE `hashtag` ADD CONSTRAINT `hashtag_hashtag_type_id_fkey` FOREIGN KEY (`hashtag_type_id`) REFERENCES `hashtag_type`(`hashtag_type_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `user_hashtag` ADD CONSTRAINT `user_hashtag_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `user_hashtag` ADD CONSTRAINT `user_hashtag_hashtag_id_fkey` FOREIGN KEY (`hashtag_id`) REFERENCES `hashtag`(`hashtag_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `user_hashtag` ADD CONSTRAINT `user_hashtag_hashtag_id_fkey` FOREIGN KEY (`hashtag_id`) REFERENCES `hashtag`(`hashtag_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `user_hashtag` ADD CONSTRAINT `user_hashtag_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `tip_hashtag` ADD CONSTRAINT `tip_hashtag_hashtag_id_fkey` FOREIGN KEY (`hashtag_id`) REFERENCES `hashtag`(`hashtag_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -416,3 +490,12 @@ ALTER TABLE `log` ADD CONSTRAINT `log_user_activity_type_id_fkey` FOREIGN KEY (`
 
 -- AddForeignKey
 ALTER TABLE `log` ADD CONSTRAINT `log_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `chat_session` ADD CONSTRAINT `chat_session_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `chat_history` ADD CONSTRAINT `chat_history_session_id_fkey` FOREIGN KEY (`session_id`) REFERENCES `chat_session`(`session_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `chat_history` ADD CONSTRAINT `chat_history_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;

@@ -389,6 +389,51 @@ model ChatHistory {
   @@map("chat_history")
 }
 
+model Challenge {
+  challenge_id       Int                  @id @default(autoincrement())
+  image_url          String               @db.Text
+  title              String
+  start_date         DateTime
+  end_date           DateTime
+  description_title  String
+  description_content String              @db.Text
+  verification_method String
+  likes_count        Int                  @default(0)
+  bookmarks_count    Int                  @default(0)
+  shares_count       Int                  @default(0)
+
+  @@map("challenge")
+}
+
+model ChallengeAttempt {
+  attempt_id   Int                  @id @default(autoincrement())
+  challenge_id Int
+  user_id      Int
+  status       String
+
+  @@index([challenge_id], map: "challenge_attempt_challenge_id_fkey")
+  @@index([user_id], map: "challenge_attempt_user_id_fkey")
+  @@map("challenge_attempt")
+}
+
+model ChallengeVerification {
+  verification_id Int                  @id @default(autoincrement())
+  attempt_id      Int
+  status          String
+
+  @@index([attempt_id], map: "challenge_verification_attempt_id_fkey")
+  @@map("challenge_verification")
+}
+
+model ChallengeAttemptImage {
+  image_id   Int                  @id @default(autoincrement())
+  attempt_id Int
+  image_url  String               @db.Text
+
+  @@index([attempt_id], map: "challenge_attempt_image_attempt_id_fkey")
+  @@map("challenge_attempt_image")
+}
+
 enum MediaType {
   image
   video
