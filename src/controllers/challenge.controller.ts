@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { ChallengeService } from '../services/challenge.service.js';
 import 'express-async-errors';
 import { authenticateJWT } from '../middlewares/authenticateJWT.js';
+import { imageUploader } from '../file.uploader.js';
 
 export class ChallengeController {
   private challengeService: ChallengeService;
@@ -178,9 +179,16 @@ export class ChallengeController {
      *     requestBody:
      *       required: true
      *       content:
-     *         application/json:
+     *         multipart/form-data:
      *           schema:
      *             type: object
+     *             properties:
+     *               image_list:
+     *                 type: array
+     *                 items:
+     *                   type: string
+     *                   format: binary
+     *                 description: "인증 이미지 파일 리스트"
      *     responses:
      *       201:
      *         description: "챌린지 인증 성공"
@@ -205,6 +213,7 @@ export class ChallengeController {
     this.router.post(
       '/challenges/:id/verify',
       authenticateJWT,
+      imageUploader.array('image_list', 5),
       this.verifyChallengeAttempt.bind(this)
     );
 
@@ -285,12 +294,15 @@ export class ChallengeController {
 
   private async verifyChallengeAttempt(req: Request, res: Response) {
     const attempt_id = parseInt(req.params.id);
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    const imageUrls = files.map(
+      (file) => (file as Express.Multer.File & { location: string }).location
+    );
 
     const verificationData = {
       attempt_id,
-      status: 'pending',
-      images: req.body.images || [],
-      ...req.body,
+      status: 'PENDING',
+      images: imageUrls,
     };
 
     const result =

@@ -131,6 +131,7 @@ export class ChallengeService {
     const verification = await this.challengeVerificationRepository.create({
       attempt_id: data.attempt_id,
       status: data.status,
+      requested_at: new Date(),
     });
 
     if (data.images && data.images.length > 0) {

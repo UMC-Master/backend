@@ -430,6 +430,9 @@ model ChallengeVerification {
   verification_id Int                  @id @default(autoincrement())
   attempt_id      Int
   status          String
+  requested_at    DateTime
+  approved_at     DateTime?
+  rejected_at     DateTime?
 
   @@index([attempt_id], map: "challenge_verification_attempt_id_fkey")
   @@map("challenge_verification")
