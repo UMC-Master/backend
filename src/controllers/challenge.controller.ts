@@ -222,7 +222,7 @@ export class ChallengeController {
      * /api/v1/challenges/{id}/stop:
      *   patch:
      *     summary: "챌린지 중단"
-     *     description: "챌린지 중단 - 챌린지 시도 테이블 상태 변경"
+     *     description: "챌린지 중단 - 챌린지 시도 테이블 상태를 CANCELED로 변경"
      *     tags:
      *       - Challenge
      *     security:
@@ -233,12 +233,6 @@ export class ChallengeController {
      *         required: true
      *         schema:
      *           type: integer
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
      *     responses:
      *       200:
      *         description: "챌린지 중단 성공"
@@ -315,8 +309,6 @@ export class ChallengeController {
 
     const stopData = {
       attempt_id,
-      status: 'stopped',
-      ...req.body,
     };
 
     const result = await this.challengeService.stopChallenge(stopData);
