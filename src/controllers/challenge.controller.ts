@@ -31,34 +31,46 @@ export class ChallengeController {
      *             schema:
      *               type: object
      *               properties:
-     *                 challengeId:
-     *                   type: integer
-     *                 imageUrl:
-     *                   type: string
-     *                 title:
-     *                   type: string
-     *                 startDate:
-     *                   type: string
-     *                   format: date-time
-     *                 endDate:
-     *                   type: string
-     *                   format: date-time
-     *                 descriptionTitle:
-     *                   type: string
-     *                 descriptionContent:
-     *                   type: string
-     *                 verificationMethod:
-     *                   type: string
-     *                 likesCount:
-     *                   type: integer
-     *                 bookmarksCount:
-     *                   type: integer
-     *                 sharesCount:
-     *                   type: integer
-     *                 hashtags:
-     *                   type: array
-     *                   items:
-     *                     type: string
+    *                 isSuccess:
+    *                   type: boolean
+    *                   example: true
+    *                 code:
+    *                   type: string
+    *                   example: "COMMON200"
+    *                 message:
+    *                   type: string
+    *                   example: "성공입니다."
+    *                 result:
+    *                   type: object
+    *                   properties:
+    *                     challengeId:
+    *                       type: integer
+    *                     imageUrl:
+    *                       type: string
+    *                     title:
+    *                       type: string
+    *                     startDate:
+    *                       type: string
+    *                       format: date-time
+    *                     endDate:
+    *                       type: string
+    *                       format: date-time
+    *                     descriptionTitle:
+    *                       type: string
+    *                     descriptionContent:
+    *                       type: string
+    *                     verificationMethod:
+    *                       type: string
+    *                     likesCount:
+    *                       type: integer
+    *                     bookmarksCount:
+    *                       type: integer
+    *                     sharesCount:
+    *                       type: integer
+    *                     hashtags:
+    *                       type: array
+    *                       items:
+    *                         type: string
      */
     this.router.get('/challenges', this.getOngoingChallenge.bind(this));
 
@@ -87,6 +99,23 @@ export class ChallengeController {
      *     responses:
      *       201:
      *         description: "챌린지 시작 성공"
+    *         content:
+    *           application/json:
+    *             schema:
+    *               type: object
+    *               properties:
+    *                 isSuccess:
+    *                   type: boolean
+    *                   example: true
+    *                 code:
+    *                   type: string
+    *                   example: "COMMON200"
+    *                 message:
+    *                   type: string
+    *                   example: "성공입니다."
+    *                 result:
+    *                   type: object
+    *                   description: "챌린지 시작 결과"
      */
     this.router.post(
       '/challenges/:id/start',
@@ -119,6 +148,23 @@ export class ChallengeController {
      *     responses:
      *       201:
      *         description: "챌린지 인증 성공"
+    *         content:
+    *           application/json:
+    *             schema:
+    *               type: object
+    *               properties:
+    *                 isSuccess:
+    *                   type: boolean
+    *                   example: true
+    *                 code:
+    *                   type: string
+    *                   example: "COMMON200"
+    *                 message:
+    *                   type: string
+    *                   example: "성공입니다."
+    *                 result:
+    *                   type: object
+    *                   description: "챌린지 인증 결과"
      */
     this.router.post(
       '/challenges/:id/verify',
@@ -151,6 +197,23 @@ export class ChallengeController {
      *     responses:
      *       200:
      *         description: "챌린지 중단 성공"
+    *         content:
+    *           application/json:
+    *             schema:
+    *               type: object
+    *               properties:
+    *                 isSuccess:
+    *                   type: boolean
+    *                   example: true
+    *                 code:
+    *                   type: string
+    *                   example: "COMMON200"
+    *                 message:
+    *                   type: string
+    *                   example: "성공입니다."
+    *                 result:
+    *                   type: object
+    *                   description: "챌린지 중단 결과"
      */
     this.router.patch(
       '/challenges/:id/stop',
@@ -161,14 +224,14 @@ export class ChallengeController {
 
   private async getOngoingChallenge(req: Request, res: Response) {
     const challenge = await this.challengeService.getOngoingChallenge();
-    res.status(StatusCodes.OK).json(challenge);
+    res.status(StatusCodes.OK).success(challenge);
   }
 
   private async getChallenge(req: Request, res: Response) {
     const challenge_id = parseInt(req.params.id);
     const challenge =
       await this.challengeService.getChallengeById(challenge_id);
-    res.status(StatusCodes.OK).json(challenge);
+    res.status(StatusCodes.OK).success(challenge);
   }
 
   private async startChallenge(req: Request, res: Response) {
@@ -183,7 +246,7 @@ export class ChallengeController {
     };
 
     const result = await this.challengeService.startChallenge(attemptData);
-    res.status(StatusCodes.CREATED).json(result);
+    res.status(StatusCodes.CREATED).success(result);
   }
 
   private async verifyChallengeAttempt(req: Request, res: Response) {
@@ -198,7 +261,7 @@ export class ChallengeController {
 
     const result =
       await this.challengeService.verifyChallengeAttempt(verificationData);
-    res.status(StatusCodes.CREATED).json(result);
+    res.status(StatusCodes.CREATED).success(result);
   }
 
   private async stopChallenge(req: Request, res: Response) {
@@ -211,6 +274,6 @@ export class ChallengeController {
     };
 
     const result = await this.challengeService.stopChallenge(stopData);
-    res.status(StatusCodes.OK).json(result);
+    res.status(StatusCodes.OK).success(result);
   }
 }
