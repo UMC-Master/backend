@@ -93,7 +93,9 @@ export class ChallengeService {
   }
 
   async startChallenge(data: { challenge_id: number; user_id: number }) {
-    const challenge = await this.challengeRepository.findById(data.challenge_id);
+    const challenge = await this.challengeRepository.findById(
+      data.challenge_id
+    );
     if (!challenge) {
       throw new ChallengeNotFoundError({ challenge_id: data.challenge_id });
     }

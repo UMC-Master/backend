@@ -79,7 +79,7 @@ export class ChallengeController {
      * /api/v1/challenges/{id}/start:
      *   post:
      *     summary: "챌린지 시작"
-      *     description: "로그인한 사용자가 챌린지를 시작합니다. challenge_attempt 테이블에 status=START로 생성됩니다."
+     *     description: "로그인한 사용자가 챌린지를 시작합니다. challenge_attempt 테이블에 status=START로 생성됩니다."
      *     tags:
      *       - Challenge
      *     security:
@@ -109,49 +109,49 @@ export class ChallengeController {
      *                   example: "성공입니다."
      *                 result:
      *                   type: object
-    *                   properties:
-    *                     attempt_id:
-    *                       type: integer
-    *                       example: 12
-    *                     challenge_id:
-    *                       type: integer
-    *                       example: 1
-    *                     user_id:
-    *                       type: integer
-    *                       example: 25
-    *                     status:
-    *                       type: string
-    *                       example: "START"
-    *       400:
-    *         description: "이미 시작한 챌린지"
-    *         content:
-    *           application/json:
-    *             schema:
-    *               type: object
-    *               properties:
-    *                 isSuccess:
-    *                   type: boolean
-    *                   example: false
-    *                 code:
-    *                   type: string
-    *                   example: "CH002"
-    *                 message:
-    *                   type: string
-    *                   example: "이미 시작한 챌린지입니다."
-    *                 data:
-    *                   type: object
-    *                   properties:
-    *                     challenge_id:
-    *                       type: integer
-    *                       example: 1
-    *                     user_id:
-    *                       type: integer
-    *                       example: 25
-    *                     attempt_id:
-    *                       type: integer
-    *                       example: 12
-    *       401:
-    *         description: "인증 실패"
+     *                   properties:
+     *                     attempt_id:
+     *                       type: integer
+     *                       example: 12
+     *                     challenge_id:
+     *                       type: integer
+     *                       example: 1
+     *                     user_id:
+     *                       type: integer
+     *                       example: 25
+     *                     status:
+     *                       type: string
+     *                       example: "START"
+     *       400:
+     *         description: "이미 시작한 챌린지"
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isSuccess:
+     *                   type: boolean
+     *                   example: false
+     *                 code:
+     *                   type: string
+     *                   example: "CH002"
+     *                 message:
+     *                   type: string
+     *                   example: "이미 시작한 챌린지입니다."
+     *                 data:
+     *                   type: object
+     *                   properties:
+     *                     challenge_id:
+     *                       type: integer
+     *                       example: 1
+     *                     user_id:
+     *                       type: integer
+     *                       example: 25
+     *                     attempt_id:
+     *                       type: integer
+     *                       example: 12
+     *       401:
+     *         description: "인증 실패"
      */
     this.router.post(
       '/challenges/:id/start',
