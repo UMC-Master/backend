@@ -16,8 +16,6 @@ export class CommunityService {
     this.communityRepository = new CommunityRepository();
   }
 
-
-
   async toggleLike(userId: number, tipId: number) {
     // 기존 좋아요 여부 확인
     const existingLike = await this.communityRepository.getTipLike(userId, tipId);
@@ -34,7 +32,7 @@ export class CommunityService {
 
   async toggleBookmark(userId: number, tipId: number) {
     // 기존 북마크 여부 확인
-    const existingBookmark = await this.communityRepository.findBookmarkByUserAndTip(userId, tipId);
+    const existingBookmark = await this.communityRepository.getBookmarkByUserAndTip(userId, tipId);
 
     if (existingBookmark) {
       await this.communityRepository.removeBookmark(existingBookmark.save_id);
@@ -46,7 +44,7 @@ export class CommunityService {
   }
 
   // 팁에 댓글 작성
-   public async commentOnTip(userId: number, tipId: number, comment: string) {
+  async commentOnTip(userId: number, tipId: number, comment: string) {
     try {
       const tip = await this.communityRepository.getTipById(tipId);
       if (!tip) {
@@ -81,7 +79,7 @@ export class CommunityService {
   }
 
   // 댓글 삭제
-  public async deleteComment(commentId: number) {
+  async deleteComment(commentId: number) {
     try {
       // 댓글 존재 여부 확인
       const comment = await this.communityRepository.getCommentById(commentId);
@@ -103,7 +101,7 @@ export class CommunityService {
     }
   }
 
-  public async updateComment(
+  async updateComment(
     userId: number,
     tipId: number,
     commentId: number,
@@ -151,8 +149,7 @@ export class CommunityService {
   }
 
 // 사용자의 저장된 꿀팁 목록 조회
-// 사용자의 저장된 꿀팁 목록 조회
-public async getSavedTips(userId: number) {
+async getSavedTips(userId: number) {
   const savedTips = await this.communityRepository.getSavedTips(userId);
 
   return savedTips.map((save) => ({
@@ -176,13 +173,13 @@ public async getSavedTips(userId: number) {
 
 
   // 전체 댓글 조회 (페이지네이션 적용)
-  public async getAllComments() {
+  async getAllComments() {
     return await this.communityRepository.getAllComments();
   }
 
   
   // 특정 댓글 상세 조회
-  public async getCommentById(commentId: number) {
+  async getCommentById(commentId: number) {
     if (!commentId || isNaN(commentId)) {
       throw new ValidationError('유효한 댓글 ID가 필요합니다.',null);
     }
