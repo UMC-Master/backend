@@ -1,12 +1,7 @@
-import { PrismaClient, MediaType, UserRole } from '@prisma/client';
+import { MediaType, UserRole } from '@prisma/client';
 import { prisma } from '../db.config.js';
+
 export class TipRepository {
-  private prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = new PrismaClient(); // Prisma 인스턴스 생성
-  }
-
   // 팁 제목으로 조회
   public async getTipByTitle(title: string) {
     return await prisma.tip.findFirst({
@@ -24,6 +19,7 @@ export class TipRepository {
             user_id: true,
             nickname: true,
             profile_image_url: true,
+            role: true,
           },
         },
         hashtags: { include: { hashtag: true } },
@@ -79,7 +75,7 @@ export class TipRepository {
     tipId: number,
     title: string,
     content: string,
-    newImages: { media_url: string; media_type: MediaType }[]
+    newImages: { media_url: string; media_type: string }[]
   ) {
     const updatedTip = await prisma.tip.update({
       where: { tips_id: tipId },
@@ -95,7 +91,7 @@ export class TipRepository {
         data: newImages.map((image) => ({
           tips_id: tipId,
           media_url: image.media_url,
-          media_type: image.media_type, // ENUM 값으로 저장
+          media_type: this.getMediaType(image.media_type), // ENUM 변환
           uploaded_at: new Date(),
         })),
       });
@@ -114,7 +110,6 @@ export class TipRepository {
   //해시태그 연결
   public async associateHashtagsWithTip(tips_id: number, hashtagIds: number[]) {
     if (!hashtagIds || hashtagIds.length === 0) {
-      console.log('저장할 해시태그가 없습니다.');
       return;
     }
 
@@ -122,8 +117,6 @@ export class TipRepository {
       tips_id,
       hashtag_id,
     }));
-
-    console.log('해시태그 저장 데이터:', data);
 
     await prisma.tipHashtag.createMany({
       data,
@@ -141,25 +134,25 @@ export class TipRepository {
         media: true, // 업로드된 이미지 포함
         hashtags: { include: { hashtag: true } }, // 해시태그 포함
         user: {
-          select: { user_id: true, nickname: true, profile_image_url: true },
+          select: { user_id: true, nickname: true, profile_image_url: true, role: true },
         }, // 작성자 정보 포함
+        _count: { select: { likes: true, saves: true } },
       },
     });
   }
 
   // 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
-  public async getSortedTips(skip: number, take: number) {
+  public async getSortedTips(skip: number, take: number, sort: string) {
     return await prisma.tip.findMany({
       skip,
       take,
-      orderBy: {
-        created_at: 'desc', // 최신순 정렬
-      },
+      orderBy: this.getSortOption(sort),
       select: {
         tips_id: true, // ID 포함
         title: true,
         content: true,
         created_at: true,
+        updated_at: true,
         media: {
           select: {
             media_url: true, // 미디어 URL만 가져옴
@@ -173,8 +166,10 @@ export class TipRepository {
         },
         user: {
           select: {
+            user_id: true,
             nickname: true, // 사용자 닉네임만 가져옴
             profile_image_url: true, // 프로필 이미지 URL만 가져옴
+            role: true,
           },
         },
         _count: {
@@ -187,53 +182,6 @@ export class TipRepository {
     });
   }
 
-  // 팁 상세 조회 기능
-  public async getTipInfo(tipId: number) {
-    // `tipId`가 올바르게 전달되는지 확인
-    console.log('getTipInfo() 호출됨, tipId:', tipId);
-
-    // `tipId`가 숫자인지 검증 후 실행
-    if (!tipId || isNaN(tipId)) {
-      throw new Error('Invalid tipId: ' + tipId);
-    }
-
-    return await prisma.tip.findUnique({
-      where: {
-        tips_id: tipId,
-      },
-      select: {
-        tips_id: true,
-        title: true,
-        content: true,
-        created_at: true,
-        media: {
-          select: {
-            media_url: true,
-            media_type: true,
-          },
-        },
-        hashtags: {
-          select: {
-            hashtag: true,
-          },
-        },
-        user: {
-          select: {
-            user_id: true,
-            nickname: true,
-            profile_image_url: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-            saves: true,
-          },
-        },
-      },
-    });
-  }
-   
   // 좋아요 여부 확인
   public async isTipLikedByUser(tipId: number, userId: number) {
     const like = await prisma.tipLike.findFirst({
@@ -282,9 +230,8 @@ export class TipRepository {
       include: {
         media: true,
         hashtags: { include: { hashtag: true } },
-        user: { select: { user_id: true, nickname: true, profile_image_url: true } },
-        likes: true,
-        saves: true,
+        user: { select: { user_id: true, nickname: true, profile_image_url: true, role: true } },
+        _count: { select: { likes: true, saves: true } },
       },
     });
   }
@@ -293,55 +240,29 @@ export class TipRepository {
   private getSortOption(sort: string) {
     switch (sort) {
       case "likes":
-        return { likes: { _count: "desc" } }; // 좋아요 개수 내림차순
+        return { likes: { _count: "desc" as const } }; // 좋아요 개수 내림차순
       case "saves":
-        return { saves: { _count: "desc" } }; // 저장 개수 내림차순
+        return { saves: { _count: "desc" as const } }; // 저장 개수 내림차순
       default:
-        return { created_at: "desc" }; // 최신순 (기본값)
+        return { created_at: "desc" as const }; // 최신순 (기본값)
     }
-  }
-  // 새로운 상세 조회 기능 추가
-  public async findTipDetails(tipId: number) {
-    return await prisma.tip.findUnique({
-      where: {
-        tips_id: tipId,
-      },
-      include: {
-        user: {
-          select: {
-            user_id: true,
-            nickname: true,
-            profile_image_url: true,
-          },
-        },
-        hashtags: {
-          include: {
-            hashtag: true,
-          },
-        },
-        media: true,
-        likes: true,
-        saves: true,
-      },
-    });
   }
 
   // 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
-  public async getSortedInfluencerTips(skip: number, take: number) {
+  public async getSortedInfluencerTips(skip: number, take: number, sort: string) {
     return await prisma.tip.findMany({
       where: {
         user: { role: UserRole.INFLUENCER },
       },
       skip,
       take,
-      orderBy: {
-        created_at: 'desc', // 최신순 정렬
-      },
+      orderBy: this.getSortOption(sort),
       select: {
         tips_id: true, // ID 포함
         title: true,
         content: true,
         created_at: true,
+        updated_at: true,
         media: {
           select: {
             media_url: true, //  미디어 URL만 가져옴
@@ -355,8 +276,10 @@ export class TipRepository {
         },
         user: {
           select: {
+            user_id: true,
             nickname: true, // 사용자 닉네임만 가져옴
             profile_image_url: true, // 프로필 이미지 URL만 가져옴
+            role: true,
           },
         },
         _count: {
