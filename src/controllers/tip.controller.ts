@@ -258,10 +258,7 @@ export class TipController {
       const tipId = parseInt(req.params.tipId, 10);
 
       if (!title || !content) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          isSuccess: false,
-          message: '제목과 내용을 입력해야 합니다.',
-        });
+        throw new ValidationError('제목과 내용을 입력해야 합니다.', null);
       }
 
       // 이미지 변환 처리
@@ -541,12 +538,6 @@ export class TipController {
       }
 
       const tipData = await this.tipService.getTipInfo(tipId, userId);
-
-      if (!tipData) {
-        return res.status(StatusCodes.NOT_FOUND).json({
-          message: 'Tip not found',
-        });
-      }
 
       res.status(StatusCodes.OK).json({
         isSuccess: true,
