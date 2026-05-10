@@ -1,8 +1,7 @@
 import { TipRepository } from '../repositories/tip.repository.js';
 import { UserRepository } from '../repositories/user.repository.js';
-import { toTipDto } from '../dtos/tip.dto.js';
 import { HashtagRepository } from '../repositories/hashtag.repository.js';
-import { ValidationError } from '../errors/errors.js';
+import { ValidationError, TipNotFoundError } from '../errors/errors.js';
 import { HashtagNotFoundError } from '../errors/hashtag.error.js'; //해시태그 에러 클래스 추가
 
 export class TipService {
@@ -75,37 +74,13 @@ export class TipService {
     };
   }
 
-  // 팁 아이디로 팁 조회 (해시태그 변환 추가)
-  public async getTipById(tipId: number) {
-    const tip = await this.tipRepository.getTipById(tipId);
-
-    return {
-      ...tip,
-      hashtags: tip.hashtags.map((h) => ({
-        hashtag_id: h.hashtag.hashtag_id,
-        name: h.hashtag.name,
-      })),
-    };
-  }
-
   public async updateTip(
     tipId: number,
     title: string,
     content: string,
     newImages: { media_url: string; media_type: string }[]
   ) {
-    // media_type을 ENUM 값으로 변환
-    const newImagesWithEnum = newImages.map((img) => ({
-      media_url: img.media_url,
-      media_type: this.tipRepository.getMediaType(img.media_type), // ENUM 변환
-    }));
-
-    return await this.tipRepository.updateTip(
-      tipId,
-      title,
-      content,
-      newImagesWithEnum
-    );
+    return await this.tipRepository.updateTip(tipId, title, content, newImages);
   }
 
   // 팁 삭제
@@ -118,82 +93,26 @@ export class TipService {
   public async getAllTips(page: number, limit: number) {
     const skip = (page - 1) * limit;
     const tips = await this.tipRepository.getAllTips(skip, limit);
-    return tips.map((tip) => ({
-      tipId: tip.tips_id,
-      title: tip.title,
-      content: tip.content,
-      author: tip.user
-        ? {
-            userId: tip.user.user_id,
-            nickname: tip.user.nickname,
-            profileImageUrl: tip.user.profile_image_url,
-            isInfluencer: tip.user.role === 'INFLUENCER',
-          }
-        : null,
-      hashtags: tip.hashtags.map((h) => ({
-        hashtagId: h.hashtag.hashtag_id,
-        name: h.hashtag.name,
-      })),
-      imageUrls: tip.media.map((media) => ({
-        media_url: media.media_url,
-        media_type: media.media_type,
-      })),
-      createdAt: tip.created_at,
-      updatedAt: tip.updated_at,
-    }));
+    return tips.map(this.mapTipToListItem);
   }
 
   // 정렬된 팁 조회 (좋아요, 저장 개수를 포함)
   public async getSortedTips(page: number, limit: number, sort: string) {
     const skip = (page - 1) * limit;
-    const tips = await this.tipRepository.getSortedTips(skip, limit);
-    console.log(tips);
-
-    // 정렬 적용 (좋아요순, 북마크순)
-    if (sort === 'likes') {
-      tips.sort((a, b) => (b._count.likes || 0) - (a._count.likes || 0)); // 좋아요 개수 내림차순
-    } else if (sort === 'saves') {
-      tips.sort((a, b) => (b._count.saves || 0) - (a._count.saves || 0)); // 북마크 개수 내림차순
-    }
-
-    return tips.map((tip) => ({
-      tipId: tip.tips_id,
-      title: tip.title,
-      content: tip.content,
-      author: tip.user
-        ? {
-            userId: tip.user.user_id,
-            nickname: tip.user.nickname,
-            profileImageUrl: tip.user.profile_image_url,
-          }
-        : null,
-      hashtags: tip.hashtags.map((h) => ({
-        hashtagId: h.hashtag.hashtag_id,
-        name: h.hashtag.name,
-      })),
-      imageUrls: tip.media.map((media) => ({
-        media_url: media.media_url,
-        media_type: media.media_type,
-      })),
-      likesCount: tip._count.likes || 0, // 기본값 0 설정
-      savesCount: tip._count.saves || 0, // 기본값 0 설정
-      createdAt: tip.created_at,
-      updatedAt: tip.updated_at,
-    }));
+    const tips = await this.tipRepository.getSortedTips(skip, limit, sort);
+    return tips.map(this.mapTipToListItem);
   }
 
   // 팁 상세 조회 서비스
-  public async getTipInfo(tipId: number, userId: number | null) {
+  public async getTipInfo(tipId: number, userId: number | null | undefined) {
     const tip = await this.tipRepository.getTipById(tipId);
-    if (!tip) return null;
+    if (!tip) throw new TipNotFoundError(tipId);
 
     // 현재 로그인한 사용자의 좋아요 및 북마크 여부 확인
-    const isLiked = userId
-      ? await this.tipRepository.isTipLikedByUser(tipId, userId)
-      : false;
-    const isBookmarked = userId
-      ? await this.tipRepository.isTipSavedByUser(tipId, userId)
-      : false;
+    const [isLiked, isBookmarked] = await Promise.all([
+      userId ? this.tipRepository.isTipLikedByUser(tipId, userId) : Promise.resolve(false),
+      userId ? this.tipRepository.isTipSavedByUser(tipId, userId) : Promise.resolve(false),
+    ]);
 
     return {
       tipId: tip.tips_id,
@@ -206,8 +125,8 @@ export class TipService {
         profileImageUrl: tip.user.profile_image_url,
         isInfluencer: tip.user.role === 'INFLUENCER',
       },
-      hashtags: tip.hashtags.map((h) => h.hashtag.name),
-      media: tip.media.map((m) => ({
+      hashtags: tip.hashtags.map((h: any) => h.hashtag.name),
+      media: tip.media.map((m: any) => ({
         mediaUrl: m.media_url,
         mediaType: m.media_type,
       })),
@@ -254,31 +173,7 @@ export class TipService {
     return {
       isSuccess: true,
       message: tips.length ? '팁 검색 성공' : '검색 결과가 없습니다.',
-      result: tips.map((tip) => ({
-        tipId: tip.tips_id,
-        title: tip.title,
-        content: tip.content,
-        author: tip.user
-          ? {
-              userId: tip.user.user_id,
-              nickname: tip.user.nickname,
-              profileImageUrl: tip.user.profile_image_url,
-              isInfluencer: tip.user.role === 'INFLUENCER',
-            }
-          : null,
-        hashtags: tip.hashtags.map((h) => ({
-          hashtagId: h.hashtag.hashtag_id,
-          name: h.hashtag.name,
-        })),
-        imageUrls: tip.media.map((media) => ({
-          media_url: media.media_url,
-          media_type: media.media_type,
-        })),
-        likesCount: tip.likes.length || 0,
-        savesCount: tip.saves.length || 0,
-        createdAt: tip.created_at,
-        updatedAt: tip.updated_at,
-      })),
+      result: tips.map(this.mapTipToListItem),
     };
   }
 
@@ -289,17 +184,13 @@ export class TipService {
     sort: string
   ) {
     const skip = (page - 1) * limit;
-    const tips = await this.tipRepository.getSortedInfluencerTips(skip, limit);
-    console.log(tips);
+    const tips = await this.tipRepository.getSortedInfluencerTips(skip, limit, sort);
+    return tips.map(this.mapTipToListItem);
+  }
 
-    // 정렬 적용 (좋아요순, 북마크순)
-    if (sort === 'likes') {
-      tips.sort((a, b) => (b._count.likes || 0) - (a._count.likes || 0)); // 좋아요 개수 내림차순
-    } else if (sort === 'saves') {
-      tips.sort((a, b) => (b._count.saves || 0) - (a._count.saves || 0)); // 북마크 개수 내림차순
-    }
-
-    return tips.map((tip) => ({
+  // 팁 목록 응답 형식 통일 매핑 함수
+  private mapTipToListItem(tip: any) {
+    return {
       tipId: tip.tips_id,
       title: tip.title,
       content: tip.content,
@@ -308,20 +199,21 @@ export class TipService {
             userId: tip.user.user_id,
             nickname: tip.user.nickname,
             profileImageUrl: tip.user.profile_image_url,
+            isInfluencer: tip.user.role === 'INFLUENCER',
           }
         : null,
-      hashtags: tip.hashtags.map((h) => ({
+      hashtags: tip.hashtags.map((h: any) => ({
         hashtagId: h.hashtag.hashtag_id,
         name: h.hashtag.name,
       })),
-      imageUrls: tip.media.map((media) => ({
-        media_url: media.media_url,
-        media_type: media.media_type,
+      imageUrls: tip.media.map((media: any) => ({
+        mediaUrl: media.media_url,
+        mediaType: media.media_type,
       })),
-      likesCount: tip._count.likes || 0, // 기본값 0 설정
-      savesCount: tip._count.saves || 0, // 기본값 0 설정
+      likesCount: tip._count?.likes ?? 0, // 기본값 0 설정
+      savesCount: tip._count?.saves ?? 0, // 기본값 0 설정
       createdAt: tip.created_at,
       updatedAt: tip.updated_at,
-    }));
+    };
   }
 }
