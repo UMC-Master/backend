@@ -41,7 +41,7 @@ jobs:
           rsync -avz --delete --exclude='node_modules' --exclude='.git' --exclude='.env' ./ homemaster:/home/ec2-user/backend
           echo "Workspace copied."
 
-       - name: Build
+      - name: Build
         run: |
           echo "Building project..."
           ssh homemaster 'cd /home/ec2-user/backend && npm run build'
