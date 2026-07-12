@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - develop
-  workflow_dispatch: # 수동 실행 가능
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      EC2_USER: ubuntu
+      EC2_USER: ec2-user
       EC2_HOST: ${{ secrets.EC2_HOST }}
       EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
 
@@ -26,9 +26,8 @@ jobs:
           echo "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
-
           cat >>~/.ssh/config <<END
-          Host umc_home_master
+          Host homemaster
             HostName $EC2_HOST
             User $EC2_USER
             IdentityFile ~/.ssh/id_rsa
@@ -38,52 +37,34 @@ jobs:
       - name: Copy Workspace
         run: |
           echo "Copying workspace..."
-          ssh umc_home_master 'sudo mkdir -p /home/ubuntu/backend'
-          ssh umc_home_master 'sudo chown ubuntu:ubuntu /home/ubuntu/backend'
-          scp -r ./[!.]* umc_home_master:/home/ubuntu/backend
+          ssh homemaster 'mkdir -p /home/ec2-user/backend'
+          rsync -avz --delete --exclude='node_modules' --exclude='.git' ./ homemaster:/home/ec2-user/backend
           echo "Workspace copied."
 
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
-          ssh umc_home_master 'cd /home/ubuntu/backend && npm install'
+          ssh homemaster 'cd /home/ec2-user/backend && npm install'
           echo "Dependencies installed."
-
-      - name: Copy systemd service file
-        run: |
-          echo "Copying systemd service file..."
-          ssh umc_home_master '
-            echo "[Unit]
-            Description=umc_home_master
-            After=network.target
-
-            [Service]
-            User=ubuntu
-            WorkingDirectory=/opt/app
-            ExecStart=/usr/bin/npm run start
-            Restart=always
-            Environment=NODE_ENV=production
-
-            [Install]
-            WantedBy=multi-user.target" | sudo tee /etc/systemd/system/app.service
-          '
-          echo "Systemd service file copied."
-
-      - name: Enable systemd service
-        run: |
-          echo "Enabling systemd service..."
-          ssh umc_home_master 'sudo systemctl daemon-reload'
-          ssh umc_home_master 'sudo systemctl enable app'
-          echo "Systemd service enabled."
 
       - name: Run Prisma Migrations
         run: |
           echo "Running Prisma migrations..."
-          ssh umc_home_master 'cd /home/ubuntu/backend && npx prisma migrate deploy'
+          ssh homemaster 'cd /home/ec2-user/backend && npx prisma migrate deploy'
           echo "Prisma migrations complete."
 
-      - name: Restart systemd service
+      - name: Generate Prisma Client
         run: |
-          echo "Restarting systemd service..."
-          ssh umc_home_master 'pm2 restart umc-backend'
-          echo "Systemd service restarted."
+          echo "Generating Prisma client..."
+          ssh homemaster 'cd /home/ec2-user/backend && npx prisma generate'
+          echo "Prisma client generated."
+
+      - name: Restart App with PM2
+        run: |
+          echo "Restarting app..."
+          ssh homemaster '
+            cd /home/ec2-user/backend
+            pm2 describe homemaster-api > /dev/null 2>&1 && pm2 restart homemaster-api || pm2 start npm --name "homemaster-api" -- run start
+            pm2 save
+          '
+          echo "App restarted."
