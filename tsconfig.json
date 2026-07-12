@@ -9,6 +9,6 @@
     "moduleResolution": "node", // Node.js 모듈 방식
     "types": ["Multer"]
   },
-  "include": ["src/**/*"], // 소스 파일 포함
+  "include": ["src/**/*", "types/*"], // 소스 파일 포함
   "exclude": ["node_modules"] // 제외 폴더
 }

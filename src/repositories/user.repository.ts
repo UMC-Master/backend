@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, User } from '@prisma/client';
+import { PrismaClient, Prisma, User, UserRole } from '@prisma/client';
 import { DuplicateUserEmailError } from '../errors/errors';
 interface UserData {
   email?: string;
@@ -17,33 +17,38 @@ export class UserRepository {
     this.prisma = new PrismaClient();
   }
 
-  // ✅ 이메일 인증 토큰 저장
-  async saveEmailVerificationToken(email: string, token: string) {
+  async setInfluencer(userId: number) {
+    await this.prisma.user.update({
+      where: { user_id: userId },
+      data: { role: UserRole.INFLUENCER },
+    });
+  }
+
+  // ✅ 이메일 인증번호 저장 (.env에서 만료 시간 가져오기)
+  async saveEmailVerificationCode(email: string, code: string) {
+    const expirationMinutes = parseInt(
+      process.env.EMAIL_VERIFICATION_EXPIRATION || '3',
+      10
+    );
+
     return await this.prisma.userVerification.create({
       data: {
         email,
-        token,
-        expires_at: new Date(Date.now() + 60 * 60 * 1000), // 1시간 후 만료
+        token: code, // 기존 토큰을 인증번호(6자리 숫자)로 변경
+        expires_at: new Date(Date.now() + expirationMinutes * 60 * 1000), // .env에서 만료 시간 가져옴
       },
     });
   }
 
-  // ✅ 이메일 인증 토큰 조회
-  async findEmailVerificationToken(token: string) {
-    return await this.prisma.userVerification.findUnique({
-      where: { token },
+  // ✅ 이메일 인증번호 조회
+  async findEmailVerificationCode(email: string, code: string) {
+    return await this.prisma.userVerification.findFirst({
+      where: { email, token: code },
     });
   }
 
-  // ✅ 이메일 인증 토큰 삭제
-  async deleteEmailVerificationToken(email: string) {
-    if (!this.prisma) {
-      console.error('❌ PrismaClient가 초기화되지 않았습니다.');
-      throw new Error('PrismaClient 초기화 오류');
-    }
-
-    console.log('🗑️ 이메일 인증 토큰 삭제 요청:', email);
-
+  // ✅ 이메일 인증번호 삭제
+  async deleteEmailVerificationCode(email: string) {
     return await this.prisma.userVerification.deleteMany({
       where: { email },
     });
@@ -54,6 +59,27 @@ export class UserRepository {
     return this.prisma.user.findUnique({
       where: { user_id: userId },
     });
+  }
+
+  // 🔹 사용자 및 관심사 태그 조회
+  async findUserByIdWithHashtags(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { user_id: userId },
+      include: {
+        hashtags: {
+          include: {
+            hashtag: true, // ✅ 관심사 태그 조회
+          },
+        },
+      },
+    });
+
+    if (!user) return null;
+
+    return {
+      ...user,
+      hashtags: user.hashtags.map((uh) => uh.hashtag.name), // 해시태그 이름만 반환
+    };
   }
 
   // 사용자 이메일로 조회
@@ -76,6 +102,22 @@ export class UserRepository {
     });
   }
 
+  // 🔹 기존 사용자 해시태그 삭제 후 새로운 해시태그 추가
+  async updateUserHashtags(userId: number, hashtagIds: number[]) {
+    await this.prisma.userHashtag.deleteMany({
+      where: { user_id: userId },
+    });
+
+    const newHashtags = hashtagIds.map((hashtagId) => ({
+      user_id: userId,
+      hashtag_id: hashtagId,
+    }));
+
+    await this.prisma.userHashtag.createMany({
+      data: newHashtags,
+    });
+  }
+
   // 사용자 업데이트
   async updateUser(
     userId: number,
@@ -92,7 +134,7 @@ export class UserRepository {
     try {
       return await this.prisma.user.create({
         data: {
-          email: userData.email,
+          email: userData.email, // ✅ 가짜 이메일 저장 가능하도록 처리
           password: userData.password,
           nickname: userData.nickname,
           provider: userData.provider,

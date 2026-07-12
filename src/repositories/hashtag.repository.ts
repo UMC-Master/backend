@@ -23,6 +23,17 @@ export class HashtagRepository {
     });
   }
 
+  // 해시태그 아이디 목록으로 조회
+  async getByIds(hashtag_ids: number[]) {
+    return await this.prisma.hashtag.findMany({
+      where: {
+        hashtag_id: {
+          in: hashtag_ids,
+        },
+      },
+    });
+  }
+
   // 새로운 해시태그 생성
   async createHashtag(name: string, hashtagTypeId: number) {
     return await this.prisma.hashtag.create({
@@ -31,5 +42,10 @@ export class HashtagRepository {
         hashtag_type_id: hashtagTypeId,
       },
     });
+  }
+
+  // 전체 해시태그 조회
+  async getAll() {
+    return await this.prisma.hashtag.findMany();
   }
 }

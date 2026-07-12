@@ -53,5 +53,5 @@ export class HashtagService {
   }
 }
 
-// ✅ Prisma 인스턴스 생성
+// Prisma 인스턴스 생성
 export const prisma = new PrismaClient();

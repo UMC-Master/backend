@@ -6,6 +6,7 @@ import { ValidationError, UnauthorizedError } from '../errors/errors'; // 필요
 import { HashtagService } from '../services/hashtag.service.js';
 import bcrypt from 'bcrypt';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { UserNotFoundError } from '../errors/user.error.js';
 
 export class UserService {
   public userRepository: UserRepository;
@@ -16,37 +17,12 @@ export class UserService {
     this.hashtagService = new HashtagService();
   }
 
-  async sendVerificationEmail(email: string) {
-    try {
-      if (!process.env.JWT_EMAIL_SECRET || !process.env.BASE_URL) {
-        throw new Error('환경변수가 설정되지 않았습니다.');
-      }
-      // JWT를 사용하여 이메일 인증 토큰 생성
-      const token = jwt.sign({ email }, process.env.JWT_EMAIL_SECRET!, {
-        expiresIn: '1h',
-      });
-
-      // 이메일 인증 URL
-      const verificationUrl = `${process.env.BASE_URL}/api/v1/auth/verify-email?token=${token}`;
-
-      // 이메일 전송
-      await this.sendEmail(
-        email,
-        '이메일 인증',
-        `인증 링크: ${verificationUrl}`
-      );
-
-      // ✅ 기존 이메일 인증 기록 삭제 후 저장
-      await this.userRepository.deleteEmailVerificationToken(email);
-      await this.userRepository.saveEmailVerificationToken(email, token);
-
-      return { message: '이메일 인증 링크가 전송되었습니다.' };
-    } catch (error) {
-      console.error('❌ 이메일 인증 이메일 전송 실패:', error);
-      throw new Error('이메일 인증 이메일을 전송하는 중 오류가 발생했습니다.');
-    }
+  // ✅ 랜덤 6자리 숫자 생성 함수
+  private generateVerificationCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString(); // 100000 ~ 999999
   }
 
+  // ✅ 이메일 전송 메서드 추가
   private async sendEmail(to: string, subject: string, text: string) {
     try {
       if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -72,6 +48,59 @@ export class UserService {
     } catch (error) {
       console.error('❌ 이메일 전송 실패:', error);
       throw new Error('이메일 전송 중 오류가 발생했습니다.');
+    }
+  }
+
+  // ✅ 인증번호 이메일 전송 로직 변경
+  async sendVerificationEmail(email: string) {
+    try {
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        throw new Error('SMTP 이메일 설정이 환경변수에 등록되지 않았습니다.');
+      }
+
+      // ✅ 인증번호 생성
+      const code = this.generateVerificationCode();
+
+      // ✅ 기존 인증번호 삭제 후 새로운 코드 저장
+      await this.userRepository.deleteEmailVerificationCode(email);
+      await this.userRepository.saveEmailVerificationCode(email, code);
+
+      // ✅ 이메일 전송
+      await this.sendEmail(
+        email,
+        '이메일 인증번호',
+        `인증번호: ${code} (3분 내 입력)`
+      );
+
+      return { message: '이메일 인증번호가 전송되었습니다.' };
+    } catch (error) {
+      console.error('❌ 이메일 인증번호 전송 실패:', error);
+      throw new Error('이메일 인증번호 전송 중 오류가 발생했습니다.');
+    }
+  }
+
+  // ✅ 인증번호 검증 로직 추가
+  async verifyEmailCode(email: string, code: string) {
+    try {
+      const verification = await this.userRepository.findEmailVerificationCode(
+        email,
+        code
+      );
+
+      if (!verification) {
+        return {
+          success: false,
+          message: '유효하지 않거나 만료된 인증번호입니다.',
+        };
+      }
+
+      // ✅ 인증 완료 후 인증번호 삭제
+      await this.userRepository.deleteEmailVerificationCode(email);
+
+      return { success: true, message: '이메일 인증이 완료되었습니다.' };
+    } catch (error) {
+      console.error('❌ 이메일 인증 실패:', error);
+      return { success: false, message: '이메일 인증 중 오류가 발생했습니다.' };
     }
   }
 
@@ -165,20 +194,71 @@ export class UserService {
     return { accessToken, refreshToken };
   }
 
-  // 프로필 조회
+  // 🔹 프로필 조회
   async getProfile(userId: number) {
-    const profile = await this.userRepository.findUserById(userId);
+    const profile = await this.userRepository.findUserByIdWithHashtags(userId);
     if (!profile) {
-      throw new ValidationError('사용자를 찾을 수 없습니다.', null);
+      throw new ValidationError('사용자를 찾을 수 없습니다.', { userId });
     }
 
-    const { password, ...safeProfile } = profile;
-    return safeProfile;
+    const { password, hashtags, ...safeProfile } = profile;
+    return {
+      ...safeProfile,
+      hashtags, // 해시태그 리스트 포함
+    };
   }
 
-  // 프로필 업데이트
+  // 🔹 프로필 업데이트 (닉네임, 도시, 구, 관심사 해시태그 포함)
   async updateProfile(userId: number, data: ProfileUpdateDto) {
-    return this.userRepository.updateUser(userId, data);
+    const { nickname, city, district, hashtags } = data;
+
+    // 기존 프로필 가져오기
+    const existingUser =
+      await this.userRepository.findUserByIdWithHashtags(userId);
+    if (!existingUser) {
+      throw new ValidationError('사용자를 찾을 수 없습니다.', { userId });
+    }
+
+    // 업데이트 가능한 필드만 업데이트
+    const updateData: Omit<ProfileUpdateDto, 'hashtags'> = {}; // 🔹 hashtags 제외
+    if (nickname) updateData.nickname = nickname;
+    if (city) updateData.city = city;
+    if (district) updateData.district = district;
+
+    // 프로필 정보 업데이트
+    const updatedUser = await this.userRepository.updateUser(
+      userId,
+      updateData
+    );
+
+    // 🔹 해시태그 업데이트 (해시태그가 제공된 경우에만 처리)
+    let updatedHashtags = existingUser.hashtags;
+    if (hashtags && hashtags.length > 0) {
+      // 해시태그 name → ID 변환
+      const hashtagEntities =
+        await this.hashtagService.findHashtagsByName(hashtags);
+
+      if (hashtagEntities.length !== hashtags.length) {
+        throw new ValidationError(
+          '유효하지 않은 해시태그가 포함되어 있습니다.',
+          {
+            invalidHashtags: hashtags,
+          }
+        );
+      }
+
+      // 해시태그 ID 리스트
+      const hashtagIds = hashtagEntities.map((tag) => tag.hashtag_id);
+
+      // 기존 해시태그 삭제 후 새로운 해시태그 추가
+      await this.userRepository.updateUserHashtags(userId, hashtagIds);
+      updatedHashtags = hashtags;
+    }
+
+    return {
+      ...updatedUser,
+      hashtags: updatedHashtags, // 최신 해시태그 반영
+    };
   }
 
   // ✅ 카카오 로그인 처리
@@ -188,6 +268,11 @@ export class UserService {
       if (!kakaoAccessToken && code) {
         console.log('🔹 Received Authorization Code:', code); // 디버깅
 
+        const redirectUri =
+          process.env.NODE_ENV === 'development'
+            ? process.env.KAKAO_REDIRECT_URI_DEV
+            : process.env.KAKAO_REDIRECT_URI;
+
         const tokenResponse = await axios.post(
           'https://kauth.kakao.com/oauth/token',
           null,
@@ -195,7 +280,7 @@ export class UserService {
             params: {
               grant_type: 'authorization_code',
               client_id: process.env.KAKAO_CLIENT_ID,
-              redirect_uri: 'https://www.hmaster.shop/oauth/kakao/callback',
+              redirect_uri: redirectUri,
               code,
             },
             headers: {
@@ -268,12 +353,24 @@ export class UserService {
       kakaoUserInfo.id
     );
 
+    // ✅ 기존 providerId가 없는 경우, email로 유저를 조회하여 연결
+    if (!user && kakaoUserInfo.email) {
+      user = await this.userRepository.findUserByEmail(kakaoUserInfo.email);
+      if (user) {
+        console.log('🔹 기존 이메일 계정과 카카오 계정 연결');
+        await this.userRepository.updateUser(user.user_id, {
+          provider: 'kakao',
+          providerId: kakaoUserInfo.id,
+        });
+      }
+    }
+
     if (!user) {
-      // 신규 회원가입 처리
+      // ✅ 신규 회원가입 처리
       user = await this.userRepository.createUser({
         provider: 'kakao',
         providerId: kakaoUserInfo.id,
-        email: kakaoUserInfo.email || `${kakaoUserInfo.id}@kakao.com`, // ✅ 이메일이 없으면 가짜 이메일 사용
+        email: kakaoUserInfo.email || `${kakaoUserInfo.id}@kakao.com`,
         nickname: kakaoUserInfo.nickname,
         profileImage: kakaoUserInfo.profileImage ?? '',
         status: 'ACTIVE',
@@ -425,5 +522,12 @@ export class UserService {
     console.log(
       `Password reset email sent to ${email} with token: ${resetToken}`
     );
+  }
+
+  public async setInfluencer(userId: number) {
+    if (!(await this.userRepository.findUserById(userId))) {
+      throw new UserNotFoundError(userId);
+    }
+    await this.userRepository.setInfluencer(userId);
   }
 }

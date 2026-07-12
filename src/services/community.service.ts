@@ -5,7 +5,6 @@ import {
   ResourceNotFoundError,
   ValidationError,
   DatabaseError,
-  TipNotFoundError
 } from '../errors/errors.js'; // 에러 클래스 import
 
 export class CommunityService {
@@ -16,8 +15,6 @@ export class CommunityService {
   constructor() {
     this.communityRepository = new CommunityRepository();
   }
-
-
 
   async toggleLike(userId: number, tipId: number) {
     // 기존 좋아요 여부 확인
@@ -35,7 +32,7 @@ export class CommunityService {
 
   async toggleBookmark(userId: number, tipId: number) {
     // 기존 북마크 여부 확인
-    const existingBookmark = await this.communityRepository.findBookmarkByUserAndTip(userId, tipId);
+    const existingBookmark = await this.communityRepository.getBookmarkByUserAndTip(userId, tipId);
 
     if (existingBookmark) {
       await this.communityRepository.removeBookmark(existingBookmark.save_id);
@@ -47,7 +44,7 @@ export class CommunityService {
   }
 
   // 팁에 댓글 작성
-   public async commentOnTip(userId: number, tipId: number, comment: string) {
+  async commentOnTip(userId: number, tipId: number, comment: string) {
     try {
       const tip = await this.communityRepository.getTipById(tipId);
       if (!tip) {
@@ -82,7 +79,7 @@ export class CommunityService {
   }
 
   // 댓글 삭제
-  public async deleteComment(commentId: number) {
+  async deleteComment(commentId: number) {
     try {
       // 댓글 존재 여부 확인
       const comment = await this.communityRepository.getCommentById(commentId);
@@ -104,7 +101,7 @@ export class CommunityService {
     }
   }
 
-  public async updateComment(
+  async updateComment(
     userId: number,
     tipId: number,
     commentId: number,
@@ -149,5 +146,44 @@ export class CommunityService {
     if (isNaN(userId) || isNaN(communityId)) {
       throw new ValidationError('ID는 숫자 형식이어야 합니다.', { userId, communityId });
     }
+  }
+
+// 사용자의 저장된 꿀팁 목록 조회
+async getSavedTips(userId: number) {
+  const savedTips = await this.communityRepository.getSavedTips(userId);
+
+  return savedTips.map((save) => ({
+    tipId: save.tips.tips_id,
+    title: save.tips.title,
+    content: save.tips.content,
+    author: {
+      userId: save.tips.user.user_id,
+      nickname: save.tips.user.nickname,
+      profileImageUrl: save.tips.user.profile_image_url,
+    },
+    imageUrls: save.tips.media.map((media) => ({
+      media_url: media.media_url,
+      media_type: media.media_type,
+    })),
+    likeCount: save.tips.likes ? save.tips.likes.length : 0, // 좋아요 수 계산
+    saveCount: save.tips.saves ? save.tips.saves.length : 0, // 북마크(저장) 수 계산
+    createdAt: save.tips.created_at,
+  }));
+}
+
+
+  // 전체 댓글 조회 (페이지네이션 적용)
+  async getAllComments() {
+    return await this.communityRepository.getAllComments();
+  }
+
+  
+  // 특정 댓글 상세 조회
+  async getCommentById(commentId: number) {
+    if (!commentId || isNaN(commentId)) {
+      throw new ValidationError('유효한 댓글 ID가 필요합니다.',null);
+    }
+
+    return await this.communityRepository.getCommentById(commentId);
   }
 }
