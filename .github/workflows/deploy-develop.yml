@@ -38,7 +38,7 @@ jobs:
         run: |
           echo "Copying workspace..."
           ssh homemaster 'mkdir -p /home/ec2-user/backend'
-          rsync -avz --delete --exclude='node_modules' --exclude='.git' ./ homemaster:/home/ec2-user/backend
+          rsync -avz --delete --exclude='node_modules' --exclude='.git' --exclude='.env' ./ homemaster:/home/ec2-user/backend
           echo "Workspace copied."
 
       - name: Install dependencies
