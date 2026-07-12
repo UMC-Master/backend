@@ -41,11 +41,6 @@ jobs:
           rsync -avz --delete --exclude='node_modules' --exclude='.git' --exclude='.env' ./ homemaster:/home/ec2-user/backend
           echo "Workspace copied."
 
-      - name: Build
-        run: |
-          echo "Building project..."
-          ssh homemaster 'cd /home/ec2-user/backend && npm run build'
-          echo "Build complete."
 
       - name: Run Prisma Migrations
         run: |
@@ -64,7 +59,9 @@ jobs:
           echo "Restarting app..."
           ssh homemaster '
             cd /home/ec2-user/backend
-            pm2 describe homemaster-api > /dev/null 2>&1 && pm2 restart homemaster-api || pm2 start npm --name "homemaster-api" -- run start
+            pm2 describe homemaster-api > /dev/null 2>&1 && pm2 restart homemaster-api || pm2 start tsx --name "homemaster-api" -- src/index.ts
             pm2 save
           '
           echo "App restarted."
+
+
