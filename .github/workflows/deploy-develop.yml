@@ -41,11 +41,11 @@ jobs:
           rsync -avz --delete --exclude='node_modules' --exclude='.git' --exclude='.env' ./ homemaster:/home/ec2-user/backend
           echo "Workspace copied."
 
-      - name: Install dependencies
+       - name: Build
         run: |
-          echo "Installing dependencies..."
-          ssh homemaster 'cd /home/ec2-user/backend && npm install'
-          echo "Dependencies installed."
+          echo "Building project..."
+          ssh homemaster 'cd /home/ec2-user/backend && npm run build'
+          echo "Build complete."
 
       - name: Run Prisma Migrations
         run: |
